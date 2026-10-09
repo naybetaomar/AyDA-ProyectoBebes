@@ -1,0 +1,78 @@
+Restrticcion1:Factura y presupuesto no son lo mismo. cada documento conserva su identidad e histórico.
+Restricción2: El saldo no es lo mismo que la facturación.
+
+Requisitos Funcionales:
+RF1: El sistema debe generar facturas en formato pdf
+RF2: El sistema debe generar presupuestos (opcional)
+RF3: El sistema debe permitir enviar el presupuesto al cliente (opcional)
+RF4: Un usuario con permiso debe poder marcar un presupuesto como aceptado o rechazado (opcional)
+RF5: El sistema debe permitir adjuntar al presupuesto la evidencia de la aceptación (opcional)
+RF6: Si el presupuesto está aceptado, el sistema debe convertirlo en factura reutilizando las líneas (opcional)
+RF7: El sistema no debe permitir que se modifiquen facturas emitidas.
+RF8: En caso de error en una factura emitida, un administrador debe poder generar una factura rectificativa vinculada a la factura original.
+RF9: Si el importe de la rectificativa supera el umbral configurado, esta debe ser aprobada antes de emitirse.
+RF10: El sistema debe proponer los datos a rectificar a partir de la factura original.
+RF11: El sistema debe recalcular el saldo del cliente a través de la factura rectificativa.
+RF12:El sistema debe generar un dashboard que comprueba el saldo,facturas pendientes, facturas pagadas. Cada cifra del dashboard se puede detallar.
+RF13: El sistema debe iniciar a principios de cada año una campaña de revisión que lista los clientes cuya facturación anual debe revisarse.
+RF14: El sistema debe obtener la facturación anual de datos simulados o de entrada manual, y registrar la fuente y la fecha del dato. Si el dato no está disponible, la revisión queda pendiente.
+RF15: El sistema debe proponer el nuevo rango correspondiente
+RF16: En caso de propuesta de cambio de plan, el administrador debe verificar la propuesta de nuevo rango.
+RF17: Si el cambio es válido, el nuevo precio tiene fecha de efecto. El nuevo precio no reescribe meses anteriores.
+RF18: El sistema debe registrar quién aprobó el cambio de plan, cuándo, y el precio anterior y el nuevo.
+RF19: El sistema debe monitorear colas de email pendientes.
+RF20: El sistema debe monitorear errores de integración recientes.
+RF21: El sistema debe monitorear el ultimo backup realizado
+RF22: El sistema debe mostrar la ultima ejecución de la generación recurrente.
+RF23: El sistema debe mostrar el historial de cada cliente (alta,cambio de responsables,cambios de tarifa, facturas emitidas,pagos,incidencias,pausas,baja,reactivación)
+RF24: El sistema debe cerrar sesion automaticamente tras un tiempo de 30 minutos de inactividad.
+RF25: El sistema debe exponer una API que permite a sistemas externos (por ejemplo, Brain) consultar clientes, estado de deuda y facturas.
+RF26: La API permite crear solicitudes controladas, que pasan por validación o aprobación y no modifican datos directamente.
+RF27: La API aplica las mismas reglas de negocio y validaciones que la interfaz. Una llamada externa no puede hacer nada que un usuario no podría hacer.
+RF28: La API usa una autenticación separada de la de los usuarios de la interfaz.
+RF29: La API aplica límites razonables de uso por consumidor.
+RF30: El sistema debe registrar las llamadas importantes a la API (quién la hizo, cuándo y qué operación).
+RF31: El sistema debe ser capaz de recibir solicitudes de baja.
+RF32: El sistema debe permitir consultar, a partir de un identificador de cliente, si existen obligaciones pendientes y el detalle mínimo autorizado.
+RF33: En caso de solicitud de baja, el sistema debe crear la tarea "darse de baja", sin eliminar directamente la recurrencia.
+RF34: El sistema debe generar logs técnicos sin mostrar información técnica sensible al usuario
+RF35: El sistema debe generar un código de incidencia que permita correlacionar el error.
+RF36: Antes de dar de alta, el sistema debe buscar duplicados: coincidencias en nombre o razón social, mismo identificador fiscal, mismo email o teléfono
+RF37: Si encuentra duplicados, se le muestra al usuario que decide si crear un nuevo cliente o usar el existente.
+RF38: El sistema debe validar el formato de email.
+RF39: El sistema debe validar el identificador fiscal siempre que el país sea conocido (NIF/CIF en España o VAT), si no se conoce, la validación queda pendiente.
+RF40: Tras 5 intentos fallidos de login consecutivos, el sistema debe bloquear temporalmente el acceso del usuario durante 15 minutos.
+RF41: El sistema debe invalidar la sesión de un usuario desactivado por un administrador.
+RF42: El sistema debe guardar los datos fiscales del emisor como configuración.
+RF43: El sistema puede tener varias entidades emisoras (opcional)
+RF44: El sistema debe identificar a cada entidad con series de numeración (opcional)
+RF45: Al emitir una factura, un usuario con permiso puede seleccionar una entidad emisora correspondiente (opcional)
+RF46: El sistema debe permitir adjuntar documentos a clientes y facturas, además del pdf que genera el sistema.
+RF47: Cada adjunto tiene un tipo (pedido del cliente, presupuesto aceptado, justificante de pago, documento de la gestoría, otro) y una descripción.
+RF48: El sistema solo admite formatos de una lista permitida: PDF, JPG/PNG, DOCX, XLSX y CSV. Ejecutables y scripts (.exe, .bat, .js…) se rechazan.
+RF49: El sistema debe registrar y mostrar al usuario el estado de creación de una factura (creada o no creada).
+RF50: El sistema debe registrar y mostrar al usuario el estado de envío de una factura (enviada o fallo de envío).
+RF51: En caso de descubrir que un dato de una revisión anual era incorrecto, el sistema debe permitir corregir la ficha de revisión, registrando la corrección.
+RF52: El sistema debe calcular el impacto potencial de la corrección sobre el precio de los meses afectados.
+RF53: El sistema no debe emitir facturas retroactivas automáticamente. Cualquier regularización debe ser una acción explícita y aprobada por un administrador.
+RF54: El sistema debe bloquear la emisión de una factura si falta un dato fiscal imprescindible, e indicar qué dato falta.
+RF55: El sistema debe permitir guardar un cliente sin los datos convenientes (el teléfono del contacto) como excepción controlada, y registrar qué datos faltan.
+RF56: El sistema debe eliminar los espacios sobrantes de los datos introducidos (nombre, razón social, email e identificador fiscal).
+RF57: El sistema debe permitir marcar clientes como favoritos y mostrar los clientes consultados recientemente.
+RF58: El sistema debe comprobar los permisos del usuario en cada acceso a un cliente o a una factura, aunque se acceda mediante una URL directa, y rechazar el acceso si no le corresponde.
+
+
+RNF1: La aplicación debe ser responsiva, es decir, que se ajuste en función del dispositivo utilizado.
+RNF2: La aplicación debe funcionar en las versiones actuales de Chrome, Firefox, Edge y Safari, y en los navegadores actuales de Android e iOS.
+RNF3: Los PDF deben abrirse de forma estándar y los CSV exportados no deben mostrar caracteres rotos con tildes.
+RNF4: La aplicación debe utilizar software libre.(comentarlo en la sesión de grupo)
+RNF5: La aplicación debe tener documentación de usuario corta; documentación técnica (despliegue, modelo de datos, API y restauración de backup) y documentación de decisiones importantes, configuración y reglas de negocio.
+RNF6: Toda regla de negocio debe quedar escrita en un test o un escenario, no solo en el código ni en la cabeza de alguien. Habrá escenarios de aceptación escritos en lenguaje sencillo, que alguien de administración pueda entender.
+RNF7: Hay un tamaño máximo por archivo, 10MB (esto es un supuesto, revisad si os parece bien)
+RNF8: Los archivos no se ejecutan ni se interpretan en el servidor.
+RNF9: El acceso a un adjunto sigue los permisos de los clientes y la factura a la que está asociado, si no puedes ver la factura, no puedes ver el adjunto 
+RNF10: Cambiar el proveedor de pagos (por ejemplo, Stripe) no debe requerir modificar el modelo de factura.
+RNF11: La configuración y los secretos (por ejemplo, las claves de Stripe simulado) deben estar separados del código y no almacenarse en el repositorio.
+RNF12: La aplicación debe poder ponerse en marcha de forma reproducible, con al menos un entorno de desarrollo o pruebas y un procedimiento documentado para producción.
+
+RU1: El usuario debe distinguir entre una factura existente que no se pudo enviar y una factura que no se pudo crear.
