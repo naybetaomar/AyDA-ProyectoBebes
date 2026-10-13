@@ -136,24 +136,25 @@ Eso corresponde al diseño, no a los requisitos.
 | FR-09 | Si el importe de la rectificativa supera el umbral configurado, esta deberá ser aprobada antes de emitirse | UR-03 |
 | FR-10 | El sistema deberá proponer los datos a rectificar a partir de la factura original | UR-03 |
 | FR-11 | El sistema deberá recalcular el saldo del cliente a través de la factura rectificativa | UR-03 |
-| FR-12 | El sistema deberá generar un dashboard que comprueba el saldo, las facturas pendientes y las facturas pagadas de los clientes asignados al usuario. Cada cifra del dashboard deberá poder detallarse | UR-04 |
+| FR-12 | El sistema deberá generar un dashboard que muestre el saldo, las facturas pendientes y las facturas pagadas de los clientes asignados al usuario. | UR-04 |
+| FR-12b | El sistema deberá permitir consultar el detalle de los registros que componen cada cifra del dashboard. | UR-04 |
 | FR-13 | El sistema deberá iniciar a principios de cada año una campaña de revisión que lista los clientes cuya facturación anual debe revisarse | UR-05 |
 | FR-14 | El sistema deberá obtener la facturación anual de datos simulados o de entrada manual, y registrar la fuente y la fecha del dato. Si el dato no está disponible, la revisión quedará pendiente | UR-05 |
-| FR-15 | El sistema deberá proponer el nuevo rango correspondiente | UR-05 |
+| FR-15 | El sistema deberá proponer el rango de facturación que corresponda según el importe anual registrado y las reglas de asignación de rangos configuradas. | UR-05 |
 | FR-16 | En caso de propuesta de cambio de plan, el administrador deberá verificar la propuesta de nuevo rango | UR-05 |
 | FR-17 | Si el cambio es válido, el nuevo precio tendrá fecha de efecto. El nuevo precio no reescribirá meses anteriores | UR-05 |
 | FR-18 | El sistema deberá registrar quién aprobó el cambio de plan, cuándo, y el precio anterior y el nuevo | UR-05 |
-| FR-19 | El sistema deberá monitorizar las colas de email pendientes | UR-06 |
+| FR-19 | El sistema deberá mostrar el número de emails pendientes de envío y permitir consultar su estado de procesamiento. | UR-06 |
 | FR-20 | El sistema deberá monitorizar los errores de integración recientes | UR-06 |
 | FR-21 | El sistema deberá monitorizar el último backup realizado | UR-06 |
 | FR-22 | El sistema deberá mostrar la última ejecución de la generación recurrente | UR-06 |
 | FR-23 | El sistema deberá mostrar el historial de cada cliente (alta, cambio de responsables, cambios de tarifa, facturas emitidas, pagos, incidencias, pausas, baja, reactivación) | UR-06 |
 | FR-24 | El sistema deberá cerrar sesión automáticamente tras 30 minutos de inactividad | UR-07 |
-| FR-25 | El sistema deberá exponer una API que permita a sistemas externos (por ejemplo, Brain) consultar clientes, estado de deuda y facturas | UR-08 |
+| FR-25 | El sistema deberá exponer una API que permita a sistemas externos consultar clientes, estado de deuda y facturas | UR-08 |
 | FR-26 | La API permitirá crear solicitudes controladas, que pasan por validación o aprobación y no modifican datos directamente | UR-08 |
 | FR-27 | La API aplicará las mismas reglas de negocio y validaciones que la interfaz. Una llamada externa no podrá hacer nada que un usuario no podría hacer | UR-08 |
 | FR-28 | La API usará una autenticación separada de la de los usuarios de la interfaz | UR-08 |
-| FR-29 | La API aplicará límites razonables de uso por consumidor | UR-08 |
+| FR-29 | El sistema deberá limitar el número de solicitudes que cada consumidor de la API puede realizar durante un intervalo de tiempo, según los límites configurados. | UR-08 |
 | FR-30 | El sistema deberá registrar las llamadas importantes a la API (quién la hizo, cuándo y qué operación) | UR-08 |
 | FR-31 | El sistema deberá poder recibir solicitudes de baja y crear la tarea 'darse de baja' sin eliminar directamente la recurrencia | UR-08 |
 | FR-32 | El sistema deberá permitir consultar, a partir de un identificador de cliente, si existen obligaciones pendientes y el detalle mínimo autorizado | UR-08 |
