@@ -33,7 +33,10 @@ adecuados a partir de la información del caso.
 
 | Actor / stakeholder | Descripción | Intereses principales |
 |---|---|---|
-| ... | ... | ... |
+| Superadministrador / Proveedor | Usuario con maximo nivel de privilegios | Usuario con poder de editar todo rango de configuraciones en la aplicacion (umbral de precio, rangos, tarifas,...) |
+|Administrador / Responsable| Empleado con casi todos privilegios pero no puede acceder a la configuracion| | Supervisar el estado global del sistema y consultar el histórico de cualquier cliente, gestionar los cambios de plan anuales de los clientes, garantizar la integridad de la facturacion, corrigiendo errores con facturas rectificadas y gestion de control de acceso |
+|Editor / Trabajador| Empleado con acceso a la aplicacion con privilegios básicos| Realizar operaciones administrativas diarias, conocer el saldo, las facturas pendientes y pagadas de los clientes asignados, Disposicion de un control claro sobre el estado real de los envios |
+
 
 
 ## 2. Requisitos de negocio
@@ -56,8 +59,9 @@ conseguir la organización. No indican todavía cómo debe hacerlo el software.
 
 | ID | Requisito | Fuente |
 |---|---|---|
-| BR-01 | ... | Cliente / entrevista / decisión del equipo / otra |
-| BR-02 | ... | ... |
+| BR-01 | Representar relación comercial entre empresas clientes| Entrevista página 2 |
+| BR-02 | Mantener la independencia operativa de la herramienta administrativa respecto al producto al que sirve | entrevista pag 2 |
+| BR-03 | Garantizar la integridad legal e historica de la facturarcion | entrevista pag 3 |
 
 
 ## 3. Requisitos de usuario
@@ -95,6 +99,10 @@ serán necesarios para proporcionarle ese servicio.
 | UR-11 | Administrador | Poder configurar los datos fiscales del emisor y, si Turbine factura desde varias sociedades, elegir con cuál se emite cada factura (opcional) | Cliente / entrevista |
 | UR-12 | Editor | Poder adjuntar a un cliente o a una factura los documentos que lo justifican (pedido, presupuesto aceptado, justificante) de forma segura | Cliente / entrevista |
 | UR-13 | Editor | Poder acceder rápidamente a los clientes que gestiono con más frecuencia | Cliente / entrevista |
+| UR-14 | Administrador | Poder registrar múltiples personas de contacto para una misma empresa con distintos roles | Entrevista página 2 |
+| UR-15 | Editor / Administrador   | Poder aplicar excepciones comerciales (descuentos, meses de carencia) sometidas a un flujo de aprobación si superan cierto umbral | Entrevista página 2-3 |
+| UR-16 | Editor | Poder previsualizar el cálculo exacto del prorrateo antes de confirmar el alta de un cliente a mitad de mes | Entrevista página 3 |
+
 
 ## 4. Requisitos del sistema
 
@@ -194,6 +202,16 @@ Eso corresponde al diseño, no a los requisitos.
 | FR-63 | El sistema podrá registrar una deuda como "anulada" o "incobrable" mediante una aprobacion administrativa (evitar marcarla como pagada) | UR-06 |
 | FR-64 | El sistema analizará movimientos de la cuenta bancaria/Revolut/Stripe y deberá asociarlos automaticamente a la factura correspondiente cuando coincidan | UR-04 |
 | FR-65 | El sistema debe detectar y gestionar casos de pagos parciales o excesivos, asociando el movimiento y manteniendo el estado como "parcial" o "no saldada" | UR-04 |
+| FR-66 | El sistema debe permitir que un administrador cree nuevos usuarios del sistema, asignándoles un rol | UR-04 |
+| FR-67 | El sistema puede asociar múltiples contactor a un cliente | UR-14 |
+| FR-68 | El sistema deberá permitir marcar como inactivo el contacto conservando intacto el histórico de envios y facturas | UR-14 |
+| FR-69 | El sistema requerirá la aprobación de una persona responsable de las excepciones comerciales (descuentos, umbral de precios, ...) | UR-15 |
+| FR-69b |Cuando una factura o modificación quede pendiente de aprobación, el sistema deberá indicar y registrar el motivo exacto (ej. supera umbral de descuento) | UR-15 |
+| FR-70 | El sistema gestionará diferentes estados de factura: borrador, aprobada, emitida, enviada, vencida, pagada, parcialmente conciliada, anulada y rectificada. | UR-01, UR-04 |
+| FR-71 | El sistema asignará el número de factura definitivo de forma concurrente y única solo en el momento de la emisión (los borradores no consumirán número) | UR-03 |
+| FR-72 | El sistema deberá calcular y mostrar el importe prorrateado de la primera cuota antes de confirmar el alta, en función del día de inicio | UR-16 |
+| FR-72b | El sistema deberá permitir registrar una excepción comercial para iniciar la facturación el mes siguiente sin cobrar el prorrateo del mes en curso | UR-15, UR-16 |
+| FR-73 | El sistema deberá permitir registrar un cliente con fecha de inicio futura, manteniéndolo en estado "pendiente de activación" sin generar facturas previas | UR-16 |
 
 
 
@@ -236,6 +254,7 @@ interpretación realizada.
 | NFR-12 | Despliegue | La aplicación deberá poder ponerse en marcha de forma reproducible, con al menos un entorno de desarrollo o pruebas y un procedimiento documentado para producción | Existe un procedimiento documentado que permite poner en marcha la aplicación desde cero |
 | NFR-13 | Fiabilidad | El sistema de notificaciones debe gestionar los reintentos tras errores de red o entrega sin provocar duplicidad en la generacion de documentos o cobros | Ante un error de red o de entrega, los reintentos automáticos o manuales del envío no generarán duplicados del documento ni duplicarán los registros de cobro asociados |
 | NFR-14 | Eficiencia | La interfaz del catalogo de productos debe ofrecer una experiencia de usuario ligera y agil para la consulta y seleccion de conceptos frecuentes | La selección de un concepto del catálogo e inserción de la línea en una factura o suscripción se podrá realizar en menos de 3 clics |
+| NFR-15 | Mantenibilidad / Desacoplamiento | la herramienta de administracion debe funcionar independiente de la empresa Brain | Aunque el producto externo principal desaparezca la aplicacion administrativa debe seguir funcionando |
 
 ## 5. Reglas de negocio
 
@@ -246,6 +265,9 @@ pero que no representan por sí mismas una funcionalidad.
 |---|---|
 | RB-01 | Factura y presupuesto no son lo mismo: cada documento conserva su identidad e histórico |
 | RB-02 | El saldo no es lo mismo que la facturación |
+| RB-03 | Una factura ya emitida no puede editarse silenciosamente ni borrarse; los cambios requieren trazabilidad o factura rectificativa |
+| RB-04 | La relación comercial es independiente de las facturas generadas; cambiar un precio futuro no altera facturas pasadas |
+| RB-05 | El cálculo del prorrateo se realizará dividiendo la cuota mensual entre los días reales del mes en curso, multiplicando el resultado por los días de servicio a prestar. |
 
 ## 6. Suposiciones y decisiones de análisis
 
@@ -264,6 +286,7 @@ un requisito.
 | A-07 | El teléfono del contacto es el dato "conveniente" que puede faltar | Es el único ejemplo citado por el cliente | FR-54 |
 | A-08 | Los límites de uso de la API quedan por definir | El cliente pidió límites "razonables" | FR-29 |
 | A-09 | Los requisitos marcados como (opcional) son ampliaciones | El cliente los presentó como ampliaciones y no como parte del primer despliegue | FR-02 a FR-06, FR-42 a FR-44 |
+| A-10 | El cálculo del prorrateo usará los días reales del mes en lugar de un mes comercial estándar de 30 días. | Decisión del equipo de desarrollo basada en la petición del cliente de definir una regla consistente. | FR-72 |
 
 
 ## 7. Dudas, ambigüedades y cuestiones pendientes
@@ -294,6 +317,7 @@ los requisitos de usuario y los requisitos del sistema.
 |---|---|
 | Factura emitida | Factura que ya ha sido emitida y no puede modificarse |
 | Factura rectificativa | Documento que corrige una factura emitida y queda vinculado a la original |
+| Borrador de factura | Estado previo a la emisión en el que la factura puede editarse o borrarse sin consumir numeración oficial. |
 | Presupuesto | Documento previo a una factura que puede ser aceptado o rechazado |
 | Saldo | Importe pendiente de cobro de un cliente, considerando facturas, rectificativas y pagos |
 | Facturación | Importe total facturado a un cliente en un periodo |
@@ -301,3 +325,5 @@ los requisitos de usuario y los requisitos del sistema.
 | Rango de plan | Tramo de facturación anual al que corresponde una tarifa |
 | Solicitud controlada | Petición externa que pasa por validación o aprobación antes de afectar a los datos |
 | Entidad emisora | Sociedad que emite facturas, con sus series de numeración |
+| Prorrateo | Cálculo proporcional de la cuota mensual cuando un cliente inicia su servicio un día distinto al día 1 del mes. |
+
