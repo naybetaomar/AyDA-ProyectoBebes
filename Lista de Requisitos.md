@@ -189,7 +189,7 @@ Eso corresponde al diseño, no a los requisitos.
 | FR-60 | El sistema deberá enviar la factura automaticamente por correo electronico tras su emision | UR-08 |
 | FR-60b | El sistema deberá registrar para cada intento de envio el canal, destinatario, fecha, hora y resultado (exito o fallo) | UR-06 |
 | FR-60c | El sistema en caso de fallo en el envío por correo, debe generar una incidencia, avisar al responsable y permitir modificar el contacto de envio | UR-06 |
-| FR-61 | Configurar los plazos de envio de recordatorios de impagos por parte del superadmininistrador, respetando las condiciones particulares pactadas con cada cliente | UR-07 |
+| FR-61 | Se podrán configurar los plazos de envio de recordatorios de impagos por parte del superadmininistrador, respetando las condiciones particulares pactadas con cada cliente | UR-07 |
 | FR-62 | El sistema podrá poner una factura en estado "en disputa" o "seguimiento pausado" especificando el motivo y la fecha de revision para detener temporalmente los recordatorios | UR-03 |
 | FR-63 | El sistema podrá registrar una deuda como "anulada" o "incobrable" mediante una aprobacion administrativa (evitar marcarla como pagada) | UR-06 |
 | FR-64 | El sistema analizará movimientos de la cuenta bancaria/Revolut/Stripe y deberá asociarlos automaticamente a la factura correspondiente cuando coincidan | UR-04 |
