@@ -183,6 +183,18 @@ Eso corresponde al diseño, no a los requisitos.
 | FR-55 | El sistema deberá eliminar los espacios sobrantes de los datos introducidos (nombre, razón social, email e identificador fiscal) | UR-10 |
 | FR-56 | El sistema deberá permitir marcar clientes como favoritos y mostrar los clientes consultados recientemente | UR-13 |
 | FR-57 | El sistema deberá comprobar los permisos del usuario en cada acceso a un cliente o a una factura, aunque se acceda mediante una URL directa, y rechazar el acceso si no le corresponde | UR-07 |
+| FR-58 | El sistema deberá poder pausar una suscripcion activa registrando motivo, fecha de inicio y fecha prevista de reactivacion, debe detener la generacion de mensualidades sin alterar facturas pendientes | UR-08 |
+| FR-58b | El sistema deberá notificar al responsable cuando se alcance la fecha prevista de reactivacion para solicitar confirmacion | UR-06 |
+| FR-59 | El sistema deberá permitir definir y gestionar un catálogo de conceptos reutilizables con precios e impuestos orientativos por defecto | UR-11 |
+| FR-60 | El sistema deberá enviar la factura automaticamente por correo electronico tras su emision | UR-08 |
+| FR-60b | El sistema deberá registrar para cada intento de envio el canal, destinatario, fecha, hora y resultado (exito o fallo) | UR-06 |
+| FR-60c | El sistema en caso de fallo en el envío por correo, debe generar una incidencia, avisar al responsable y permitir modificar el contacto de envio | UR-06 |
+| FR-61 | Configurar los plazos de envio de recordatorios de impagos por parte del superadmininistrador, respetando las condiciones particulares pactadas con cada cliente | UR-07 |
+| FR-62 | El sistema podrá poner una factura en estado "en disputa" o "seguimiento pausado" especificando el motivo y la fecha de revision para detener temporalmente los recordatorios | UR-03 |
+| FR-63 | El sistema podrá registrar una deuda como "anulada" o "incobrable" mediante una aprobacion administrativa (evitar marcarla como pagada) | UR-06 |
+| FR-64 | El sistema analizará movimientos de la cuenta bancaria/Revolut/Stripe y deberá asociarlos automaticamente a la factura correspondiente cuando coincidan | UR-04 |
+| FR-65 | El sistema debe detectar y gestionar casos de pagos parciales o excesivos, asociando el movimiento y manteniendo el estado como "parcial" o "no saldada" | UR-04 |
+
 
 
 ### 4.2. Requisitos no funcionales
@@ -222,6 +234,8 @@ interpretación realizada.
 | NFR-10 | Mantenibilidad / Extensibilidad | Cambiar el proveedor de pagos (por ejemplo, Stripe) no deberá requerir modificar el modelo de factura | Sustituir el proveedor de pagos no exige cambios en el modelo de factura |
 | NFR-11 | Seguridad | La configuración y los secretos (por ejemplo, las claves de Stripe simulado) deberán estar separados del código y no almacenarse en el repositorio | El repositorio no contiene claves ni secretos y la configuración se carga desde fuera del código |
 | NFR-12 | Despliegue | La aplicación deberá poder ponerse en marcha de forma reproducible, con al menos un entorno de desarrollo o pruebas y un procedimiento documentado para producción | Existe un procedimiento documentado que permite poner en marcha la aplicación desde cero |
+| NFR-13 | Fiabilidad | El sistema de notificaciones debe gestionar los reintentos tras errores de red o entrega sin provocar duplicidad en la generacion de documentos o cobros | Ante un error de red o de entrega, los reintentos automáticos o manuales del envío no generarán duplicados del documento ni duplicarán los registros de cobro asociados |
+| NFR-14 | Eficiencia | La interfaz del catalogo de productos debe ofrecer una experiencia de usuario ligera y agil para la consulta y seleccion de conceptos frecuentes | La selección de un concepto del catálogo e inserción de la línea en una factura o suscripción se podrá realizar en menos de 3 clics |
 
 ## 5. Reglas de negocio
 
