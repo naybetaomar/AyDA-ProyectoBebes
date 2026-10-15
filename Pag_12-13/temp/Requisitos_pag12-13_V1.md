@@ -1,6 +1,6 @@
 7/10726
 
-Páginas 11 y 12
+Páginas 12 y 13
 
 
 ## Requisitos Funcionales
@@ -40,18 +40,3 @@ Páginas 11 y 12
 - Los usuarios operativos no deben poder acceder a notas administrativas restringidas ni a datos de precios/negociaciones confidenciales si no les corresponde.
 
 - Controles estrictos en las exportaciones masivas para evitar fuga de información sensible sin dejar traza. Todo auditado. Toda reasignación de aprobaciones, cierre o reapertura de periodos, cambio de estado de tareas, exportación de datos y acción de anonimización debe quedar estrictamente registrada de forma inalterable.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
