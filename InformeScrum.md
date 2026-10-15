@@ -6,7 +6,7 @@
 |---|---| 
 | Abdelnaybet Aomar Hamed   | Scrum Master | 
 | Imad 	El Founti Chaib          | Miembro | 
-| Luca Cordeiro Fernández        | Miembro | 
+| Luca Fernández Cordeiro        | Miembro | 
 | Ana Guerrero Martín            | Miembro | 
 | Guillermo Herrera Lozano       | Miembro | 
 | Loraine Meijer Arboleda        | Miembro | 
