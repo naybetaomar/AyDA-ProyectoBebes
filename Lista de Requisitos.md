@@ -91,14 +91,17 @@ serán necesarios para proporcionarle ese servicio.
 | UR-03 | Administrador | Poder corregir un error de una factura ya emitida sin alterarla, de forma que el saldo del cliente refleje la corrección | Cliente / entrevista |
 | UR-04 | Editor | Poder conocer de un vistazo el saldo, las facturas pendientes y las pagadas, y comprobar de dónde sale cada cifra (limitado a clientes asignados) | Cliente / entrevista |
 | UR-05 | Administrador | Poder revisar cada año si un cliente sigue en el plan que le corresponde y decidir el cambio, sin que se alteren las facturas pasadas | Cliente / entrevista |
-| UR-06 | Administrador | Poder conocer el estado del sistema (emails pendientes, errores de integración, último backup, última generación recurrente) y la historia de cada cliente | Cliente / entrevista |
+| UR-06 | Administrador | Poder conocer el estado del sistema (emails pendientes, errores de integración, último backup, última generación recurrente) | Cliente / entrevista |
+| UR-06b | Administrador | Poder consultar la historia de cada cliente | Cliente / entrevista |
 | UR-07 | Administrador | Poder garantizar que solo las personas autorizadas acceden al sistema y a cada cliente o factura | Cliente / entrevista |
-| UR-08 | Sistema externo (Brain) | Poder consultar datos de clientes, deuda y facturas, y enviar solicitudes (como la de baja de un cliente), sin saltarme las reglas del sistema | Cliente / entrevista |
-| UR-09 | Administrador | Poder identificar y localizar la causa de un error del sistema sin que se muestre información técnica sensible a los usuarios | Cliente / entrevista |
+| UR-08 | Sistema externo (Brain) | Poder consultar datos de clientes, deuda y facturas, y enviar solicitudes (como la de baja de un cliente), de forma que el sistema aplique siempre sus reglas de negocio | Cliente / entrevista |
+| UR-09 | Administrador | Poder identificar y localizar la causa de un error del sistema a partir de un código de incidencia | Cliente / entrevista |
+| UR-09b | Editor / Administrador | Poder ver un mensaje comprensible ante un error, sin información técnica interna del sistema | Cliente / entrevista |
 | UR-10 | Editor | Poder dar de alta clientes con datos correctos y sin duplicados, y saber qué datos faltan para poder facturarles | Cliente / entrevista |
-| UR-11 | Administrador | Poder configurar los datos fiscales del emisor y, si Turbine factura desde varias sociedades, elegir con cuál se emite cada factura (opcional) | Cliente / entrevista |
+| UR-11 | Administrador | Poder configurar los datos fiscales del emisor | Cliente / entrevista |
+| UR-11b | Administrador | Poder elegir, si Turbine factura desde varias sociedades, con cuál se emite cada factura (opcional) | Cliente / entrevista |
 | UR-12 | Editor | Poder adjuntar a un cliente o a una factura los documentos que lo justifican (pedido, presupuesto aceptado, justificante) de forma segura | Cliente / entrevista |
-| UR-13 | Editor | Poder acceder rápidamente a los clientes que gestiono con más frecuencia | Cliente / entrevista |
+| UR-13 | Editor | Poder acceder rápidamente a los clientes con los que trabaja con más frecuencia | Cliente / entrevista |
 | UR-14 | Administrador | Poder registrar múltiples personas de contacto para una misma empresa con distintos roles | Entrevista página 2 |
 | UR-15 | Editor / Administrador   | Poder aplicar excepciones comerciales (descuentos, meses de carencia) sometidas a un flujo de aprobación si superan cierto umbral | Entrevista página 2-3 |
 | UR-16 | Editor | Poder previsualizar el cálculo exacto del prorrateo antes de confirmar el alta de un cliente a mitad de mes | Entrevista página 3 |
@@ -147,49 +150,57 @@ Eso corresponde al diseño, no a los requisitos.
 | FR-12 | El sistema deberá generar un dashboard que muestre el saldo, las facturas pendientes y las facturas pagadas de los clientes asignados al usuario. | UR-04 |
 | FR-12b | El sistema deberá permitir consultar el detalle de los registros que componen cada cifra del dashboard. | UR-04 |
 | FR-13 | El sistema deberá iniciar a principios de cada año una campaña de revisión que lista los clientes cuya facturación anual debe revisarse | UR-05 |
-| FR-14 | El sistema deberá obtener la facturación anual de datos simulados o de entrada manual, y registrar la fuente y la fecha del dato. Si el dato no está disponible, la revisión quedará pendiente | UR-05 |
+| FR-14 | El sistema deberá obtener la facturación anual de una fuente simulada o de entrada manual | UR-05 |
+| FR-14b | El sistema deberá registrar la fuente y la fecha de cada dato de facturación anual | UR-05 |
+| FR-14c | Si el dato de facturación anual no está disponible, el sistema deberá dejar la revisión en estado pendiente | UR-05 |
 | FR-15 | El sistema deberá proponer el rango de facturación que corresponda según el importe anual registrado y las reglas de asignación de rangos configuradas. | UR-05 |
 | FR-16 | En caso de propuesta de cambio de plan, el administrador deberá verificar la propuesta de nuevo rango | UR-05 |
-| FR-17 | Si el cambio es válido, el nuevo precio tendrá fecha de efecto. El nuevo precio no reescribirá meses anteriores | UR-05 |
+| FR-17 | Si el cambio de plan es válido, el sistema deberá aplicar el nuevo precio a partir de una fecha de efecto | UR-05 |
+| FR-17b | El sistema no deberá modificar las facturas ya emitidas de meses anteriores al aplicar un nuevo precio | UR-05 |
 | FR-18 | El sistema deberá registrar quién aprobó el cambio de plan, cuándo, y el precio anterior y el nuevo | UR-05 |
-| FR-19 | El sistema deberá mostrar el número de emails pendientes de envío y permitir consultar su estado de procesamiento. | UR-06 |
-| FR-20 | El sistema deberá monitorizar los errores de integración recientes | UR-06 |
-| FR-21 | El sistema deberá monitorizar el último backup realizado | UR-06 |
+| FR-19 | El sistema deberá mostrar el número de emails pendientes de envío | UR-06 |
+| FR-19b | El sistema deberá permitir consultar el estado de procesamiento de los emails pendientes | UR-06 |
+| FR-20 | El sistema deberá mostrar los errores de integración, ordenados del más reciente al más antiguo | UR-06 |
+| FR-21 | El sistema deberá mostrar la fecha y el resultado del último backup realizado | UR-06 |
 | FR-22 | El sistema deberá mostrar la última ejecución de la generación recurrente | UR-06 |
-| FR-23 | El sistema deberá mostrar el historial de cada cliente (alta, cambio de responsables, cambios de tarifa, facturas emitidas, pagos, incidencias, pausas, baja, reactivación) | UR-06 |
+| FR-23 | El sistema deberá mostrar el historial de cada cliente (alta, cambio de responsables, cambios de tarifa, facturas emitidas, pagos, incidencias, pausas, baja, reactivación) | UR-06b |
 | FR-24 | El sistema deberá cerrar sesión automáticamente tras 30 minutos de inactividad | UR-07 |
 | FR-25 | El sistema deberá exponer una API que permita a sistemas externos consultar clientes, estado de deuda y facturas | UR-08 |
-| FR-26 | La API permitirá crear solicitudes controladas, que pasan por validación o aprobación y no modifican datos directamente | UR-08 |
-| FR-27 | La API aplicará las mismas reglas de negocio y validaciones que la interfaz. Una llamada externa no podrá hacer nada que un usuario no podría hacer | UR-08 |
-| FR-28 | La API usará una autenticación separada de la de los usuarios de la interfaz | UR-08 |
+| FR-26 | La API deberá permitir crear solicitudes controladas | UR-08 |
+| FR-26b | Las solicitudes controladas deberán pasar por validación o aprobación y no deberán modificar datos directamente | UR-08 |
+| FR-27 | La API deberá aplicar las mismas reglas de negocio y validaciones que la interfaz. Una llamada externa no podrá hacer nada que un usuario no podría hacer | UR-08 |
+| FR-28 | Las credenciales de un consumidor de la API no deberán permitir acceder a la interfaz de usuario, ni las de un usuario acceder a la API | UR-08 |
 | FR-29 | El sistema deberá limitar el número de solicitudes que cada consumidor de la API puede realizar durante un intervalo de tiempo, según los límites configurados. | UR-08 |
 | FR-30 | El sistema deberá registrar las llamadas importantes a la API (quién la hizo, cuándo y qué operación) | UR-08 |
 | FR-31 | El sistema deberá poder recibir solicitudes de baja y crear la tarea 'darse de baja' sin eliminar directamente la recurrencia | UR-08 |
 | FR-32 | El sistema deberá permitir consultar, a partir de un identificador de cliente, si existen obligaciones pendientes y el detalle mínimo autorizado | UR-08 |
-| FR-33 | El sistema deberá generar logs técnicos sin mostrar información técnica sensible al usuario | UR-09 |
+| FR-33 | El sistema deberá registrar los errores en logs técnicos | UR-09 |
+| FR-33b | El sistema no deberá mostrar al usuario final información técnica del error (trazas, mensajes internos, rutas del servidor) | UR-09b |
 | FR-34 | El sistema deberá generar un código de incidencia que permita correlacionar el error | UR-09 |
 | FR-35 | Antes de dar de alta a un cliente, el sistema deberá buscar duplicados: coincidencias en nombre o razón social, mismo identificador fiscal, mismo email o teléfono | UR-10 |
-| FR-36 | Si encuentra duplicados, el sistema se lo mostrará al usuario, que decidirá si crear un nuevo cliente o usar el existente | UR-10 |
+| FR-36 | Si encuentra duplicados, el sistema deberá mostrárselos al usuario, que decidirá si crear un nuevo cliente o usar el existente | UR-10 |
 | FR-37 | El sistema deberá validar el formato de email | UR-10 |
 | FR-38 | El sistema deberá validar el identificador fiscal siempre que el país sea conocido (NIF/CIF en España o VAT). Si no se conoce, la validación quedará pendiente | UR-10 |
 | FR-39 | Tras 5 intentos fallidos de login consecutivos, el sistema deberá bloquear temporalmente el acceso del usuario durante 15 minutos | UR-07 |
 | FR-40 | El sistema deberá invalidar la sesión de un usuario desactivado por un administrador | UR-07 |
 | FR-41 | El sistema deberá guardar los datos fiscales del emisor como configuración | UR-11 |
-| FR-42 | El sistema podrá tener varias entidades emisoras (opcional) | UR-11 |
-| FR-43 | El sistema deberá identificar a cada entidad con series de numeración (opcional) | UR-11 |
-| FR-44 | Al emitir una factura, un usuario con permiso podrá seleccionar la entidad emisora correspondiente (opcional) | UR-11 |
+| FR-42 | El sistema deberá permitir tener varias entidades emisoras (opcional) | UR-11b |
+| FR-43 | El sistema deberá identificar a cada entidad con series de numeración (opcional) | UR-11b |
+| FR-44 | Al emitir una factura, un usuario con permiso deberá poder seleccionar la entidad emisora correspondiente (opcional) | UR-11b |
 | FR-45 | El sistema deberá permitir adjuntar documentos a clientes y facturas, además del PDF que genera el sistema | UR-12 |
-| FR-46 | Cada adjunto tendrá un tipo (pedido del cliente, presupuesto aceptado, justificante de pago, documento de la gestoría, otro) y una descripción | UR-12 |
-| FR-47 | El sistema solo admitirá formatos de una lista permitida: PDF, JPG/PNG, DOCX, XLSX y CSV. Los ejecutables y scripts (.exe, .bat, .js…) se rechazarán | UR-12 |
+| FR-46 | Cada adjunto deberá tener un tipo (pedido del cliente, presupuesto aceptado, justificante de pago, documento de la gestoría, otro) y una descripción | UR-12 |
+| FR-47 | El sistema deberá admitir solo formatos de una lista permitida: PDF, JPG/PNG, DOCX, XLSX y CSV. Los ejecutables y scripts (.exe, .bat, .js…) se deberán rechazar | UR-12 |
 | FR-48 | El sistema deberá registrar y mostrar al usuario el estado de creación de una factura (creada o no creada) | UR-01 |
 | FR-49 | El sistema deberá registrar y mostrar al usuario el estado de envío de una factura (enviada o fallo de envío) | UR-01 |
 | FR-50 | En caso de descubrir que un dato de una revisión anual era incorrecto, el sistema deberá permitir corregir la ficha de revisión, registrando la corrección | UR-05 |
 | FR-51 | El sistema deberá calcular el impacto potencial de la corrección sobre el precio de los meses afectados | UR-05 |
-| FR-52 | El sistema no deberá emitir facturas retroactivas automáticamente. Cualquier regularización deberá ser una acción explícita y aprobada por un administrador | UR-05 |
+| FR-52 | El sistema no deberá emitir facturas retroactivas automáticamente | UR-05 |
+| FR-52b | Toda regularización retroactiva deberá requerir una acción explícita y la aprobación de un administrador | UR-05 |
 | FR-53 | El sistema deberá bloquear la emisión de una factura si falta un dato fiscal imprescindible, e indicar qué dato falta | UR-10 |
 | FR-54 | El sistema deberá permitir guardar un cliente sin los datos convenientes (el teléfono del contacto) como excepción controlada, y registrar qué datos faltan | UR-10 |
 | FR-55 | El sistema deberá eliminar los espacios sobrantes de los datos introducidos (nombre, razón social, email e identificador fiscal) | UR-10 |
-| FR-56 | El sistema deberá permitir marcar clientes como favoritos y mostrar los clientes consultados recientemente | UR-13 |
+| FR-56 | El sistema deberá permitir marcar clientes como favoritos | UR-13 |
+| FR-56b | El sistema deberá mostrar los clientes consultados recientemente | UR-13 |
 | FR-57 | El sistema deberá comprobar los permisos del usuario en cada acceso a un cliente o a una factura, aunque se acceda mediante una URL directa, y rechazar el acceso si no le corresponde | UR-07 |
 | FR-58 | El sistema deberá permitir pausar una suscripción activa registrando el motivo, la fecha de inicio y la fecha prevista de reactivación, deteniendo la generación de mensualidades sin alterar ni cancelar las facturas impagadas pendientes | UR-08 |
 | FR-58b | Al alcanzarse la fecha prevista de reactivación de una suscripción, el sistema deberá notificar al responsable asignado para solicitar confirmación explícita antes de reanudar la facturación | UR-08 |
@@ -258,14 +269,16 @@ interpretación realizada.
 |---|---|---|---|
 | NFR-01 | Portabilidad / Usabilidad | La aplicación deberá ser responsiva, es decir, ajustarse en función del dispositivo utilizado | Las funcionalidades principales son utilizables desde ordenador, tablet y teléfono móvil |
 | NFR-02 | Compatibilidad | La aplicación deberá funcionar en navegadores actuales de escritorio y móvil | Funciona en las versiones actuales de Chrome, Firefox, Edge y Safari, y en los navegadores actuales de Android e iOS |
-| NFR-03 | Interoperabilidad | Los PDF deberán abrirse de forma estándar y los CSV exportados no deberán mostrar caracteres rotos con tildes | Un PDF generado se abre en un visor estándar. Un CSV con tildes y nombres extranjeros se abre sin caracteres rotos |
+| NFR-03 | Interoperabilidad | Los PDF deberán abrirse de forma estándar | Un PDF generado se abre en un visor estándar |
+| NFR-03b | Interoperabilidad | Los CSV exportados no deberán mostrar caracteres rotos con tildes | Un CSV con tildes y nombres extranjeros se abre sin caracteres rotos |
 | NFR-04 | Restricción tecnológica | La aplicación deberá utilizar software libre | Las herramientas y dependencias principales tienen licencia de software libre |
 | NFR-05 | Documentación | La aplicación deberá tener documentación de usuario corta; documentación técnica (despliegue, modelo de datos, API y restauración de backup); y documentación de decisiones importantes, configuración y reglas de negocio | Existen los tres tipos de documentación y la de usuario es corta (extensión máxima a definir por el equipo) |
-| NFR-06 | Mantenibilidad / Testabilidad | Toda regla de negocio deberá quedar escrita en un test o un escenario, no solo en el código. Habrá escenarios de aceptación en lenguaje sencillo, que alguien de administración pueda entender | Cada regla de negocio de la sección 5 tiene al menos un test o escenario asociado |
-| NFR-07 | Seguridad | Habrá un tamaño máximo por archivo adjunto (10 MB) | Un archivo mayor de 10 MB es rechazado con un mensaje explicativo (supuesto A-01) |
-| NFR-08 | Seguridad | Los archivos adjuntos no se ejecutarán ni se interpretarán en el servidor | Un archivo con código subido como adjunto no se ejecuta |
-| NFR-09 | Seguridad | El acceso a un adjunto seguirá los permisos del cliente y de la factura a la que está asociado | Un usuario que no puede ver la factura no puede ver su adjunto |
-| NFR-10 | Mantenibilidad / Extensibilidad | Cambiar el proveedor de pagos (por ejemplo, Stripe) no deberá requerir modificar el modelo de factura | Sustituir el proveedor de pagos no exige cambios en el modelo de factura |
+| NFR-06 | Mantenibilidad / Testabilidad | Toda regla de negocio deberá quedar escrita en un test o un escenario, no solo en el código | Cada regla de negocio de la sección 5 tiene al menos un test o escenario asociado |
+| NFR-06b | Mantenibilidad / Testabilidad | Los escenarios de aceptación deberán estar escritos en lenguaje sencillo, comprensible para alguien de administración | Un miembro de administración puede leer un escenario de aceptación y explicar qué comprueba |
+| NFR-07 | Seguridad | El sistema deberá limitar el tamaño de cada archivo adjunto (10 MB) | Un archivo mayor de 10 MB es rechazado con un mensaje explicativo (supuesto A-01) |
+| NFR-08 | Seguridad | Los archivos adjuntos no deberán ejecutarse ni interpretarse en el servidor | Un archivo con código subido como adjunto no se ejecuta |
+| NFR-09 | Seguridad | El acceso a un adjunto deberá seguir los permisos del cliente y de la factura a la que está asociado | Un usuario que no puede ver la factura no puede ver su adjunto |
+| NFR-10 | Mantenibilidad / Extensibilidad | Cambiar el proveedor de pagos (por ejemplo, Stripe) no deberá requerir modificar las facturas existentes | Se puede sustituir el proveedor de pagos simulado por otro de prueba sin modificar las facturas ya almacenadas |
 | NFR-11 | Seguridad | La configuración y los secretos (por ejemplo, las claves de Stripe simulado) deberán estar separados del código y no almacenarse en el repositorio | El repositorio no contiene claves ni secretos y la configuración se carga desde fuera del código |
 | NFR-12 | Despliegue | La aplicación deberá poder ponerse en marcha de forma reproducible, con al menos un entorno de desarrollo o pruebas y un procedimiento documentado para producción | Existe un procedimiento documentado que permite poner en marcha la aplicación desde cero |
 | NFR-13 | Fiabilidad | El sistema de notificaciones debe gestionar los reintentos tras errores de red o entrega sin provocar duplicidad en la generacion de documentos o cobros | Ante un error de red o de entrega, los reintentos automáticos o manuales del envío no generarán duplicados del documento ni duplicarán los registros de cobro asociados |
@@ -297,7 +310,7 @@ un requisito.
 | A-02 | La sesión se cierra tras 30 minutos de inactividad | El cliente pidió una expiración "razonable" | FR-24 |
 | A-03 | Se bloquea el acceso 15 minutos tras 5 intentos fallidos de login | El cliente pidió protección básica sin convertirla en "un infierno de bloqueos" | FR-39 |
 | A-04 | La lista de formatos permitidos es PDF, JPG/PNG, DOCX, XLSX y CSV | El cliente pidió limitar formatos sin concretarlos | FR-47 |
-| A-05 | La regularización retroactiva la aprueba un administrador | El cliente pidió que fuera "explícita y aprobada" sin indicar quién | FR-52 |
+| A-05 | La regularización retroactiva la aprueba un administrador | El cliente pidió que fuera "explícita y aprobada" sin indicar quién | FR-52b |
 | A-06 | Los criterios de detección de duplicados son nombre o razón social, identificador fiscal, email y teléfono | El cliente habló de duplicados "razonables" y citó el identificador fiscal | FR-35 |
 | A-07 | El teléfono del contacto es el dato "conveniente" que puede faltar | Es el único ejemplo citado por el cliente | FR-54 |
 | A-08 | Los límites de uso de la API quedan por definir | El cliente pidió límites "razonables" | FR-29 |
