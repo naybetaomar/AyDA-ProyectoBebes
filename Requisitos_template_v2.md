@@ -35,7 +35,10 @@ adecuados a partir de la información del caso.
 |---|---|---|
 | Superadministrador / Proveedor | Usuario con maximo nivel de privilegios | Usuario con poder de editar todo rango de configuraciones en la aplicacion (umbral de precio, rangos, tarifas,...) |
 |Administrador / Responsable| Empleado con casi todos privilegios pero no puede acceder a la configuracion| | Supervisar el estado global del sistema y consultar el histórico de cualquier cliente, gestionar los cambios de plan anuales de los clientes, garantizar la integridad de la facturacion, corrigiendo errores con facturas rectificadas y gestion de control de acceso |
-|Editor / Trabajador| Empleado con acceso a la aplicacion con privilegios básicos| Realizar operaciones administrativas diarias, conocer el saldo, las facturas pendientes y pagadas de los clientes asignados, Disposicion de un control claro sobre el estado real de los envios |
+|Lector / Trabajador| Empleado con acceso a la aplicacion con privilegios básicos| Realizar operaciones administrativas diarias, conocer el saldo, las facturas pendientes y pagadas de los clientes asignados, Disposicion de un control claro sobre el estado real de los envios |
+| Sistema externo   |  Plataforma propia de la empresa que gestionaa las cuentas de los clientes | Consultar deuda, facturas y clientes; solicitar bajas sin saltarse las reglas del sistema |
+| API | Plataforma propia de la empresa que gestionaa las cuentas de los clientes | Consultar deuda, facturas y clientes; solicitar bajas sin saltarse las reglas del sistema |
+| Planificador (tareas automáticas) | Actor | Dispara procesos sin intervención humana | Generación mensual, recordatorios, campaña anual, caducidad de delegaciones |
 
 
 ## 2. Requisitos de negocio
