@@ -16,26 +16,14 @@ qué elementos quedan explícitamente fuera de su alcance.
 Identificar las personas, organizaciones o sistemas que interactúan con el sistema
 o tienen algún interés relevante en su funcionamiento.
 
-<!--
-EJEMPLO:
-
 | Actor / stakeholder | Descripción | Intereses principales |
 |---|---|---|
-| Personal administrativo | Personal de Turbine encargado de gestionar clientes, facturas y cobros | Realizar las tareas administrativas de forma rápida y disponer de información actualizada |
-| Administrador | Usuario con permisos sobre la gestión del sistema y sus usuarios | Gestionar usuarios, permisos y configuración |
-| Cliente de Turbine | Empresa a la que Turbine presta sus servicios y factura periódicamente | Recibir correctamente sus facturas y comunicaciones relacionadas con los pagos |
-| Sistema de pagos | Sistema externo en el que se reflejan los cobros | Proporcionar información que permita determinar si una factura ha sido pagada |
-
-Los elementos anteriores son únicamente un ejemplo de cómo documentar esta sección.
-El equipo debe identificar y justificar los actores y stakeholders que considere
-adecuados a partir de la información del caso.
--->
-
-| Actor / stakeholder | Descripción | Intereses principales |
-|---|---|---|
-<!--
-A espera de la reunión grupal
--->
+| Superadministrador | Persona con acceso a la configuración global del sistema | Configurar umbrales de aprobación, rangos y tarifas, series de numeración y recordatorios |
+| Administrador | Empleado con permisos de gestión de operación, clientes, facturas, asignaciones y aprobaciones, sin acceso a la configuración global | Supervisar el estado del sistema, consultar el histórico de cualquier cliente, gestionar cambios de plan anuales, corregir errores con facturas rectificativas y gestionar el control de acceso |
+| Lector | Empleado que trabaja sobre los clientes que tiene asignados | Realizar sus operaciones diarias, conocer el saldo y las facturas pendientes y pagadas de sus clientes y tener claro el estado real de los envíos |
+| Sistema externo | Sistema de terceros o de Turbine (como Brain) que consume la API de la aplicación | Consultar deuda, facturas y clientes y solicitar bajas sin saltarse las reglas del sistema |
+| Pasarela de pagos (Stripe simulado) | Servicio externo que notifica los cobros | Que los pagos se reflejen correctamente en las facturas, sin contabilizar dos veces el mismo evento |
+| Planificador (tareas automáticas) | Disparador de procesos sin intervención humana | Generación mensual, recordatorios, campaña anual y caducidad de delegaciones |
 
 
 ## 2. Requisitos de negocio
@@ -83,22 +71,22 @@ serán necesarios para proporcionarle ese servicio.
 
 | ID | Actor | Requisito | Fuente |
 |---|---|---|---|
-| UR-01 | Editor | Poder distinguir entre una factura que existe pero no se pudo enviar y una factura que no se pudo crear | Cliente / entrevista |
-| UR-02 | Editor | Poder preparar un presupuesto para un cliente, enviarlo y registrar si lo acepta o lo rechaza, para convertirlo en factura sin volver a introducir los datos (opcional) | Cliente / entrevista |
+| UR-01 | Lector | Poder distinguir entre una factura que existe pero no se pudo enviar y una factura que no se pudo crear | Cliente / entrevista |
+| UR-02 | Lector | Poder preparar un presupuesto para un cliente, enviarlo y registrar si lo acepta o lo rechaza, para convertirlo en factura sin volver a introducir los datos (opcional) | Cliente / entrevista |
 | UR-03 | Administrador | Poder corregir un error de una factura ya emitida sin alterarla, de forma que el saldo del cliente refleje la corrección | Cliente / entrevista |
-| UR-04 | Editor | Poder conocer de un vistazo el saldo, las facturas pendientes y las pagadas, y comprobar de dónde sale cada cifra (limitado a clientes asignados) | Cliente / entrevista |
+| UR-04 | Lector | Poder conocer de un vistazo el saldo, las facturas pendientes y las pagadas, y comprobar de dónde sale cada cifra (limitado a clientes asignados) | Cliente / entrevista |
 | UR-05 | Administrador | Poder revisar cada año si un cliente sigue en el plan que le corresponde y decidir el cambio, sin que se alteren las facturas pasadas | Cliente / entrevista |
 | UR-06 | Administrador | Poder conocer el estado del sistema (emails pendientes, errores de integración, último backup, última generación recurrente) | Cliente / entrevista |
 | UR-06b | Administrador | Poder consultar la historia de cada cliente | Cliente / entrevista |
 | UR-07 | Administrador | Poder garantizar que solo las personas autorizadas acceden al sistema y a cada cliente o factura | Cliente / entrevista |
-| UR-08 | Sistema externo (Brain) | Poder consultar datos de clientes, deuda y facturas, y enviar solicitudes (como la de baja de un cliente), de forma que el sistema aplique siempre sus reglas de negocio | Cliente / entrevista |
+| UR-08 | Sistema externo | Poder consultar datos de clientes, deuda y facturas, y enviar solicitudes (como la de baja de un cliente), de forma que el sistema aplique siempre sus reglas de negocio | Cliente / entrevista |
 | UR-09 | Administrador | Poder identificar y localizar la causa de un error del sistema a partir de un código de incidencia | Cliente / entrevista |
-| UR-09b | Editor / Administrador | Poder ver un mensaje comprensible ante un error, sin información técnica interna del sistema | Cliente / entrevista |
-| UR-10 | Editor | Poder dar de alta clientes con datos correctos y sin duplicados, y saber qué datos faltan para poder facturarles | Cliente / entrevista |
+| UR-09b | Lector / Administrador | Poder ver un mensaje comprensible ante un error, sin información técnica interna del sistema | Cliente / entrevista |
+| UR-10 | Lector | Poder dar de alta clientes con datos correctos y sin duplicados, y saber qué datos faltan para poder facturarles | Cliente / entrevista |
 | UR-11 | Administrador | Poder configurar los datos fiscales del emisor | Cliente / entrevista |
 | UR-11b | Administrador | Poder elegir, si Turbine factura desde varias sociedades, con cuál se emite cada factura (opcional) | Cliente / entrevista |
-| UR-12 | Editor | Poder adjuntar a un cliente o a una factura los documentos que lo justifican (pedido, presupuesto aceptado, justificante) de forma segura | Cliente / entrevista |
-| UR-13 | Editor | Poder acceder rápidamente a los clientes con los que trabaja con más frecuencia | Cliente / entrevista |
+| UR-12 | Lector | Poder adjuntar a un cliente o a una factura los documentos que lo justifican (pedido, presupuesto aceptado, justificante) de forma segura | Cliente / entrevista |
+| UR-13 | Lector | Poder acceder rápidamente a los clientes con los que trabaja con más frecuencia | Cliente / entrevista |
 
 
 

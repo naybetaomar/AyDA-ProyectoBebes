@@ -33,12 +33,13 @@ adecuados a partir de la información del caso.
 
 | Actor / stakeholder | Descripción | Intereses principales |
 |---|---|---|
-| Superadministrador / Proveedor | Usuario con maximo nivel de privilegios | Usuario con poder de editar todo rango de configuraciones en la aplicacion (umbral de precio, rangos, tarifas,...) |
-|Administrador / Responsable| Empleado con casi todos privilegios pero no puede acceder a la configuracion|  Supervisar el estado global del sistema y consultar el histórico de cualquier cliente, gestionar los cambios de plan anuales de los clientes, garantizar la integridad de la facturacion, corrigiendo errores con facturas rectificadas y gestion de control de acceso |
-|Lector / Trabajador| Empleado con acceso a la aplicacion con privilegios básicos| Realizar operaciones administrativas diarias, conocer el saldo, las facturas pendientes y pagadas de los clientes asignados, Disposicion de un control claro sobre el estado real de los envios |
-| Sistema externo   |  Plataforma propia de la empresa que gestionaa las cuentas de los clientes | Consultar deuda, facturas y clientes; solicitar bajas sin saltarse las reglas del sistema |
-| API | Plataforma propia de la empresa que gestionaa las cuentas de los clientes | Consultar deuda, facturas y clientes; solicitar bajas sin saltarse las reglas del sistema |
-| Planificador (tareas automáticas) | Actor | Dispara procesos sin intervención humana | Generación mensual, recordatorios, campaña anual, caducidad de delegaciones |
+| Superadministrador | Persona  con acceso a la configuración global del sistema | Configurar umbrales de aprobación, rangos y tarifas, series de numeración y recordatorios |
+| Administrador | Empleado con permisos de gestión de operación, clientes, facturas, asignaciones y aprobaciones, sin acceso a la configuración global | Supervisar el estado del sistema, consultar el histórico de cualquier cliente, gestionar cambios de plan anuales, corregir errores con facturas rectificativas y gestionar el control de acceso |
+| Lector | Empleado que trabaja sobre los clientes que tiene asignados | Realizar sus operaciones diarias, conocer el saldo y las facturas pendientes y pagadas de sus clientes y tener claro el estado real de los envíos |
+| Sistema externo | Sistema de terceros o de Turbine (como Brain) que consume la API de la aplicación | Consultar deuda, facturas y clientes y solicitar bajas sin saltarse las reglas del sistema |
+| Pasarela de pagos (Stripe simulado) | Servicio externo que notifica los cobros | Que los pagos se reflejen correctamente en las facturas, sin contabilizar dos veces el mismo evento |
+| Planificador (tareas automáticas) | Disparador de procesos sin intervención humana | Generación mensual, recordatorios, campaña anual y caducidad de delegaciones |
+
 
 
 ## 2. Requisitos de negocio
