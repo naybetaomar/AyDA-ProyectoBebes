@@ -237,7 +237,7 @@ un requisito.
 | ID | Suposición o decisión | Justificación | Requisitos afectados |
 |---|---|---|---|
 | A-01 | Prorrateo segun el porcentaje de dias que le falta con la cantidad de dias que tiene el mes | Justo para el cliente | FR-10, FR-11 |
-| A-02 |  | ... | ... |
+| A-02 | Compatible para cada tipo de movil (Responsive) | Asi es independiente del movil |  |
 
 
 ## 7. Dudas, ambigüedades y cuestiones pendientes
@@ -248,15 +248,6 @@ ambiguos, incompletos, contradictorios o que requieran aclaración.
 | ID | Cuestión | Origen | Impacto | Estado / resolución |
 |---|---|---|---|---|
 
-| Q-02 | ¿Cuáles serán los estados y transiciones definitivos de una factura, y qué procedimiento legal se aplicará para anularla o rectificarla? | Entrevista ampliada / gestoría | FR-17, FR-35 | Pendiente de validar con gestoría |
-| Q-03 | ¿Cuándo se considera vencida una factura y con qué frecuencia y canal se enviarán recordatorios? | Entrevista ampliada | FR-17, FR-19 | Pendiente de definir |
-| Q-04 | ¿Qué fuente se utilizará para verificar la facturacion anual y desde qué fecha se aplicará un cambio de rango aprobado? | Entrevista ampliada | FR-22 a FR-25 | Pendiente de definir |
-| Q-05 | ¿Qué umbrales concretos y roles de aprobacion se aplicarán a descuentos, cambios de importe, vencimientos excepcionales y facturas puntuales? | Entrevista ampliada | FR-27 a FR-29 | Pendiente de configurar por el negocio |
-| Q-06 | ¿Qué plazos y excepciones legales determinan la conservacion o eliminacion de los datos historicos? | Entrevista ampliada / asesoramiento legal | FR-03, FR-34 a FR-36, NFR-08 | Pendiente de validar legalmente |
-| Q-07 | ¿Qué tiempos máximos de respuesta se exigirán para las operaciones frecuentes y para el resumen de 1000 clientes? | Entrevista ampliada | NFR-02, NFR-03 | Pendiente de acordar |
-| Q-08 | ¿Qué dispositivos y tamaños de pantalla móviles se incluirán en las pruebas de aceptación? | Primera sesion | NFR-04 | Pendiente de definir |
-| Q-09 | ¿Qué impuestos estarán precargados y quién tendrá permisos para mantenerlos? | Entrevista ampliada | FR-06 | Pendiente de definir |
-| Q-10 | ¿Qué significa exactamente “observar el inicio de las facturas iniciales” en el requisito original UR-35? | Entrevista ampliada pag3 | Requisito de usuario UR-35 | Pendiente de aclarar |
 
 
 ## 8. Trazabilidad
