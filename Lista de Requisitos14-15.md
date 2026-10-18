@@ -4,11 +4,11 @@
 
 | Actor / stakeholder | Descripción | Intereses principales |
 |---|---|---|
-| Superadministrador | Usuario con los máximos privilegios de administración y configuración global del sistema. | Modificar parámetros del sistema (plazos de pago, frecuencia de recordatorios), gestionar altas y roles de usuarios, y acceder a revisiones globales. |
+| Superadministrador | Usuario con los máximos privilegios de administración y configuración global del sistema. | Modificar parámetros del sistema, gestionar altas y roles de usuarios, y acceder a revisiones globales. |
 | Administrador | Personal administrativo de la empresa con acceso completo. | Gestionar todos los clientes y facturas, asignar clientes a los lectores, consultar dashboards y configurar la retención de informes. |
-| Lector | Personal administrativo de la empresa con acceso limitado. | Consultar, emitir facturas y realizar operaciones exclusivamente sobre los clientes y facturas que tenga asignados. |
+| Lector | Personal administrativo de la empresa con acceso limitado. | Operar sobre la información de los clientes que tenga asignados. |
 | Cliente | Empresa cliente del servicio. | Recibir las facturas y recordatorios con datos fiscales correctos. |
-| Banco | Banco donde se registran los movimientos, transferencias y cobros automáticos. | Dar el registro de las operaciones para confirmar que cada factura se haya pagado. |
+| Pasarela/Banco | Banco donde se registran los movimientos, transferencias y cobros automáticos. | Dar el registro de las operaciones para confirmar que cada factura se haya pagado. |
 | Brain | Plataforma propia de la empresa que gestiona las cuentas de los clientes. | Consultar de forma automática con una API si hay pagos pendientes antes de dar de baja a un cliente o autorizar una operación. |
 
 ---
@@ -17,12 +17,13 @@
 
 | ID | Requisito | Fuente |
 |---|---|---|
-| BR-01 | Automatizar todo el proceso de emisión de facturas recurrentes y seguimiento de cobros, evitando hacer las facturas a mano y escribir los recordatorios uno a uno. | Transcripción [P035, P038, P213, P214] |
-| BR-02 | Permitir que la administración gestione miles de clientes sin necesidad de contratar a más personal administrativo. | Transcripción [P034, P171] |
-| BR-03 | Asegurar que cada cambio en el estado de un cobro quede registrado y justificado, y que el sistema avise de inmediato al responsable si ocurre algún fallo o error automático. | Transcripción ampliada |
-| BR-04 | Garantizar que las facturas mensuales no se detengan por errores en clientes concretos; los fallos puntuales se aislarán para que el resto siga procesándose. | Transcripción ampliada|
-| BR-05 | Cumplir con la ley de conservación de facturas y, al mismo tiempo, respetar la privacidad de los clientes anonimizando sus datos cuando lo soliciten. | Transcripción [P084, P085, P100, P185] y Transcripción ampliada |
-| BR-06 | Permitir la gestión de la facturación desde cualquier lugar o dispositivo, haciendo el proceso lo más rápido y sencillo posible. | Transcripción [P043, P045, P046, P216, P217] |
+| BR-01 | El sistema deberá automatizar la creación mensual de facturas recurrentes. | Transcripción |
+| BR-02 | El sistema deberá automatizar el seguimiento y las notificaciones de los cobros pendientes. | Transcripción |
+| BR-03 | La empresa deberá ser escalable sin necesidad de incrementar el personal administrativo. | Transcripción |
+| BR-04 | El sistema deberá registrar y justificar cada cambio de estado en el momento del cobro. | Transcripción ampliada|
+| BR-05 | El sistema deberá garantizar la continuidad del flujo de facturación masiva ante errores puntuales en registros individuales. | Transcripción ampliada |
+| BR-06 | La empresa deberá cumplir con las políticas legales de conservación y protección de facturas emitidas. | Transcripción y Transcripción ampliada |
+| BR-07 | La empresa deberá proteger la privacidad de los clientes ante solicitudes de anonimización manteniendo los registros contables. | Transcripción y Transcripción ampliada |
 
 ---
 
@@ -30,18 +31,20 @@
 
 | ID | Actor | Requisito | Fuente |
 |---|---|---|---|
-| UR-01 | Superadministrador / Administrador | Registrar nuevos clientes y definir si pagarán de forma recurrente o puntual en menos de un minuto y casi sin ayuda. | Transcripción [P038, P042, P043, P216] y Transcripción ampliada |
-| UR-02 | Superadministrador / Administrador / Lector | Guardar automáticamente las facturas en borrador mientras se redactan, para no perder la información si se corta la conexión o se cierra la pestaña por accidente. | Transcripción ampliada |
-| UR-03 | Superadministrador / Administrador / Lector | Encontrar cualquier cliente o factura en segundos usando filtros rápidos (estado, fechas, tipo o ubicación), sin tener que navegar por menús complicados. | Transcripción [P141] y Transcripción |
-| UR-04 | Superadministrador / Administrador / Lector | Poder deshacer errores o acciones por accidente, y ver un aviso claro que explique el riesgo antes de hacer cambios que no se puedan revertir por ley. | Transcripción ampliada |
-| UR-05 | Personal administrativo | Revisar y solucionar fácilmente los errores puntuales de los clientes que hayan quedado en pausa. | Transcripción ampliada |
-| UR-06 | Superadministrador / Administrador / Lector | Asignar a cada usuario con rol Lector la cartera específica de clientes que le corresponde gestionar. | Transcripción [P118, P119, P147, P149, P200, P201] |
-| UR-07 | Superadministrador / Administrador | Ver un dashboard con resúmenes semanales, mensuales y anuales para saber cuánto se ha facturado y qué cobros están pendientes. | Transcripción [P103, P104, P130, P131] |
-| UR-08 | Superadministrador / Administrador | Definir cuánto tiempo se guardan los informes y descargas generadas antes de borrarlos, para no llenar la memoria del servidor. | Transcripción ampliada |
-| UR-09 | Superadministrador | Definir los ajustes generales de facturación (días de plazo para cobrar y cada cuánto enviar avisos) y administrar el acceso de los usuarios al sistema. | Transcripción [P133, P134, P144, P151] y Transcripción ampliada |
-| UR-10 | Superadministrador | Ver datos generales sobre el rendimiento del sistema y los fallos ocurridos. | Transcripción ampliada |
-| UR-11 | Superadministrador / Administrador / Lector | Enviar automáticamente las facturas emitidas y los avisos de cobro por correo electrónico o WhatsApp. | Transcripción [P088, P101] |
-| UR-12 | Brain  | Comprobar automáticamente con API si un cliente que pide la baja tiene alguna factura pendiente de pago. | Transcripción [P202, P203, P212] |
+| UR-01 | Superadministrador / Administrador | El administrador deberá registrar la información fiscal y operativa de nuevos clientes. | Transcripción y Transcripción ampliada |
+| UR-02 | Superadministrador / Administrador | El administrador deberá establecer el tipo de cobro (suscripción o pago puntual) a cada cliente. | Transcripción y Transcripción ampliada |
+| UR-03 | Superadministrador / Administrador / Lector | El usuario deberá conservar su información redactada ante interrupciones accidentales durante la edición de facturas. | Transcripción ampliada |
+| UR-04 | Superadministrador / Administrador / Lector | El usuario deberá encontrar clientes y registros aplicando filtros. | Transcripción y Transcripción ampliada |
+| UR-05 | Superadministrador / Administrador / Lector | El usuario deberá poder deshacer modificaciones accidentales exceptuando las legalmente irreversibles. | Transcripción ampliada |
+| UR-06 | Superadministrador / Administrador / Lector | El usuario deberá comprender el nivel de irreversibilidad legal y riesgo de una acción antes de su confirmación final. | Transcripción ampliada |
+| UR-07 | Superadministrador / Administrador / Lector | El personal deberá poder identificar y resolver las incidencias y excepciones técnicas de los procesos de cobro. | Transcripción ampliada |
+| UR-08 | Superadministrador / Administrador | El administrador deberá delimitar el acceso a la información asignando clientes específicos a cada usuario con rol Lector. | Transcripción |
+| UR-09 | Superadministrador / Administrador | El administrador deberá poder analizar la evolución global mediante un dashboard. | Transcripción |
+| UR-10 | Superadministrador / Administrador | El sistema deberá reclamar la deuda de clientes inactivos o dados de baja. | Transcripción y Transcripción ampliada |
+| UR-11 | Superadministrador | El superadministrador deberá poder establecer un tiempo de retención de almacenamiento temporal para informes. | Transcripción ampliada |
+| UR-12 | Superadministrador | El superadministrador deberá poder configurar los vencimientos y recurrencia de notificaciones. | Transcripción y Transcripción ampliada |
+| UR-13 | Superadministrador | El superadministrador deberá poder evaluar la eficiencia operativa mediante un dashboard. | Transcripción ampliada |
+| UR-14 | Brain | Brain deberá obtener el estado actualizado de pagos pendientes de cualquier cliente. | Transcripción |
 
 ---
 
@@ -51,46 +54,45 @@
 
 | ID | Requisito | Relacionado con |
 |---|---|---|
-| FR-01 | Permitir registrar y editar los datos de cada cliente: razón social, NIF/CIF, dirección fiscal, sector, ubicación y contactos de facturación. | UR-01 |
-| FR-02 | Permitir la carga masiva de clientes y contactos desde archivos CSV. | UR-01 |
-| FR-03 | Asignar a cada cliente su forma de cobro: cuota fija mensual de suscripción (según lo que facture al año) o cobros puntuales por servicios extra. | UR-01 |
-| FR-04 | Crear automáticamente el día 1 de cada mes las facturas de suscripción para todos los clientes activos. | UR-01 |
-| FR-05 | Calcular y cobrar solo los días restantes del mes cuando un cliente con suscripción se dé de alta a mitad de mes. | UR-01 |
-| FR-06 | Crear las facturas en PDF con el diseño de la empresa. | UR-01 |
-| FR-07 | Guardar automáticamente en borrador las facturas puntuales mientras se redactan o editan, para evitar perder datos. | UR-02 |
-| FR-08 | Permitir deshacer acciones o cambios erróneos realizados en la plataforma. | UR-04 |
-| FR-09 | Mostrar un aviso claro antes de realizar acciones irreversibles explicando las consecuencias de no poder volver atrás. | UR-04 |
-| FR-10 | Enviar automáticamente la factura en PDF al cliente por correo electrónico o WhatsApp, incluyendo el contacto del soporte técnico. | UR-11 |
-| FR-11 | Enviar automáticamente los avisos de cobro: recordatorio previo el día 3, aviso de vencimiento el día 5 y avisos cada 2-3 días para facturas pendientes. | UR-11 |
-| FR-12 | Comprobar y marcar automáticamente las facturas como pagadas examinando los datos con la pasarela de pago y el banco. | UR-03 |
-| FR-13 | Guardar justificante que demuestre por qué una factura pasó a "Pagada". | UR-03 |
-| FR-14 | Avisar de inmediato al responsable si falla el envío de una factura, se interrumpe un proceso automático o no cuadra un pago. | UR-05 |
-| FR-15 | Procesar cada cliente por separado en la facturación mensual, aislando los errores puntuales para que no detengan el cobro al resto de clientes. | UR-05 |
-| FR-16 | Filtrar y borrar los avisos duplicados que envíe la pasarela de pago para evitar registrar dos veces el mismo pago. | UR-05 |
-| FR-17 | Cuando un cliente se dé de baja, cancelar sus facturas futuras pero continuar reclamando las facturas que ya tuviera pendientes. | UR-12 |
-| FR-18 | Permitir buscar clientes y facturas mediante filtros rápidos. | UR-03 |
-| FR-19 | Mostrar un dashboard con resúmenes semanales, mensuales y anuales, accesible solo para administradores. | UR-07 |
-| FR-20 | Permitir al Administrador asignar clientes a usuarios con rol Lector, para que solo puedan ver o editar la información de esos clientes en concreto. | UR-06 |
-| FR-21 | Exigir correo de la empresa y contraseña para iniciar sesión en la plataforma. | UR-01, UR-06 |
-| FR-22 | Permitir que el Superadministrador defina los ajustes generales, como los días de plazo para el cobro y la frecuencia de los avisos de impago. | UR-09 |
-| FR-23 | Fijar un plazo de caducidad para los informes y descargas generadas, eliminándolos automáticamente cuando pase ese tiempo. | UR-08 |
-| FR-24 | Permitir la anonimización de los datos personales de un contacto (cumpliendo con la Ley de Protección de Datos) sin modificar las facturas históricas ya emitidas. | UR-01 |
-| FR-25 | Recopilar datos generales sobre el rendimiento del sistema sin rastrear ni identificar a los empleados. | UR-10 |
-| FR-26 | Ofrecer una integración con API para que otros sistemas autorizados puedan consultar si un cliente tiene facturas o deudas pendientes. | UR-12 |
+| FR-01 | El sistema deberá registrar los campos obligatorios de cliente: nombre, NIF/CIF, dirección fiscal, sector y contactos. | UR-01 |
+| FR-02 | El sistema deberá permitir la carga masiva de clientes y contactos desde archivos CSV. | UR-01 |
+| FR-03 | El sistema deberá vincular cada cliente a un modelo de cobro de suscripción recurrente o de servicio puntual. | UR-02 |
+| FR-04 | El sistema deberá crear las facturas de las suscripciones el primer día de cada mes para los clientes en estado activo. | UR-02 |
+| FR-05 | El sistema deberá calcular el importe basado en los días efectivos restantes del mes en curso de nueva suscripción. | UR-02 |
+| FR-06 | El sistema deberá autoguardar borradores periódicos durante redacción de facturas. | UR-03 |
+| FR-07 | El sistema deberá disponer filtros de búsqueda basados en ubicación, sector comercial, estado de pago y fechas. | UR-04 |
+| FR-08 | El sistema deberá poder deshacer acciones que no tengan inmutabilidad legal. | UR-05 |
+| FR-09 | El sistema deberá requerir una confirmación explícita informando de la imposibilidad de restauración antes de ejecutar borrados o envíos a Hacienda. | UR-06 |
+| FR-10 | El sistema deberá notificar al empleado responsable ante la interrupción en el envío o proceso de validación de una factura. | UR-07 |
+| FR-11 | El sistema deberá capturar las notificaciones de eventos duplicados emitidas por la pasarela de pagos y reportarlas. | UR-07 |
+| FR-12 | El sistema deberá aislar y excluir a los clientes que generen errores de procesamiento, prosiguiendo con el cobro del resto del conjunto. | UR-07 |
+| FR-13 | El sistema deberá restringir la visualización y edición del rol Lector estrictamente al conjunto de clientes vinculados a su perfil por un administrador. | UR-08 |
+| FR-14 | El sistema deberá autenticar a los usuarios validando obligatoriamente el uso de un correo de la empresa. | UR-08 |
+| FR-15 | El sistema deberá generar un dashboard resumiendo la facturación total y deuda pendiente semanalmente, mensualmente y anualmente. | UR-09 |
+| FR-16 | El sistema deberá suspender la generación de facturas futuras recurrentes para aquellos clientes dados de baja. | UR-10 |
+| FR-17 | El sistema deberá continuar el envío de avisos de impago sobre las facturas emitidas no pagadas. | UR-10 |
+| FR-18 | El sistema deberá eliminar del servidor los archivos exportados temporalmente una vez superado su tiempo de caducidad. | UR-11 |
+| FR-19 | El sistema deberá poder ajustar la recurrencia de los avisos y cobros según la configuración del Superadministrador. | UR-12 |
+| FR-20 | El sistema deberá recopilar el tiempo invertido en generar acciones críticas, los fallos devueltos por el sistema y el conteo de clics de los usuarios de forma anonima. | UR-13 |
+| FR-21 | El sistema deberá exponer una API que responda con el estado de deuda asociado a un identificador de cliente. | UR-14 |
+| FR-22 | El sistema deberá comparar el identificador de la pasarela con el identificador de la factura para marcar su estado como "Cobrada". | UR-07 |
+| FR-23 | El sistema deberá guardar de forma permanente los datos de confirmación de la pasarela de pago en la factura en cuanto esta cambie su estado a "Cobrada". | UR-07 |
+| FR-24 | El sistema deberá transmitir las facturas emitidas en formato digital mediante la vía de contacto registrada del cliente (correo o whatsapp). | UR-01, UR-12 |
+| FR-25 | El sistema deberá ejecutar el cálculo financiero mediante programación determinista tradicional sin usar IA. | UR-13 |
+| FR-26 | El sistema deberá desactivar completamente sus funciones de apoyo basadas en inteligencia artificial de forma configurable (opcional). | UR-13 |
 
 #### 4.2. Requisitos no funcionales
 
 | ID | Categoría | Requisito | Criterio verificable |
 |---|---|---|---|
-| NFR-01 | Usabilidad / Facilidad de aprendizaje | Permitir que un usuario administrativo sin formación previa complete el alta de un cliente y la configuración de su suscripción casi sin ayuda. | Al menos el 90% de los usuarios deben completar el alta y la suscripción con éxito al primer intento usando solo la interfaz. |
-| NFR-02 | Usabilidad / Eficiencia | Permitir realizar las tareas habituales (dar de alta un cliente, emitir una factura o revisar pagos) en pocos pasos y de forma ágil. | Tardar menos de 1 minuto en crear y emitir una factura o dar de alta a un cliente en condiciones normales. |
-| NFR-03 | Usabilidad / Eficiencia | Encontrar cualquier cliente o factura mediante los buscadores y filtros de forma prácticamente instantánea. | Mostrar los resultados de búsqueda o filtrado en menos de 5 segundos. |
-| NFR-04 | Usabilidad / Consistencia | Mantener una interfaz clara y coherente, situando los botones siempre en el mismo sitio y evitando avisos molestos o innecesarios. | Colocar los botones de acción en posiciones fijas en todas las pantallas y pedir confirmación solo al realizar acciones destructivas o irreversibles. |
-| NFR-05 | Usabilidad / Portabilidad | Garantizar que la aplicación se adapte y funcione correctamente en cualquier pantalla o dispositivo. | Poder usar todas las funciones de consulta, emisión y seguimiento desde ordenador, tablet o móvil sin perder contenido ni agilidad. |
-| NFR-06 | Escalabilidad | Preparar la arquitectura del sistema para soportar una gran cantidad de datos y usuarios sin que se vuelva lenta. | Soportar la gestión y facturación de al menos 2.500 clientes activos simultáneamente sin fallos de rendimiento. |
-| NFR-07 | Confiabilidad | Garantizar que el cobro mensual continúe aunque surjan errores puntuales, sin duplicar cobros. | Procesar correctamente al 100% de los clientes válidos y registrar las excepciones, sin que un fallo individual detenga al resto. |
-| NFR-08 | Seguridad y Privacidad | Proteger los datos fiscales mediante permisos y cuidar la privacidad de los empleados en los datos de uso. | Exigir correo de la empresa y restringir el acceso a datos fiscales según permisos |
-| NFR-09 | Mantenibilidad / Arquitectura | Estructurar y documentar el código de forma clara para que cualquier equipo pueda mantenerlo o mejorarlo fácil. | Desarrollar un sistema modular con convenciones, migraciones de base de datos, pruebas y documentación de despliegue. |
-| NFR-10 | Mantenibilidad / Centralización | Reunir todos los ajustes en una zona. | Modificar los plazos de pago, avisos y tarifas desde un solo módulo central, sin tener que cambiar todo el código de la aplicación. |
-| NFR-11 | Robustez | Asegurar que los cálculos de facturas, fechas y cobros sean siempre exactos. | Realizar los cálculos mediante programación tradicional, sin IA. |
-| NFR-12 | Integridad y Legalidad | Proteger las facturas emitidas para que no se puedan alterar y guardarlas el tiempo que exige la ley. | Mantener inalterables los PDF de las facturas durante al menos 5 años, aunque el cliente se dé de baja o se anonimicen sus datos. |
+| NFR-01 | Usabilidad / Facilidad de aprendizaje | El sistema deberá posibilitar que un usuario administrativo asimile el alta de un cliente de forma directa. | Al menos el 90% de los sujetos de prueba sin experiencia completarán el alta de suscripción al primer intento. |
+| NFR-02 | Usabilidad / Eficiencia | El sistema deberá requerir una carga mínima de interacciones para las operaciones fundamentales de la empresa. | El proceso completo de creación y emisión de una factura puntual requerirá la ejecución de menos de 5 clics. |
+| NFR-03 | Usabilidad / Eficiencia | El sistema deberá procesar las búsquedas de clientes de forma fluida. | Las consultas y filtrados del catálogo de clientes devolverán los datos solicitados en un tiempo inferior a 3 segundos. |
+| NFR-04 | Usabilidad / Consistencia | El sistema deberá estandarizar la disposición de la intefaz. | Los botones principales de guardado y navegación estarán ubicados en lugares idénticos en todas las pantallas. |
+| NFR-05 | Escalabilidad | El sistema deberá ser escalable en la base de datos sin degradación para el usuario. | Soportará la operación simultánea de 2.500 clientes sin superar 5 segundos de latencia. |
+| NFR-07 | Confiabilidad | El sistema deberá garantizar la validación del procesamiento de facturación frente a registros corruptos. | El procesamiento finalizará con un 100% de registros válidos, almacenando los corruptos en una cola de excepciones. |
+| NFR-08 | Seguridad y Privacidad | El sistema deberá mantener el carácter inmutable y exacto de los documentos fiscales emitidos. | La anonimización posterior de un cliente mantendrá el archivo del PDF generado intacto. |
+| NFR-09 | Mantenibilidad / Arquitectura | El sistema deberá adoptar prácticas formales que garanticen el relevo a futuro. | El proyecto será un sistema modular con convenciones, migraciones de base de datos, pruebas y documentación de despliegue. |
+| NFR-10 | Mantenibilidad / Centralización | El sistema deberá agrupar la lógica de reglas de facturación en un mismo lugar. | La variación de un plazo de cobro no requerirá cambio de todo el código y se gestionará mediante el cambio de una sola constante. |
+| NFR-11 | Robustez | El sistema deberá procesar la contabilidad usando operaciones aritméticas convencionales. | Todo cálculo numérico, vencimiento e IVA se resolverá exclusivamente con algoritmos clásicos y verificables, sin IA. |
+| NFR-12 | Integridad y Legalidad | El sistema deberá garantizar la persistencia de las facturas. | Las facturas en PDF dispondrán de un bloqueo contra modificaciones o borrados directos en la base de datos durante el plazo legal obligatorio. |
