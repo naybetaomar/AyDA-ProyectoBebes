@@ -1,7 +1,4 @@
 
-# SÓLO PÁGINAS 12 - 13
-
-
 ## 1. Posibles nuevos actores
 - Soporte IT / administradores especiales (En caso de que se vaya a hacer una simulación¿)
 - Gestoría de la propia de Turbine. Recibe el paquete de facturas, informes, etc
@@ -21,7 +18,6 @@
 
 
 ## 3. Requisitos de usuario
-
 | ID | Actor | Requisito de usuario |
 | --- | --- | --- |
 | UR-04 | Usuario operativo / Administrador | Saber qué facturas están pagadas, pendientes, vencidas o en disputa, y por qué. |

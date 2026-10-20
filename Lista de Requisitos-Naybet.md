@@ -83,7 +83,7 @@ serán necesarios para proporcionarle ese servicio.
 | UR-09 | Administrador | Poder identificar y localizar la causa de un error del sistema a partir de un código de incidencia | Cliente / entrevista |
 | UR-09b | Lector / Administrador | Poder ver un mensaje comprensible ante un error, sin información técnica interna del sistema | Cliente / entrevista |
 | UR-10 | Lector | Poder dar de alta clientes con datos correctos y sin duplicados, y saber qué datos faltan para poder facturarles | Cliente / entrevista |
-| UR-11 | Administrador | Poder configurar los datos fiscales del emisor | Cliente / entrevista |
+| UR-11 | Superadministrador | Poder configurar los datos fiscales del emisor | Cliente / entrevista |
 | UR-11b | Administrador | Poder elegir, si Turbine factura desde varias sociedades, con cuál se emite cada factura (opcional) | Cliente / entrevista |
 | UR-12 | Lector | Poder adjuntar a un cliente o a una factura los documentos que lo justifican (pedido, presupuesto aceptado, justificante) de forma segura | Cliente / entrevista |
 | UR-13 | Lector | Poder acceder rápidamente a los clientes con los que trabaja con más frecuencia | Cliente / entrevista |
@@ -151,7 +151,8 @@ Eso corresponde al diseño, no a los requisitos.
 | FR-25 | El sistema deberá exponer una API que permita a sistemas externos consultar clientes, estado de deuda y facturas | UR-08 |
 | FR-26 | La API deberá permitir crear solicitudes controladas | UR-08 |
 | FR-26b | Las solicitudes controladas deberán pasar por validación o aprobación y no deberán modificar datos directamente | UR-08 |
-| FR-27 | La API deberá aplicar las mismas reglas de negocio y validaciones que la interfaz. Una llamada externa no podrá hacer nada que un usuario no podría hacer | UR-08 |
+| FR-27 | La API deberá aplicar las mismas reglas de negocio y validaciones que la interfaz | UR-08 |
+| FR-27b | Una llamada externa no deberá hacer ninguna operación que un usuario no pueda realizar | UR-08 |
 | FR-28 | Las credenciales de un consumidor de la API no deberán permitir acceder a la interfaz de usuario, ni las de un usuario acceder a la API | UR-08 |
 | FR-29 | El sistema deberá limitar el número de solicitudes que cada consumidor de la API puede realizar durante un intervalo de tiempo, según los límites configurados. | UR-08 |
 | FR-30 | El sistema deberá registrar las llamadas importantes a la API (quién la hizo, cuándo y qué operación) | UR-08 |
@@ -167,8 +168,8 @@ Eso corresponde al diseño, no a los requisitos.
 | FR-39 | Tras 5 intentos fallidos de login consecutivos, el sistema deberá bloquear temporalmente el acceso del usuario durante 15 minutos | UR-07 |
 | FR-40 | El sistema deberá invalidar la sesión de un usuario desactivado por un administrador | UR-07 |
 | FR-41 | El sistema deberá guardar los datos fiscales del emisor como configuración | UR-11 |
-| FR-42 | El sistema deberá permitir tener varias entidades emisoras (opcional) | UR-11b |
-| FR-43 | El sistema deberá identificar a cada entidad con series de numeración (opcional) | UR-11b |
+| FR-42 | El sistema deberá permitir tener varias entidades emisoras (opcional) | UR-11 |
+| FR-43 | El sistema deberá identificar a cada entidad con series de numeración (opcional) | UR-11 |
 | FR-44 | Al emitir una factura, un usuario con permiso deberá poder seleccionar la entidad emisora correspondiente (opcional) | UR-11b |
 | FR-45 | El sistema deberá permitir adjuntar documentos a clientes y facturas, además del PDF que genera el sistema | UR-12 |
 | FR-46 | Cada adjunto deberá tener un tipo (pedido del cliente, presupuesto aceptado, justificante de pago, documento de la gestoría, otro) y una descripción | UR-12 |
