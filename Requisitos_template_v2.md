@@ -4,7 +4,7 @@
 
 ### 1.1. Objetivo del sistema
 
-Proveer una herramienta interna de gestión administrativa, facturación y cobros para Turbine H (independiente del producto principal Brain). El sistema busca optimizar el envío de facturas por correo electrónico mediante plantillas personalizables, el seguimiento de vencimientos y estados de pago, la asignación de clientes a empleados, el registro de incidencias y la generación de informes y resúmenes periódicos.
+Breve descripción del problema que se pretende resolver y del objetivo general del sistema.
 
 ### 1.2. Alcance
 
@@ -33,13 +33,7 @@ adecuados a partir de la información del caso.
 
 | Actor / stakeholder | Descripción | Intereses principales |
 |---|---|---|
-| Superadministrador | Persona  con acceso a la configuración global del sistema | Configurar umbrales de aprobación, rangos y tarifas, series de numeración y recordatorios |
-| Administrador | Empleado con permisos de gestión de operación, clientes, facturas, asignaciones y aprobaciones, sin acceso a la configuración global | Supervisar el estado del sistema, consultar el histórico de cualquier cliente, gestionar cambios de plan anuales, corregir errores con facturas rectificativas y gestionar el control de acceso |
-| Lector | Empleado que trabaja sobre los clientes que tiene asignados | Realizar sus operaciones diarias, conocer el saldo y las facturas pendientes y pagadas de sus clientes y tener claro el estado real de los envíos |
-| Sistema externo | Sistema de terceros o de Turbine (como Brain) que consume la API de la aplicación | Consultar deuda, facturas y clientes y solicitar bajas sin saltarse las reglas del sistema |
-| Pasarela de pagos (Stripe simulado) | Servicio externo que notifica los cobros | Que los pagos se reflejen correctamente en las facturas, sin contabilizar dos veces el mismo evento |
-| Planificador (tareas automáticas) | Disparador de procesos sin intervención humana | Generación mensual, recordatorios, campaña anual y caducidad de delegaciones |
-
+| ... | ... | ... |
 
 
 ## 2. Requisitos de negocio
@@ -62,8 +56,15 @@ conseguir la organización. No indican todavía cómo debe hacerlo el software.
 
 | ID | Requisito | Fuente |
 |---|---|---|
-| BR-01 | ... | Cliente / entrevista / decisión del equipo / otra |
-| BR-02 | ... | ... |
+| BR-01 | El sistema deberá representar la relación comercial de cada cliente de forma independiente de sus facturas y del producto, separando la rescisión de contrato de la gestión activa de deudas pendientes para garantizar la continuidad del recobro tras la baja. | Cliente / entrevista / decisión del equipo / otra |
+| BR-02 | El personal deberá administrar clientes y facturación mediante una herramienta interna independiente que optimice la tasa de cobro mediante la automatización de notificaciones, seguimiento de impagos y conciliación bancaria inteligente. | ... |
+| BR-02 | El administrador deberá conocer la situación global del negocio sin revisar cada cliente individualmente a medida que crezca la cartera. | ... |
+| BR-02 | El sistema deberá procesar empresas internacionales sin asumir que todas usan formatos fiscales o domicilios españoles. | ... |
+| BR-02 | El sistema deberá conservar el historial de clientes, contactos, relaciones comerciales y facturas durante el plazo permitido por la ley, garantizando la inmutabilidad legal e histórica de los documentos emitidos frente a cambios en la marca o en el catálogo. | ... |
+
+
+
+
 
 
 ## 3. Requisitos de usuario
