@@ -44,7 +44,7 @@ El objetivo es proporcionar una gestión, automatizada e inmutable de la factura
 | UR-04 | Lector | Poder consultar duplicados por identificador fiscal al dar de alta o reingresar clientes para reactivar expedientes históricos | Entrevista página 4-5 |
 | UR-05 | Operador | Poder confeccionar facturas puntuales utilizando conceptos frecuentes de un catálogo ligero | Entrevista página 4-5 |
 | UR-06 | Lector | Poder previsualizar la factura y disponer de bloqueos automáticos en caso de faltar datos fiscales antes de su emisión | Entrevista página 4-5 |
-| UR-07 | Lector | Poder gestionar incidencias de envío de correo para corregir los datos de contacto | Poder gestionar incidencias de envío de correo para corregir los datos de contacto y realizar reintentos sin emitir facturas duplicadas | Entrevista página 4-5 |
+| UR-07 | Lector | Poder gestionar incidencias de envío de correo para corregir los datos de contacto y realizar reintentos sin emitir facturas duplicadas | Entrevista página 4-5 |
 | UR-08 | Admin | Poder pausar el envío automático de recordatorios marcando facturas "en disputa" mientras se investiga una disconformidad | Entrevista página 4-5 |
 | UR-09 | Admin | Poder dar de baja contable una deuda clasificándola como "anulada" o "incobrable" tras aprobación administrativa | Entrevista página 4-5 |
 | UR-10 | Lector | Poder revisar en una bandeja de trabajo los movimientos bancarios o de pasarela no conciliados automáticamente o con importes parciales/excesivos | Entrevista página 4-5 | 
