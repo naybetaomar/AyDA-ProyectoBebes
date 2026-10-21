@@ -31,7 +31,7 @@ Proveer una herramienta interna de gestión administrativa, facturación y cobro
 
 | Actor / stakeholder | Descripción | Intereses principales |
 
-|---|---|---|
+|:----|:----|:----|
 
 | Superadministrador | Persona  con acceso a la configuración global del sistema | Configurar umbrales de aprobación, rangos y tarifas, series de numeración y recordatorios |
 
