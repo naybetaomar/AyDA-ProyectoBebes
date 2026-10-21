@@ -285,8 +285,36 @@ los requisitos de usuario y los requisitos del sistema.
 
 | Requisito de negocio | Requisito de usuario | Requisito funcional / no funcional |
 |---|---|---|
-| BR-01 | UR-01 | FR-01, FR-02 |
-| BR-02 | UR-03 | FR-07, NFR-02 |
+| BR-01 | UR-04 | FR-06 |
+| BR-01 | UR-05 | FR-42 |
+| BR-01 | UR-06 | FR-42 |
+| BR-01 | UR-07 | FR-43 |
+| BR-01 | UR-28 | FR-14, FR-15 |
+| BR-02 | UR-02 | FR-02 |
+| BR-02 | UR-03 | FR-03, FR-04, FR-05 |
+| BR-02 | UR-08 | FR-08, FR-09, FR-10, FR-38, FR-45, NFR-14 |
+| BR-02 | UR-09 | FR-11, FR-12, FR-46 |
+| BR-02 | UR-10 | FR-18, FR-19 |
+| BR-02 | UR-11 | FR-40 |
+| BR-02 | UR-12 | FR-16 |
+| BR-02 | UR-13 | FR-23 |
+| BR-02 | UR-14 | FR-24, FR-25, FR-26, FR-27, FR-28 |
+| BR-02 | UR-15 | FR-07 |
+| BR-02 | UR-16 | FR-30, FR-31 |
+| BR-02 | UR-17 | FR-33 |
+| BR-02 | UR-18 | FR-31 |
+| BR-02 | UR-19 | FR-32 |
+| BR-02 | UR-20 | FR-34, FR-35, FR-36 |
+| BR-02 | UR-22 | FR-21, FR-48 |
+| BR-02 | UR-23 | FR-37, NFR-13 |
+| BR-02 | UR-24 | FR-18 |
+| BR-02 | UR-25 | FR-20, FR-49, FR-50, FR-51 |
+| BR-02 | UR-26 | FR-41, NFR-05 |
+| BR-02 | - | NFR-01, NFR-04 |
+| BR-03 | UR-27 | FR-22, NFR-03 |
+| BR-04 | UR-01 | FR-01, FR-44, NFR-02, NFR-07 |
+| BR-05 | UR-21 | FR-17, NFR-06 |
+| BR-05 | - | FR-29, FR-39, NFR-08 |
 
 
 ## 9. Glosario
