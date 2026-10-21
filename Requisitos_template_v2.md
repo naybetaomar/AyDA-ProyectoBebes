@@ -4,7 +4,7 @@
 
 ### 1.1. Objetivo del sistema
 
-Breve descripción del problema que se pretende resolver y del objetivo general del sistema.
+Proveer una herramienta interna de gestión administrativa, facturación y cobros para Turbine H (independiente del producto principal Brain). El sistema busca optimizar el envío de facturas por correo electrónico mediante plantillas personalizables, el seguimiento de vencimientos y estados de pago, la asignación de clientes a empleados, el registro de incidencias y la generación de informes y resúmenes periódicos.
 
 ### 1.2. Alcance
 
