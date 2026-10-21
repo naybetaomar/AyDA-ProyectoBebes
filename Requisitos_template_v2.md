@@ -245,8 +245,14 @@ pero que no representan por sí mismas una funcionalidad.
 
 | ID | Regla |
 |---|---|
-| RB-01 | ... |
-| RB-02 | ... |
+| RB-01 | Una factura dispondrá de un ID único únicamente cuando haya alcanzado el estado de emitida. |
+| RB-02 | Las facturas recurrentes se emitirán el día 1 de cada mes y desde el dia que empezo la relación. |
+| RB-03 | Los datos de empresas y facturas emitidas no se podrán eliminar definitivamente hasta transcurrido el plazo exigido por la legislación contable. |
+| RB-04 | Toda excepción requerirá la aprobación de un usuario con rol Administrador o Superadministrador. |
+| RB-05 | La pausa de una suscripción detiene la generación de nuevas mensualidades recurrentes pero no cancela ni modifica los derechos de cobro de las facturas emitidas anteriormente que continúen impagadas. |
+| RB-06 | Las modificaciones en las tarifas o impuestos por defecto de los conceptos del catálogo de productos no afectarán de forma retroactiva a las facturas ni suscripciones previamente emitidas. |
+| RB-07 | La representación en PDF de una factura emitida es inalterable. |
+| RB-08 | Una deuda perdonada no puede ser clasificada ni contabilizada como "pagada", debiendo pasar explícitamente al estado "anulada" o "incobrable".|
 
 
 ## 6. Suposiciones y decisiones de análisis
