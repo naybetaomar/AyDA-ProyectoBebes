@@ -53,36 +53,36 @@ El objetivo es proporcionar una gestión, automatizada e inmutable de la factura
 ## 4.1 Requisitos funcionales
 | ID | Requisito | Relacionado con |
 |---|---|---| 
-| FR-58 | El sistema deberá permitir pausar una suscripción activa registrando el motivo, la fecha de inicio y la fecha prevista de reactivación | UR-08 |
-| FR-58b | Si una suscripción esta en pausa, el sistema deberá detener la generación de mensualidades sin alterar ni cancelar las facturas impagadas pendientes | UR-08 |
-| FR-58c | Al alcanzarse la fecha prevista de reactivación de una suscripción, el sistema deberá notificar al responsable asignado para solicitar confirmación explícita antes de reanudar la facturación | UR-06 |
-| FR-59 | El sistema deberá recibir o registrar solicitudes de baja comprobando la existencia de deudas pendientes | UR-08 |
-| FR-59b | Si no hay deudas, el sistema cerrará la recurrencia comercial en la fecha efectiva | UR-08 |
-| FR-59c | Si hay deudas, el sistema detendrá la generación de nuevas mensualidades a partir de la fecha de baja, pero mantendrá activo el flujo de cobro/recobro sobre las facturas pendientes anteriores | UR-08 |
-| FR-60 | Al dar de alta o el reingreso de un cliente, el sistema deberá buscar coincidencias por identificador fiscal y avisar al usuario para permitir la reactivación de su ficha histórica | UR-10 |
-| FR-61 | El sistema deberá permitir emitir facturas puntuales compuestas por múltiples líneas con concepto, cantidad, precio unitario, porcentaje de descuento y tipo de impuesto aplicable | UR-04 |
-| FR-62 | El sistema permitirá administrar un catálogo de conceptos reutilizables con un precio orientativo y un impuesto asignado por defecto | UR-11 |
-| FR-63 | El sistema deberá permitir ajustar la descripción y el precio al añadir un concepto del catálogo a una factura puntual. Los cambios posteriores en los elementos del catálogo no afectarán a las facturas ya emitidas | UR-11 |
-| FR-64 | El sistema deberá ofrecer una vista previa de la factura antes de su emisión  | UR-10 |
-| FR-64b | El sistema bloqueará automáticamente el envío de una factura si detecta que falta algún dato fiscal imprescindible, informando del dato que falta | UR-10 |
-| FR-65 | El sistema deberá evaluar el importe total de la factura antes de emitirla y mostrar una advertencia al usuario si detecta que sale del patrón habitual del cliente | UR-01 UR-03 |
-| FR-66 | El sistema deberá generar la representación en PDF del documento incluyendo logo corporativo, tipografía, datos fiscales, numeración, fechas, desglose de líneas, bases, impuestos, totales, condiciones de pago y contacto de soporte | UR-01 |
-| FR-67 | El sistema deberá almacenar la versión original del PDF emitido garantizando que las modificaciones futuras en los activos corporativos no alteren los documentos históricos | UR-03 |
-| FR-68 | El sistema deberá enviar automáticamente la factura por correo electrónico al contacto de facturación en el momento de su emisión | UR-01 |
-| FR-68b | El sistema permitirá la simulación del envío de facturas por WhatsApp únicamente para los contactos que dispongan de un número válido y hayan otorgado su consentimiento | UR-01 |
-| FR-69 | El sistema deberá registrar cada intento de envío almacenando el canal utilizado, destinatario, fecha, hora y el resultado obtenido sea éxito o fallo | UR-06 |
-| FR-70 | Ante un rebote o un fallo de correo, el sistema deberá marcar el fallo, generar una incidencia de entrega, notificar al responsable asignado y permitir modificar los datos de contacto para realizar reintentos sin duplicar la factura | UR-06 |
-| FR-71 | El sistema enviará recordatorios automáticos según la cadencia configurada por el superadministrador | UR-04 |
-| FR-71b | El sistema deberá adaptar el envío de avisos de impago respetando la fecha de vencimiento acordada específicamente con el cliente  sobre el valor por defecto | UR-15 |
-| FR-72 | El sistema deberá permitir marcar una factura en estado "en disputa" o "seguimiento pausado", registrando un motivo y una fecha de revisión, para suspender temporalmente el envío de recordatorios automáticos | UR-04 |
-| FR-73 | El sistema deberá permitir clasificar una deuda como "anulada" o "incobrable" si hay una previa aprobación administrativa y registro de motivo, evitando en todo momento catalogarla como "pagada" | UR-03 |
-| FR-74 | El sistema deberá simular la recepción de eventos o notificaciones de pago externas de Stripe | UR-08 |
-| FR-74b | El sistema debe permitir la consulta de transacciones | UR-04 UR-06 |
-| FR-75 | El sistema deberá identificar las notificaciones o eventos de pago duplicados recibidos por pasarelas externas para no contabilizar los cobros repetidamente | UR-09 |
-| FR-76 | El sistema deberá procesar movimientos bancarios o de pasarelas (importe, fecha, moneda, concepto, referencia) y vincularlos automáticamente a la factura correspondiente si existe una coincidencia clara | UR-04 |
-| FR-76b | El sistema deberá derivar los movimientos bancarios que carezcan de referencia clara o presenten dudas a una bandeja de revisión manual | UR-06 |
-| FR-77 | Ante un cobro por un importe inferior o superior al total de la factura, el sistema deberá asociar el movimiento a la factura, registrar la diferencia y mantener la factura en estado "parcial" o "no saldada" | UR-04 |
-| FR-78 | En caso de deshacer o revertir una conciliación previa, el sistema deberá conservar la traza histórica guardando quién o qué regla la realizó, quién la deshizo y la justificación dada | UR-03 UR-06b |
+| FR-58 | El sistema deberá permitir pausar una suscripción activa registrando el motivo, la fecha de inicio y la fecha prevista de reactivación | UR-01 |
+| FR-58b | Si una suscripción esta en pausa, el sistema deberá detener la generación de mensualidades sin alterar ni cancelar las facturas impagadas pendientes | UR-01 |
+| FR-58c | Al alcanzarse la fecha prevista de reactivación de una suscripción, el sistema deberá notificar al responsable asignado para solicitar confirmación explícita antes de reanudar la facturación | UR-02 |
+| FR-59 | El sistema deberá recibir o registrar solicitudes de baja comprobando la existencia de deudas pendientes | UR-03 |
+| FR-59b | Si no hay deudas, el sistema cerrará la recurrencia comercial en la fecha efectiva | UR-03 |
+| FR-59c | Si hay deudas, el sistema detendrá la generación de nuevas mensualidades a partir de la fecha de baja, pero mantendrá activo el flujo de cobro/recobro sobre las facturas pendientes anteriores | UR-03 |
+| FR-60 | Al dar de alta o el reingreso de un cliente, el sistema deberá buscar coincidencias por identificador fiscal y avisar al usuario para permitir la reactivación de su ficha histórica | UR-04 |
+| FR-61 | El sistema deberá permitir emitir facturas puntuales compuestas por múltiples líneas con concepto, cantidad, precio unitario, porcentaje de descuento y tipo de impuesto aplicable | UR-05 |
+| FR-62 | El sistema permitirá administrar un catálogo de conceptos reutilizables con un precio orientativo y un impuesto asignado por defecto | UR-06 |
+| FR-63 | El sistema deberá permitir ajustar la descripción y el precio al añadir un concepto del catálogo a una factura puntual. Los cambios posteriores en los elementos del catálogo no afectarán a las facturas ya emitidas | UR-06 |
+| FR-64 | El sistema deberá ofrecer una vista previa de la factura antes de su emisión  | UR-07 |
+| FR-64b | El sistema bloqueará automáticamente el envío de una factura si detecta que falta algún dato fiscal imprescindible, informando del dato que falta | UR-07 |
+| FR-65 | El sistema deberá evaluar el importe total de la factura antes de emitirla y mostrar una advertencia al usuario si detecta que sale del patrón habitual del cliente | UR-07 |
+| FR-66 | El sistema deberá generar la representación en PDF del documento incluyendo logo corporativo, tipografía, datos fiscales, numeración, fechas, desglose de líneas, bases, impuestos, totales, condiciones de pago y contacto de soporte | UR-08 |
+| FR-67 | El sistema deberá almacenar la versión original del PDF emitido garantizando que las modificaciones futuras en los activos corporativos no alteren los documentos históricos | UR-08 |
+| FR-68 | El sistema deberá enviar automáticamente la factura por correo electrónico al contacto de facturación en el momento de su emisión | UR-09 |
+| FR-68b | El sistema permitirá la simulación del envío de facturas por WhatsApp únicamente para los contactos que dispongan de un número válido y hayan otorgado su consentimiento | UR-09 |
+| FR-69 | El sistema deberá registrar cada intento de envío almacenando el canal utilizado, destinatario, fecha, hora y el resultado obtenido sea éxito o fallo | UR-10 |
+| FR-70 | Ante un rebote o un fallo de correo, el sistema deberá marcar el fallo, generar una incidencia de entrega, notificar al responsable asignado y permitir modificar los datos de contacto para realizar reintentos sin duplicar la factura | UR-10 |
+| FR-71 | El sistema enviará recordatorios automáticos según la cadencia configurada por el superadministrador | UR-11 |
+| FR-71b | El sistema deberá adaptar el envío de avisos de impago respetando la fecha de vencimiento acordada específicamente con el cliente  sobre el valor por defecto | UR-11 |
+| FR-72 | El sistema deberá permitir marcar una factura en estado "en disputa" o "seguimiento pausado", registrando un motivo y una fecha de revisión, para suspender temporalmente el envío de recordatorios automáticos | UR-12 |
+| FR-73 | El sistema deberá permitir clasificar una deuda como "anulada" o "incobrable" si hay una previa aprobación administrativa y registro de motivo, evitando en todo momento catalogarla como "pagada" | UR-13 |
+| FR-74 | El sistema deberá simular la recepción de eventos o notificaciones de pago externas de Stripe | UR-14 |
+| FR-74b | El sistema debe permitir la consulta de transacciones | UR-14 |
+| FR-75 | El sistema deberá identificar las notificaciones o eventos de pago duplicados recibidos por pasarelas externas para no contabilizar los cobros repetidamente | UR-14 |
+| FR-76 | El sistema deberá procesar movimientos bancarios o de pasarelas (importe, fecha, moneda, concepto, referencia) y vincularlos automáticamente a la factura correspondiente si existe una coincidencia clara | UR-15 |
+| FR-76b | El sistema deberá derivar los movimientos bancarios que carezcan de referencia clara o presenten dudas a una bandeja de revisión manual | UR-15 |
+| FR-77 | Ante un cobro por un importe inferior o superior al total de la factura, el sistema deberá asociar el movimiento a la factura, registrar la diferencia y mantener la factura en estado "parcial" o "no saldada" | UR-15 |
+| FR-78 | En caso de deshacer o revertir una conciliación previa, el sistema deberá conservar la traza histórica guardando quién o qué regla la realizó, quién la deshizo y la justificación dada | UR-16 |
 
 
 ## 4.2 Requisitos no funcionales
