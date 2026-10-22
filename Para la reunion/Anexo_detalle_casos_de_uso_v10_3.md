@@ -4,7 +4,7 @@ Cada FR de la v10 es una capacidad. Aquí se conserva, sin perder nada, el detal
 
 Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoya en los FR de esta tabla.
 
-## FR-01 — El sistema deberá permitir registrar y consultar los datos identificativos y fiscales de la empresa cliente (nombre comercial, razón social, identificador fiscal, domicilio fiscal, país y moneda de trabajo).
+## FR-01 — El sistema deberá permitir registrar y consultar los datos identificativos y fiscales de la empresa cliente.
 *UR: UR-01, UR-02*
 
 | FR v9 | Detalle |
@@ -21,7 +21,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 | FR-04 | El sistema deberá permitir marcar una persona de contacto como inactiva conservando intactos sus registros e historial contable asociado. |
 | FR-196 | El sistema deberá impedir eliminar o inactivar el único contacto de facturación de un cliente activo, emitiendo una advertencia explícita |
 
-## FR-03 — El sistema deberá registrar la relación comercial de una empresa (fecha de inicio, servicio o plan, tarifa, responsable interno, condiciones de pago y documentos firmados).
+## FR-03 — El sistema deberá registrar la relación comercial de una empresa.
 *UR: UR-04*
 
 | FR v9 | Detalle |
@@ -108,7 +108,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 | FR-23 | El sistema deberá permitir al superadministrador configurar las series de facturación. |
 | FR-24 | El sistema deberá asignar un número definitivo único correlativo dentro de su serie únicamente en el momento de emitir la factura. |
 
-## FR-14 — El sistema deberá permitir gestionar borradores de factura (modificarlos, eliminarlos mientras no estén emitidos y autoguardarlos) sin consumir numeración definitiva.
+## FR-14 — El sistema deberá permitir gestionar borradores de factura.
 *UR: UR-05, UR-08, UR-16, UR-96*
 
 | FR v9 | Detalle |
@@ -118,7 +118,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 | FR-27 | El sistema deberá permitir eliminar únicamente borradores de facturas que no hayan sido emitidas. |
 | FR-197 | El sistema deberá autoguardar borradores periódicos durante redacción de facturas. |
 
-## FR-15 — El sistema deberá permitir pausar una suscripción, suspendiendo la generación de mensualidades sin alterar las facturas impagadas, y avisar al responsable al llegar la fecha prevista de reactivación.
+## FR-15 — El sistema deberá permitir pausar una suscripción y avisar de su reactivación.
 *UR: UR-20, UR-21*
 
 | FR v9 | Detalle |
@@ -239,7 +239,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 | FR-60 | El sistema deberá permitir marcar una notificación como leída o como resuelta/atendida, distinguiendo ambos estados |
 | FR-61 | Las notificaciones deberán incorporar una prioridad |
 
-## FR-29 — El sistema deberá permitir configurar el canal de recepción de las notificaciones internas (en la aplicación, correo o resumen diario).
+## FR-29 — El sistema deberá permitir configurar el canal de recepción de las notificaciones internas.
 *UR: UR-35*
 
 | FR v9 | Detalle |
@@ -379,7 +379,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 | FR-97 | Un usuario autenticado solo deberá poder descargar documentos autorizados |
 | FR-98 | Los enlaces temporales de descarga de documentos deberán caducar |
 
-## FR-46 — El sistema deberá permitir generar y enviar facturas y recordatorios mediante plantillas editables que se completan con los datos del cliente y la factura, registrando la plantilla usada en cada envío.
+## FR-46 — El sistema deberá permitir generar y enviar facturas y recordatorios mediante plantillas editables.
 *UR: UR-49*
 
 | FR v9 | Detalle |
@@ -416,7 +416,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 |---|---|
 | FR-103 | El sistema deberá generar informes específicos de la aplicación (con detalle de facturas que fallaron en meses anteriores) y resúmenes periódicos semanales y mensuales |
 
-## FR-51 — El sistema deberá permitir gestionar presupuestos: generarlos, enviarlos, registrar su aceptación o rechazo con evidencia y convertir los aceptados en factura (opcional).
+## FR-51 — El sistema deberá permitir gestionar presupuestos (opcional).
 *UR: UR-54*
 
 | FR v9 | Detalle |
@@ -456,7 +456,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 | FR-118 | El sistema deberá registrar la fuente y la fecha de cada dato de facturación anual |
 | FR-119 | Si el dato de facturación anual no está disponible, el sistema deberá dejar la revisión en estado pendiente |
 
-## FR-55 — El sistema deberá proponer el rango de facturación que corresponde a cada cliente y aplicar, tras la verificación de un administrador, el cambio de plan con efecto futuro y su registro.
+## FR-55 — El sistema deberá proponer el rango de facturación que corresponde a cada cliente y aplicar el cambio de plan tras su verificación.
 *UR: UR-57*
 
 | FR v9 | Detalle |
@@ -500,7 +500,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 | FR-130 | El sistema deberá exponer una API que permita a sistemas externos consultar clientes, estado de deuda y facturas |
 | FR-138 | El sistema deberá permitir consultar, a partir de un identificador de cliente, si existen obligaciones pendientes y el detalle mínimo autorizado |
 
-## FR-60 — El sistema deberá permitir que sistemas externos envíen solicitudes controladas (por ejemplo, la baja de un cliente) que pasen por validación o aprobación y apliquen las mismas reglas de negocio que la interfaz.
+## FR-60 — El sistema deberá permitir que sistemas externos envíen solicitudes controladas.
 *UR: UR-61*
 
 | FR v9 | Detalle |
@@ -552,7 +552,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 |---|---|
 | FR-148 | El sistema deberá guardar los datos fiscales del emisor como configuración |
 
-## FR-66 — El sistema deberá permitir trabajar con varias entidades emisoras, cada una con sus series de numeración, y elegir con cuál se emite cada factura (opcional).
+## FR-66 — El sistema deberá permitir trabajar con varias entidades emisoras y elegir con cuál se emite cada factura (opcional).
 *UR: UR-65, UR-66*
 
 | FR v9 | Detalle |
@@ -640,7 +640,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 |---|---|
 | FR-172 | El sistema deberá requerir permisos superiores (Superadministrador) y la justificación obligatoria de un motivo para reabrir un periodo cerrado. |
 
-## FR-77 — El sistema deberá permitir generar, con trazabilidad y versión, un paquete contable del periodo con las facturas, cobros y PDF.
+## FR-77 — El sistema deberá permitir generar el paquete contable de un periodo y consultar quién y cuándo lo generó y de qué versión es.
 *UR: UR-84, UR-85, UR-86*
 
 | FR v9 | Detalle |
@@ -677,7 +677,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 | FR-184 | El sistema deberá emitir una alerta cuando una revisión o incidencia anual permanezca sin resolver tras transcurrir una semana. |
 
 ## FR-81 — El sistema deberá permitir clasificar las facturas por proyecto o línea de negocio con categorías administrables (opcional).
-*UR: UR-36*
+*UR: UR-107*
 
 | FR v9 | Detalle |
 |---|---|
@@ -739,7 +739,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 |---|---|
 | FR-193 | El sistema deberá distinguir comunicaciones operativas de facturación de campañas comerciales y no deberá reutilizar automáticamente datos de facturación para marketing |
 
-## FR-90 — El sistema deberá permitir comentar internamente en clientes, facturas e incidencias, con notas restringidas y menciones, sin enviar los comentarios al cliente.
+## FR-90 — El sistema deberá permitir comentar internamente en clientes, facturas e incidencias.
 *UR: UR-69*
 
 | FR v9 | Detalle |
@@ -748,7 +748,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 | FR-239 | El sistema deberá permitir mencionar a otro usuario en un comentario y generarle una notificación |
 | FR-240 | El sistema no deberá enviar los comentarios internos al cliente |
 
-## FR-91 — El sistema deberá cargarse con datos ficticios para demostraciones sin mezclarlos con producción (opcional).
+## FR-91 — El sistema deberá cargarse con datos ficticios para demostraciones (opcional).
 *UR: UR-74*
 
 | FR v9 | Detalle |
@@ -799,7 +799,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 |---|---|
 | FR-205 | El sistema deberá ejecutar el cálculo financiero mediante programación determinista tradicional sin usar IA. |
 
-## FR-98 — El sistema deberá permitir desactivar de forma configurable sus funciones de apoyo basadas en inteligencia artificial (opcional).
+## FR-98 — El sistema deberá permitir desactivar las funciones de apoyo basadas en inteligencia artificial (opcional).
 *UR: UR-110*
 
 | FR v9 | Detalle |
@@ -832,7 +832,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 | FR-213 | El sistema deberá registrar en cada ejecución cuántos clientes ha procesado y cuántas facturas ha creado |
 | FR-214 | El sistema deberá registrar en cada ejecución los elementos que han fallado y la causa de cada fallo |
 
-## FR-102 — El sistema deberá permitir programar informes periódicos y enviarlos a las personas indicadas, con enlace autenticado y solo a quien tenga permiso (opcional).
+## FR-102 — El sistema deberá permitir programar informes periódicos y enviarlos a las personas indicadas (opcional).
 *UR: UR-111*
 
 | FR v9 | Detalle |
@@ -883,7 +883,7 @@ Los UR no cambian de número: cada caso de uso parte del UR de siempre y se apoy
 | FR-230 | El sistema deberá mostrar al terminar una acción masiva el resultado con los elementos correctos y los erróneos |
 | FR-231 | El sistema no deberá permitir marcar facturas como pagadas mediante una acción masiva |
 
-## FR-108 — El sistema deberá permitir etiquetar clientes sin sustituir los estados derivados (opcional).
+## FR-108 — El sistema deberá permitir etiquetar clientes (opcional).
 *UR: UR-107*
 
 | FR v9 | Detalle |
