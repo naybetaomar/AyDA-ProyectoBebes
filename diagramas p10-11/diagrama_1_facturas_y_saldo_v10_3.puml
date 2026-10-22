@@ -1,0 +1,51 @@
+@startuml
+' Trazabilidad v10.3: UR-53 -> FR-68, FR-101 | UR-54 -> FR-51 | UR-55 -> FR-52 | UR-56 -> FR-53
+' Reglas: RB-21 (rectificativas), RB-24 (rectificativa sobre umbral). Jerarquia de roles: A-19.
+title Facturas y saldo (UR-53, UR-54, UR-55, UR-56)
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Lector" as Lector
+actor "Administrador" as Admin
+
+Admin --|> Lector
+
+rectangle "Aplicación de facturación y cobros" {
+
+  usecase "Distinguir factura no enviada\nde factura no creada (UR-53)" as UC01
+
+  usecase "Preparar presupuesto (UR-54) (opcional)" as UC02a
+  usecase "Enviar presupuesto (UR-54) (opcional)" as UC02b
+  usecase "Registrar aceptación o rechazo\ndel presupuesto (UR-54) (opcional)" as UC02c
+  usecase "Convertir presupuesto aceptado\nen factura (UR-54) (opcional)" as UC02d
+
+  usecase "Emitir factura rectificativa (UR-55)" as UC03
+  usecase "Recalcular saldo del cliente" as UCsaldo
+  usecase "Aprobar rectificativa que supera\nel umbral configurado (UR-55)" as UC03b
+
+  usecase "Consultar saldo y facturas\nde un cliente asignado (UR-56)" as UC04
+  usecase "Ver origen de una cifra" as UC04b
+}
+
+Lector --> UC01
+Lector --> UC02a
+Lector --> UC02b
+Lector --> UC02c
+Lector --> UC04
+
+Admin --> UC03
+
+UC02d ..> UC02c : <<extend>>\n(si el cliente acepta)
+Admin --> UC03b
+
+note right of UC03b
+  RB-24: la rectificativa que supera el umbral
+  requiere aprobación antes de emitirse.
+  RB-21: la genera un Administrador o
+  Superadministrador.
+end note
+UC03b ..> UC03 : <<extend>>\n(si supera el umbral)
+UC03 ..> UCsaldo : <<include>>
+UC04b ..> UC04 : <<extend>>
+
+@enduml

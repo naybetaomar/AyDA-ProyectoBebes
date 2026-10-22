@@ -1,0 +1,52 @@
+@startuml
+' Trazabilidad v10.3: UR-57 -> FR-54, FR-55, FR-69 | UR-59 -> FR-57 | UR-64 -> FR-18, FR-64, FR-70 | UR-67 -> FR-67 | UR-68 -> FR-71
+' Reglas: RB-26 (regularizacion retroactiva), RB-27 (contacto de facturacion). Jerarquia de roles: A-19.
+title Clientes y documentación (UR-57, UR-59, UR-64, UR-67, UR-68)
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Lector" as Lector
+actor "Administrador" as Admin
+
+Admin --|> Lector
+
+rectangle "Aplicación de facturación y cobros" {
+
+  usecase "Dar de alta un cliente (UR-64)" as UC10a
+  usecase "Validar datos y detectar duplicados" as UCval
+  usecase "Consultar datos pendientes\npara poder facturar (UR-64)" as UC10b
+
+  usecase "Adjuntar documento justificativo\na un cliente o una factura (UR-67)" as UC12
+
+  usecase "Acceder a clientes frecuentes (UR-68)" as UC13
+
+  usecase "Revisar el plan anual de un cliente (UR-57)" as UC05a
+  usecase "Decidir el cambio de plan (UR-57)" as UC05b
+  usecase "Corregir la ficha de revisión anual (UR-57)" as UC05c
+  usecase "Regularizar facturación retroactiva (UR-57)" as UC05d
+
+  usecase "Consultar el historial de un cliente (UR-59)" as UC06b
+}
+
+Lector --> UC10a
+Lector --> UC10b
+Lector --> UC12
+Lector --> UC13
+
+Admin --> UC05a
+Admin --> UC06b
+
+UC10a ..> UCval : <<include>>
+Admin --> UC05c
+Admin --> UC05d
+
+UC05b ..> UC05a : <<extend>>\n(si procede el cambio)
+UC05c ..> UC05a : <<extend>>\n(si un dato era incorrecto)
+UC05d ..> UC05c : <<extend>>\n(con acción explícita\ny aprobación)
+
+' Opcional: la campaña anual la lanza el Planificador (ver tabla de actores).
+' Descomentar solo si algún UR/FR de tu bloque lo recoge.
+' actor "Planificador" as Plan
+' Plan --> UC05a
+
+@enduml

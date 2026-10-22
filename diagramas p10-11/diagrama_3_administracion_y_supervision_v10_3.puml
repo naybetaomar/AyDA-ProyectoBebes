@@ -1,0 +1,45 @@
+@startuml
+' Trazabilidad v10.3: UR-58 -> FR-56, FR-86, FR-101 | UR-60 -> FR-58, FR-72 | UR-62 -> FR-62 | UR-63 -> FR-63 | UR-65 -> FR-65, FR-66 | UR-66 -> FR-66
+' Jerarquia de roles: A-19.
+title Administración y supervisión (UR-58, UR-60, UR-62, UR-63, UR-65, UR-66)
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Lector" as Lector
+actor "Administrador" as Admin
+actor "Superadministrador" as Super
+
+Admin --|> Lector
+Super --|> Admin
+
+rectangle "Aplicación de facturación y cobros" {
+
+  usecase "Consultar el estado del sistema (UR-58)" as UC06
+
+  usecase "Gestionar el acceso de usuarios\na clientes y facturas (UR-60)" as UC07
+
+  usecase "Localizar la causa de un error\na partir de su código de incidencia (UR-62)" as UC09
+  usecase "Mostrar mensaje de error comprensible,\nsin información técnica (UR-63)" as UC09b
+
+  usecase "Configurar los datos fiscales del emisor (UR-65)" as UC11
+  usecase "Elegir la sociedad emisora de cada factura\n(UR-66) (opcional)" as UC11b
+}
+
+Admin --> UC06
+Admin --> UC07
+Admin --> UC09
+Lector --> UC09b
+Super --> UC11
+Admin --> UC11b
+
+UC11b ..> UC11 : <<extend>>\n(si Turbine factura\ndesde varias sociedades)
+
+note right of UC09b
+  Comportamiento común a todos los
+  casos de uso que pueden fallar.
+  Si el grupo lo prefiere, se
+  documenta como nota y no como
+  caso de uso propio.
+end note
+
+@enduml

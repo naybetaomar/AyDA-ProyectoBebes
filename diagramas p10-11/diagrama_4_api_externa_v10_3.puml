@@ -1,0 +1,36 @@
+@startuml
+' Trazabilidad v10.3: UR-61 -> FR-59, FR-60, FR-61 | Reglas: RB-31 | NFR-50 (credenciales de la API)
+title API externa (UR-61)
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Sistema externo" as Ext
+
+rectangle "Aplicación de facturación y cobros" {
+
+  usecase "Consultar datos de clientes (UR-61)" as UC08a
+  usecase "Consultar la deuda de un cliente (UR-61)" as UC08b
+  usecase "Consultar facturas (UR-61)" as UC08c
+  usecase "Solicitar la baja de un cliente (UR-61)" as UC08d
+
+  usecase "Aplicar las reglas de negocio" as UCreglas
+}
+
+Ext --> UC08a
+Ext --> UC08b
+Ext --> UC08c
+Ext --> UC08d
+
+UC08a ..> UCreglas : <<include>>
+UC08b ..> UCreglas : <<include>>
+UC08c ..> UCreglas : <<include>>
+UC08d ..> UCreglas : <<include>>
+
+note right of UC08d
+  La solicitud pasa por validación o
+  aprobación y aplica las mismas reglas
+  que la interfaz (RB-31). La baja en sí
+  se gestiona en el caso de uso del UR-22.
+end note
+
+@enduml
