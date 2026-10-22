@@ -64,14 +64,12 @@ Decisiones de organización tomadas durante la entrega:
   - Sesión de prácticas del miércoles 21 de octubre `[COMPLETAR tras la sesión]`.
   - Quedada del jueves 22 de octubre, 17:30 `[COMPLETAR tras la reunión]`.
 - Problemas encontrados:
-  - El bloque 8-9 llegó con retraso y con errores de lectura de la transcripción (por ejemplo, interpretar "zoom" como la aplicación Zoom cuando el cliente se refería al zoom del navegador).
   - Algunas cifras no figuraban en el texto del cliente (tiempos de respuesta, volumen de clientes, plazo de conservación) y se habían inventado de forma distinta en cada bloque.
   - Falta de cobertura de algunos temas (informes programados, etiquetas, estados del cliente, disponibilidad tras una caída).
   - Coincidencia con exámenes de otras asignaturas.
 - Soluciones aplicadas:
   - Documentar las cifras sin fuente como suposiciones en la sección 6 de cada bloque, y dejar el valor al criterio de cada autor.
   - Eliminar los duplicados entre bloques durante la unificación, quedándose con la versión del bloque al que corresponde el tema.
-  - Repartir los temas pendientes del bloque 8-9 entre varios miembros `[CONFIRMAR]`.
   - Calendario hasta la entrega: requisitos resueltos para el miércoles 21, quedada el jueves 22 a las 17:30 y entrega el viernes 23, dejando el jueves como fecha objetivo interna para tenerlo todo listo.
 
 #### Estado del tablero en el Sprint Planning
