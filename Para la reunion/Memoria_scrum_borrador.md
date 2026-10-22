@@ -66,7 +66,6 @@ Decisiones de organización tomadas durante la entrega:
 - Problemas encontrados:
   - Algunas cifras no figuraban en el texto del cliente (tiempos de respuesta, volumen de clientes, plazo de conservación) y se habían inventado de forma distinta en cada bloque.
   - Falta de cobertura de algunos temas (informes programados, etiquetas, estados del cliente, disponibilidad tras una caída).
-  - Coincidencia con exámenes de otras asignaturas.
 - Soluciones aplicadas:
   - Documentar las cifras sin fuente como suposiciones en la sección 6 de cada bloque, y dejar el valor al criterio de cada autor.
   - Eliminar los duplicados entre bloques durante la unificación, quedándose con la versión del bloque al que corresponde el tema.
