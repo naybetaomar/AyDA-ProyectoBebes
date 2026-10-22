@@ -99,7 +99,6 @@ serán necesarios para proporcionarle ese servicio.
 | UR-08 | Personal administrativo | El personal administrativo deberá poder borrar un borrador de factura que no se haya emitido. | Entrevista |
 | UR-09 | Personal administrativo | El personal administrativo deberá poder programar la emisión de facturas para fechas futuras. | Entrevista |
 | UR-10 | Superadministrador | El superadministrador deberá poder configurar el rango y precios de las tarifas globales. | Entrevista |
-| UR-11 | Personal administrativo | El personal administrativo deberá poder recibir avisos de revisión de rangos de precios y consultar el rango propuesto. | Entrevista |
 | UR-12 | Personal administrativo | El personal administrativo deberá poder modificar los impuestos aplicables a una factura. | Entrevista |
 | UR-13 | Personal administrativo | El personal administrativo deberá poder proponer facturas nuevas o modificadas que requieran revisión. | Entrevista |
 | UR-14 | Administrador | El administrador deberá poder revisar las propuestas de facturas recibidas y registrar su aprobación o rechazo. | Entrevista |
@@ -107,10 +106,7 @@ serán necesarios para proporcionarle ese servicio.
 | UR-16 | Superadministrador | El superadministrador deberá poder autorizar facturas que superen el umbral de facturación configurado. | Entrevista |
 | UR-17 | Superadministrador | El superadministrador deberá poder configurar la serie y numeración de las facturas. | Entrevista |
 | UR-18 | Personal administrativo | El personal administrativo deberá poder gestionar facturas de modalidad puntual y recurrente. | Primera sesión |
-| UR-19 | Personal administrativo | El personal administrativo deberá poder generar y consultar las facturas en formato PDF. | Primera sesión |
 | UR-20 | Personal administrativo | El personal administrativo deberá poder hacer el seguimiento de cobros y enviar recordatorios de pago. | Entrevista |
-| UR-21 | Administrador | El administrador deberá poder gestionar los usuarios del sistema y asignar sus permisos de acceso. | Entrevista |
-| UR-22 | Personal administrativo | El personal administrativo deberá poder consultar de forma global la situación de clientes y facturas sin abrir cada cliente de manera individual. | Entrevista |
 | UR-23 | Personal administrativo | El personal administrativo deberá poder consultar la lista de clientes con fecha de inicio futura pendientes de activación. | Entrevista |
 
 
@@ -159,18 +155,8 @@ Eso corresponde al diseño, no a los requisitos.
 | FR-14 | El sistema deberá poder asignar una fecha de inicio futura a una relación comercial manteniendo su estado como pendiente de activación. | UR-23 |
 | FR-15 | El sistema no deberá poder generar facturas ni recordatorios de cobro antes de la fecha de inicio futura de una relacion comercial. | UR-20, UR-23 |
 | FR-16 | El sistema deberá poder programar la emisión automática de facturas para una fecha futura. | UR-09 |
-| FR-17 | El sistema deberá poder generar y mostrar la representación en archivo PDF de una factura. | UR-19 |
 | FR-18 | El sistema deberá poder registrar las transiciones de estado de cobro de cada factura (pendiente, vencida, pagada o parcialmente conciliada). | UR-07, UR-20 |
 | FR-19 | El sistema deberá poder listar y filtrar las facturas emitidas según su estado de cobro. | UR-07 |
-| FR-20 | El sistema deberá poder registrar pagos parciales reflejando de forma transparente el saldo e importe pendiente restante. | UR-07 |
-| FR-21 | El sistema deberá poder transmitir recordatorios de cobro para facturas vencidas y registrar la fecha del envío. | UR-20 |
-| FR-22 | El sistema deberá poder mostrar un cuadro de mando con el resumen global consolidado de clientes y facturas. | UR-22 |
-| FR-23 | El sistema deberá poder permitir al superadministrador configurar los rangos de facturación anual y sus tarifas sin modificar el código fuente. | UR-10 |
-| FR-24 | El sistema deberá poder registrar la facturación anual verificada de un cliente. | UR-11 |
-| FR-25 | El sistema deberá poder notificar cuando corresponda revisar el rango de tarifa aplicable a un cliente. | UR-11 |
-| FR-26 | El sistema deberá poder calcular la propuesta de tarifa aplicable en función de la facturación anual verificada y los rangos configurados. | UR-11 |
-| FR-27 | El sistema deberá poder exigir validación humana previa antes de aplicar un cambio de rango de tarifa. | UR-11 |
-| FR-28 | El sistema deberá poder registrar el usuario aprobador, la fecha, la tarifa anterior y la tarifa nueva al modificar el rango de un cliente. | UR-11 |
 | FR-29 | El sistema mantendrá inalterados los importes y datos de las facturas históricas emitidas tras cambios en la configuración global de tarifas. | UR-10, UR-11 |
 | FR-30 | El sistema deberá poder registrar propuestas de excepciones comerciales (descuentos, meses gratuitos o precios especiales). | UR-13 |
 | FR-31 | El sistema deberá poder parametrizar los umbrales económicos y niveles de aprobación requeridos para autorizar excepciones comerciales. | UR-14, UR-15, UR-16 |
@@ -181,9 +167,7 @@ Eso corresponde al diseño, no a los requisitos.
 | FR-36 | El sistema no deberá poder consumir un número definitivo para facturas en estado de borrador. | UR-08, UR-17 |
 | FR-37 | El sistema deberá poder mantener el número y la factura original sin generar duplicados ante el reintento de envío de una factura emitida. | UR-17, UR-19 |
 | FR-38 | El sistema deberá poder permitir modificar el contenido de una factura mientras permanezca en estado de borrador. | UR-05, UR-08 |
-| FR-39 | El sistema deberá poder conservar la factura original emitida y registrar una factura rectificativa vinculada para realizar correcciones legales. | UR-07 |
 | FR-40 | El sistema deberá poder eliminar únicamente borradores de facturas que no hayan sido emitidas. | UR-08 |
-| FR-41 | El sistema deberá poder permitir al administrador gestionar los usuarios de la plataforma y asignar sus permisos de acceso. | UR-21 |
 
 
 ### 4.2. Requisitos no funcionales
@@ -212,10 +196,7 @@ interpretación realizada.
 | ID | Categoría | Requisito | Criterio verificable |
 |---|---|---|---|
 | NFR-01 | Independencia | El sistema deberá poder operar como herramienta independiente de la empresa, sin depender de su interfaz o disponibilidad para las operaciones administrativas. | Se pueden completar los flujos administrativos principales mientras Brain no está disponible. |
-| NFR-02 | Usabilidad / Eficiencia | El sistema deberá poder realizar operaciones administrativas con pocos pasos. | El alta normal de una empresa debe de tener menos de 5 clicks. |
 | NFR-03 | Escalabilidad | El sistema deberá permitir consultar la situacion global del negocio independientemente del numero de clientes. | Poder ver el global sin abrir los clientes uno por uno. |
-| NFR-04 | Portabilidad | El sistema deberá poder utilizarse desde un telefono movil. | Debe poder realizar los requisitos funcionales desde el movil. |
-| NFR-05 | Seguridad y permisos | El sistema deberá poder restringir el acceso segun los permisos asignados a cada usuario. | Un usuario con rol Lector solo podrá visualizar y operar sobre los clientes que tenga explícitamente asignados. |
 | NFR-06 | Integridad y auditoría | El sistema deberá poder garantizar la trazabilidad de los cambios económicos e inmutabilidad del histórico. | Para cada cambio sujeto a auditoria se conserva usuario, fecha y valores anteriores y nuevos; una factura emitida mantiene su contenido original. |
 | NFR-07 | Internacionalización | El sistema deberá poder soportar el registro de empresas internacionales sin imponer formatos exclusivos de españa. | Se pueden registrar empresas de distintos paises sin exigir formatos. |
 | NFR-08 | Privacidad y conservación | El sistema deberá poder cumplir con los plazos legales de conservación y eliminación contable. | Antes de aceptar el sistema se documentan los plazos y reglas de conservacion y se comprueba que el borrado logico y las restricciones de acceso los respetan. |
