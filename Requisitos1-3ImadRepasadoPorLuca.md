@@ -209,7 +209,7 @@ pero que no representan por sí mismas una funcionalidad.
 | ID | Regla |
 |---|---|
 | RB-01 | Una factura dispondrá de un ID único únicamente cuando haya alcanzado el estado de emitida. |
-| RB-02 | Las facturas recurrentes se emitirán el día 1 de cada mes y desde el dia que empezo la relación. |
+| RB-02 | Las facturas recurrentes se emitirán el día 1 de cada mes; la primera, en el mes de alta, se calcula por prorrateo desde el día de inicio de la relación, salvo. |
 | RB-03 | Los datos de empresas y facturas emitidas no se podrán eliminar definitivamente hasta transcurrido el plazo exigido por la legislación contable. |
 | RB-04 | Toda excepción, requerirá la aprobación de un usuario con rol Administrador o Superadministrador. |
 
