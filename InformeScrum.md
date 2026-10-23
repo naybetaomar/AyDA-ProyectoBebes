@@ -13,9 +13,18 @@
 | Cristóbal Jesús Subires Macías | Miembro | 
  
 ## 2. Organización del trabajo 
- 
-Descripción de cómo se ha organizado el equipo durante la entrega. 
- 
+La organización quedo dividida en 4 etapas:
+### 2.1 Analisis de contexto y comprensión del problema
+Lectura de las fuentes (reunión en salon de actos, entrevista transcrita y entrevista ampliada)
+Identificacion del alcance general de la aplicación, los actores y sus intereses principales.
+### 2.2 Segmentacion del problema 
+Descomposición de la información en bloques, seguimos que cada 2 paginas se le asignaba a cada miembro. 
+Cada miembro en su segmento asignado hace catalogo con Requisito de Negocio, Requisitos de Usuario, Requisitos no funcionales y reglas de negocio
+### 2.3 Consolidación, Trazabilidad y Resolución de Ambigüedades
+Puesta en común de los requisitos extraídos de forma individual para eliminar duplicados, unificar criterios y verificar trazabilidad entre requisitos.
+### 2.4 Modelado Visual y Distribución por Casos de Uso
+Asignación individualizada de paquetes de trabajo por miembro de equipo para desarrollar el modelado de casos de uso
+Generación y estandarización de diagramas en código PlantUML, representando adecuadamente los casos de usos, los actores y las relaciones.
 ## 3. Sprints realizados 
  
 ### Sprint 1 
