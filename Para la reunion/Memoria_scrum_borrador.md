@@ -81,7 +81,7 @@ Decisiones de organización tomadas durante la entrega:
 
 | Problema / riesgo | Impacto | Medida adoptada |
 |---|---|---|
-| Criterios de redacción distintos entre bloques | Documento incoherente, requisitos duplicados o contradictorios | Rúbrica común y revisión cruzada |
+| Criterios de redacción distintos entre bloques | Documento incoherente, requisitos contradictorios | Rúbrica común y revisión cruzada |
 | Temas repetidos en varios bloques | Duplicados y contradicciones entre requisitos | Tabla de responsable por tema decidida en reunión |
 | Actores con nombres diferentes | Trazabilidad y diagramas inconsistentes | Lista única de actores acordada en reunión |
 | Lecturas erróneas de la transcripción | Requisitos que no corresponden a lo que pidió el cliente | Revisión de cada bloque contra el texto original |
