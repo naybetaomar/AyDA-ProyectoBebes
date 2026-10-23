@@ -1,7 +1,5 @@
 # Requisitos
 
-> Documento unificado v10.3 (borrador). Generado a partir de los bloques de Imad (1-3), Guille (4-5), Loraine (6-7), Ana (8-9), Naybet (10-11), Cristóbal (12-13) y Luca (14-15). Las secciones 1.1, 1.2, 2 y 8 son propuesta de unificación y deben ser revisadas por el grupo. Los requisitos funcionales están formulados por capacidad; el detalle de interacción de cada uno está en `Anexo_detalle_casos_de_uso_v10_3.md` y el mapa de la v9 a la v10.3 en `Mapa_FR_v9_a_v10_3.md`.
-
 ## 1. Contexto y alcance
 
 ### 1.1. Objetivo del sistema
@@ -77,107 +75,105 @@ Gestoría y persona de contacto del cliente son partes interesadas, no actores d
 | UR-14 | Superadministrador | Poder configurar los umbrales de facturación para las aprobaciones extraordinarias. | Entrevista |
 | UR-15 | Superadministrador | Poder autorizar facturas que superen el umbral de facturación configurado. | Entrevista |
 | UR-16 | Superadministrador | Poder configurar la serie y numeración de las facturas. | Entrevista |
-| UR-17 | Lector / Administrador | Poder gestionar facturas de modalidad puntual y recurrente. | Primera sesión |
+| UR-17 | Lector / Administrador | Poder gestionar facturas de modalidad puntual y recurrente. | Entrevista |
 | UR-18 | Lector / Administrador | Poder hacer el seguimiento de cobros y enviar recordatorios de pago. | Entrevista |
 | UR-19 | Lector / Administrador | Poder consultar la lista de clientes con fecha de inicio futura pendientes de activación. | Entrevista |
-| UR-20 | Lector | Poder pausar temporalmente una suscripción indicando motivo y fechas, congelando la generación de mensualidades sin afectar a las facturas impagadas | Entrevista página 4 |
-| UR-21 | Lector / Administrador | Poder recibir alertas de reactivación de suscripciones pausadas para confirmar la reanudación del cobro | Entrevista página 4 |
-| UR-22 | Lector | Poder registrar la baja de un cliente deteniendo cobros futuros pero manteniendo el flujo de recobro sobre las deudas no saldadas | Entrevista página 4-5 |
-| UR-23 | Lector | Poder confeccionar facturas puntuales utilizando conceptos frecuentes de un catálogo ligero | Entrevista página 4-5 |
-| UR-24 | Lector | Poder previsualizar la factura y disponer de bloqueos automáticos en caso de faltar datos fiscales antes de su emisión | Entrevista página 4-5 |
-| UR-25 | Lector | Poder gestionar incidencias de envío de correo para corregir los datos de contacto y realizar reintentos sin emitir facturas duplicadas | Entrevista página 4-5 |
-| UR-26 | Administrador | Poder pausar el envío automático de recordatorios marcando facturas "en disputa" mientras se investiga una disconformidad | Entrevista página 4-5 |
-| UR-27 | Administrador | Poder dar de baja contable una deuda clasificándola como "anulada" o "incobrable" tras aprobación administrativa | Entrevista página 4-5 |
-| UR-28 | Lector | Poder revisar en una bandeja de trabajo los movimientos bancarios o de pasarela no conciliados automáticamente o con importes parciales/excesivos | Entrevista página 4-5 |
-| UR-29 | Lector / Administrador | Poder disponer de la factura emitida en PDF, con su aspecto y contenido inalterables aunque cambie la marca o el catálogo | Unificación del bloque 4-5 (validado por Naybet) |
-| UR-30 | Lector / Administrador | Poder enviar las facturas emitidas al contacto de facturación por correo electrónico o WhatsApp (simulado) | Unificación del bloque 4-5 (validado por Naybet) |
-| UR-31 | Superadministrador | Poder configurar la cadencia de los recordatorios automáticos de impago y que respeten el vencimiento acordado con cada cliente | Unificación del bloque 4-5 (validado por Naybet) |
-| UR-32 | Lector / Administrador | Poder consultar los cobros notificados por la pasarela de pagos sin que un mismo evento se contabilice dos veces | Unificación del bloque 4-5 (validado por Naybet) |
-| UR-33 | Lector / Administrador | Poder disponer de una pantalla de trabajo diaria útil que muestre alertas y tareas pendientes para resolverlas con pocos clics | Transcripción ampliada (Página 6) |
-| UR-34 | Lector | Poder recibir notificaciones relevantes de los clientes asignados y distinguir las ya leídas de las ya resueltas | Transcripción ampliada (Página 6) |
-| UR-35 | Superadministrador | Poder configurar canales y preferencias de notificación (in-app, email, resumen diario) para evitar saturación | Transcripción ampliada (Página 6) |
-| UR-36 | Administrador | Poder consultar un dashboard financiero con cifras reales y generar informes filtrables y exportables a CSV y PDF | Transcripción ampliada (Página 6) |
-| UR-37 | Lector / Administrador / Superadministrador | Poder realizar búsquedas globales rápidas y guardar vistas o filtros frecuentes | Transcripción ampliada (Página 6) |
-| UR-38 | Lector / Administrador / Superadministrador | Poder importar clientes desde CSV con previsualización, mapeo y control de duplicados (NIF) | Transcripción ampliada (Página 6) |
-| UR-39 | Administrador | Poder importar histórico de facturas en modo migración sin disparar emails ni consumir numeración oficial | Transcripción ampliada (Página 6) |
-| UR-40 | Administrador / Superadministrador | Poder gestionar altas, invitaciones y desactivaciones de usuarios internos manteniendo el histórico de auditoría | Transcripción ampliada (Página 6) |
-| UR-41 | Lector / Administrador / Superadministrador | Poder recuperar la contraseña mediante un enlace temporal con caducidad | Transcripción ampliada (Página 6) |
-| UR-42 | Lector | Poder trabajar exclusivamente sobre los clientes asignados, con permisos operativos limitados y sin acceso a la configuración global | Transcripción ampliada (Página 7) |
-| UR-43 | Administrador | Poder asignar y desasignar clientes, heredando el nuevo responsable las tareas pendientes y manteniendo el histórico | Transcripción ampliada (Página 7) |
-| UR-44 | Administrador | Poder delegar temporalmente los clientes de un usuario (por vacaciones) sin necesidad de compartir contraseñas | Transcripción ampliada (Página 7) |
-| UR-45 | Lector / Administrador / Superadministrador | Poder evitar sobrescribir cambios de otros usuarios mediante la detección de conflictos de edición concurrente | Transcripción ampliada (Página 7) |
-| UR-46 | Superadministrador | Poder consultar y filtrar los registros de auditoría de negocio sin poder alterar el pasado | Transcripción ampliada (Página 7) |
-| UR-47 | Superadministrador | Poder disponer de copias de seguridad automáticas y un mecanismo de restauración probado y demostrable | Transcripción ampliada (Página 7) |
-| UR-48 | Lector / Administrador / Superadministrador | Poder descargar únicamente los documentos e información para los cuales posea permisos válidos | Transcripción ampliada (Página 7) |
-| UR-49 | Lector / Administrador | Poder redactar y enviar facturas y recordatorios previos por correo electrónico utilizando plantillas que completen automáticamente variables clave (nombre de empresa, número de factura, importe y vencimiento) | Notas de requisitos |
-| UR-50 | Lector / Administrador | Poder abrir y seguir incidencias de facturación sobre un cliente | Notas de requisitos |
-| UR-51 | Lector / Administrador / Superadministrador | Poder consultar informes detallados de la aplicación (incluyendo facturas que fallaron en meses anteriores) así como resúmenes semanales y mensuales | Notas de requisitos |
-| UR-52 | Lector / Administrador | Poder utilizar la aplicación desde diferentes dispositivos (ordenador, tablet y móvil), en idioma español o inglés, adaptada a la zona horaria de España | Notas de requisitos |
-| UR-53 | Lector | Poder distinguir entre una factura que existe pero no se pudo enviar y una factura que no se pudo crear | Cliente / entrevista |
-| UR-54 | Lector | Poder preparar un presupuesto para un cliente, enviarlo y registrar si lo acepta o lo rechaza, para convertirlo en factura sin volver a introducir los datos (opcional) | Cliente / entrevista |
-| UR-55 | Administrador | Poder corregir un error de una factura ya emitida sin alterarla, de forma que el saldo del cliente refleje la corrección | Cliente / entrevista |
-| UR-56 | Lector | Poder conocer de un vistazo el saldo, las facturas pendientes y las pagadas, y comprobar de dónde sale cada cifra (limitado a clientes asignados) | Cliente / entrevista |
-| UR-57 | Administrador | Poder revisar cada año si un cliente sigue en el plan que le corresponde y decidir el cambio, sin que se alteren las facturas pasadas | Cliente / entrevista |
-| UR-58 | Administrador | Poder conocer el estado del sistema (emails pendientes, errores de integración, último backup, última generación recurrente) | Cliente / entrevista |
-| UR-59 | Administrador | Poder consultar la historia de cada cliente | Cliente / entrevista |
-| UR-60 | Administrador | Poder garantizar que solo las personas autorizadas acceden al sistema y a cada cliente o factura | Cliente / entrevista |
-| UR-61 | Sistema externo | Poder consultar datos de clientes, deuda y facturas, y enviar solicitudes (como la de baja de un cliente), de forma que el sistema aplique siempre sus reglas de negocio | Cliente / entrevista |
-| UR-62 | Administrador | Poder identificar y localizar la causa de un error del sistema a partir de un código de incidencia | Cliente / entrevista |
-| UR-63 | Lector / Administrador | Poder ver un mensaje comprensible ante un error, sin información técnica interna del sistema | Cliente / entrevista |
-| UR-64 | Lector | Poder dar de alta clientes con datos correctos y sin duplicados, y saber qué datos faltan para poder facturarles | Cliente / entrevista |
-| UR-65 | Superadministrador | Poder configurar los datos fiscales del emisor | Cliente / entrevista |
-| UR-66 | Administrador | Poder elegir, si Turbine factura desde varias sociedades, con cuál se emite cada factura (opcional) | Cliente / entrevista |
-| UR-67 | Lector | Poder adjuntar a un cliente o a una factura los documentos que lo justifican (pedido, presupuesto aceptado, justificante) de forma segura | Cliente / entrevista |
-| UR-68 | Lector | Poder acceder rápidamente a los clientes con los que trabaja con más frecuencia | Cliente / entrevista |
-| UR-69 | Lector / Administrador | Poder comentar internamente en clientes, facturas e incidencias, con notas restringidas cuando proceda. | Ampliación / entrevista |
-| UR-70 | Lector / Administrador / Superadministrador | Poder evitar duplicados por doble clic o reintento al emitir, enviar o conciliar. | Ampliación / entrevista |
-| UR-71 | Administrador | Poder fijar objetivos mensuales/anuales de facturación y cobro. | Ampliación / entrevista |
-| UR-72 | Superadministrador | Poder configurar el sistema de plazos (plazo de pago y calendario laboral). | Ampliación / entrevista |
-| UR-73 | Superadministrador | Poder configurar las monedas en las que se emiten las facturas. | Ampliación / entrevista |
-| UR-74 | Superadministrador | Poder cargar datos ficticios para demostraciones sin mezclarlos con los de producción (opcional) | Ampliación / entrevista |
-| UR-75 | Administrador / Superadministrador | Poder localizar qué datos personales se tienen de un contacto y anonimizarlos cuando legalmente proceda, sin invalidar el histórico contable. | Ampliación / entrevista |
-| UR-76 | Administrador | Poder consultar tipos de cambio y reglas de conversión de divisa aplicados a la consolidación de informes. | Ampliación / entrevista |
-| UR-77 | Lector / Administrador | Poder consultar la trazabilidad y el estado detallado de entrega de cada mensaje individual enviado. | Ampliación / entrevista |
-| UR-78 | Administrador / Superadministrador | Poder consultar en una bandeja el estado (aprobada, rechazada o pendiente) de las solicitudes económicas realizadas. | Ampliación / entrevista |
-| UR-79 | Administrador / Superadministrador | Poder ver los comentarios explicativos del aprobador sobre una solicitud, para entender el motivo de la decisión. | Ampliación / entrevista |
-| UR-80 | Administrador / Superadministrador | Poder garantizar la separación de funciones: nadie aprueba sus propias solicitudes sensibles. | Ampliación / entrevista |
-| UR-81 | Administrador | Poder ejecutar el cierre formal de un mes o trimestre contable cuando finalice el periodo. | Ampliación / entrevista |
-| UR-82 | Administrador | Poder evitar modificar por error facturas o cobros de un periodo cerrado. | Ampliación / entrevista |
-| UR-83 | Superadministrador | Poder reabrir periodos cerrados únicamente ingresando un motivo obligatorio que quede registrado. | Ampliación / entrevista |
-| UR-84 | Administrador | Poder generar y descargar en un solo archivo (ZIP/CSV) toda la información y PDF contables del periodo. | Ampliación / entrevista |
-| UR-85 | Administrador | Poder consultar la fecha y autoría de la última generación del paquete contable para confirmar su envío a la gestoría. | Ampliación / entrevista |
-| UR-86 | Administrador | Poder diferenciar si un paquete contable es la versión inicial o una regeneración posterior para evitar duplicidades o confusiones. | Ampliación / entrevista |
-| UR-87 | Lector / Administrador | Poder registrar el idioma preferido de un contacto para enviarle las comunicaciones en su idioma. | Ampliación / entrevista |
-| UR-88 | Lector / Administrador | Poder indicar el canal preferido de un contacto para recibir notificaciones e impresos. | Ampliación / entrevista |
-| UR-89 | Lector / Administrador | Poder gestionar los permisos de envío de forma independiente para cada canal según la normativa de protección de datos. | Ampliación / entrevista |
-| UR-90 | Superadministrador | Poder consultar en la auditoría del sistema qué usuario realizó exportaciones masivas de datos y con qué criterios. | Ampliación / entrevista |
-| UR-91 | Superadministrador | Poder identificar quién y cuándo descargó cualquier fichero de datos exportado, para disuadir fugas de información. | Ampliación / entrevista |
-| UR-92 | Lector / Administrador | Poder recibir una alerta cuando una factura supere el límite tolerable de días vencida. | Ampliación / entrevista |
-| UR-93 | Lector / Administrador | Poder recibir una notificación cuando la deuda de un cliente supera el límite económico permitido, para bloquear nuevas acciones. | Ampliación / entrevista |
-| UR-94 | Lector / Administrador | Poder recibir un aviso cuando fallen repetidamente los envíos hacia un contacto, para corregir sus datos de entrega. | Ampliación / entrevista |
-| UR-95 | Lector / Administrador | Poder recibir un aviso sobre revisiones pendientes que lleven más de una semana sin gestión. | Ampliación / entrevista |
-| UR-96 | Lector / Administrador / Superadministrador | Poder conservar su información redactada ante interrupciones accidentales durante la edición de facturas. | Transcripción ampliada |
-| UR-97 | Lector / Administrador / Superadministrador | Poder deshacer modificaciones accidentales exceptuando las legalmente irreversibles. | Transcripción ampliada |
-| UR-98 | Lector / Administrador / Superadministrador | Poder comprender el nivel de irreversibilidad legal y riesgo de una acción antes de su confirmación final. | Transcripción ampliada |
-| UR-99 | Lector / Administrador / Superadministrador | Poder identificar y resolver las incidencias y excepciones técnicas de los procesos de cobro. | Transcripción ampliada |
-| UR-100 | Superadministrador | Poder establecer un tiempo de retención de almacenamiento temporal para informes. | Transcripción ampliada |
-| UR-101 | Superadministrador | Poder evaluar la eficiencia operativa mediante un dashboard. | Transcripción ampliada |
-| UR-102 | Administrador | Poder confiar en que una caída breve del sistema no hace perder ni duplicar emisiones o generaciones mensuales de facturas | Transcripción ampliada (Página 8) |
-| UR-103 | Superadministrador | Poder gestionar la configuración global del sistema con cambios validados y auditados, sin que afecten a lo ya emitido | Transcripción ampliada (Página 8) |
-| UR-104 | Administrador / Superadministrador | Poder probar los cambios de plantillas y de reglas de recordatorio antes de activarlos | Transcripción ampliada (Páginas 8 y 9) |
-| UR-105 | Lector / Administrador | Poder dar de alta clientes de forma ágil, con valores por defecto y revisando el resultado antes de confirmar | Transcripción ampliada (Página 9) |
-| UR-106 | Lector / Administrador | Poder ejecutar acciones masivas sobre clientes con control del alcance y del resultado | Transcripción ampliada (Página 9) |
-| UR-107 | Lector / Administrador | Poder etiquetar clientes y clasificar facturas por proyecto o línea de negocio para organizarlos y analizarlos (opcional) | Transcripción ampliada (Página 9) |
-| UR-108 | Lector / Administrador | Poder buscar direcciones al registrar los datos de un cliente | Notas de requisitos |
-| UR-109 | Administrador / Superadministrador | Poder asegurar que los datos de facturación no se usan automáticamente para campañas comerciales | Ampliación / entrevista |
-| UR-110 | Superadministrador | Poder confiar en que el cálculo financiero es determinista y no depende de inteligencia artificial | Transcripción ampliada |
-| UR-111 | Administrador | Poder programar informes periódicos y su envío a las personas que indique (opcional) | Ampliación / entrevista |
+| UR-20 | Lector | Poder pausar temporalmente una suscripción indicando motivo y fechas, congelando la generación de mensualidades sin afectar a las facturas impagadas | Entrevista |
+| UR-21 | Lector / Administrador | Poder recibir alertas de reactivación de suscripciones pausadas para confirmar la reanudación del cobro | Entrevista |
+| UR-22 | Lector | Poder registrar la baja de un cliente deteniendo cobros futuros pero manteniendo el flujo de recobro sobre las deudas no saldadas | Entrevista |
+| UR-23 | Lector | Poder confeccionar facturas puntuales utilizando conceptos frecuentes de un catálogo ligero | Entrevista |
+| UR-24 | Lector | Poder previsualizar la factura y disponer de bloqueos automáticos en caso de faltar datos fiscales antes de su emisión | Entrevista |
+| UR-25 | Lector | Poder gestionar incidencias de envío de correo para corregir los datos de contacto y realizar reintentos sin emitir facturas duplicadas | Entrevista |
+| UR-26 | Administrador | Poder pausar el envío automático de recordatorios marcando facturas "en disputa" mientras se investiga una disconformidad | Entrevista |
+| UR-27 | Administrador | Poder dar de baja contable una deuda clasificándola como "anulada" o "incobrable" tras aprobación administrativa | Entrevista |
+| UR-28 | Lector | Poder revisar en una bandeja de trabajo los movimientos bancarios o de pasarela no conciliados automáticamente o con importes parciales/excesivos | Entrevista |
+| UR-29 | Lector / Administrador | Poder disponer de la factura emitida en PDF, con su aspecto y contenido inalterables aunque cambie la marca o el catálogo | Entrevista |
+| UR-30 | Lector / Administrador | Poder enviar las facturas emitidas al contacto de facturación por correo electrónico o WhatsApp (simulado) | Entrevista |
+| UR-31 | Superadministrador | Poder configurar la cadencia de los recordatorios automáticos de impago y que respeten el vencimiento acordado con cada cliente | Entrevista |
+| UR-32 | Lector / Administrador | Poder consultar los cobros notificados por la pasarela de pagos sin que un mismo evento se contabilice dos veces | Entrevista |
+| UR-33 | Lector / Administrador | Poder disponer de una pantalla de trabajo diaria útil que muestre alertas y tareas pendientes para resolverlas con pocos clics | Entrevista |
+| UR-34 | Lector | Poder recibir notificaciones relevantes de los clientes asignados y distinguir las ya leídas de las ya resueltas | Entrevista |
+| UR-35 | Superadministrador | Poder configurar canales y preferencias de notificación (in-app, email, resumen diario) para evitar saturación | Entrevista |
+| UR-36 | Administrador | Poder consultar un dashboard financiero con cifras reales y generar informes filtrables y exportables a CSV y PDF | Entrevista |
+| UR-37 | Lector / Administrador / Superadministrador | Poder realizar búsquedas globales rápidas y guardar vistas o filtros frecuentes | Entrevista |
+| UR-38 | Lector / Administrador / Superadministrador | Poder importar clientes desde CSV con previsualización, mapeo y control de duplicados (NIF) | Entrevista |
+| UR-39 | Administrador | Poder importar histórico de facturas en modo migración sin disparar emails ni consumir numeración oficial | Entrevista |
+| UR-40 | Administrador / Superadministrador | Poder gestionar altas, invitaciones y desactivaciones de usuarios internos manteniendo el histórico de auditoría | Entrevista |
+| UR-41 | Lector / Administrador / Superadministrador | Poder recuperar la contraseña mediante un enlace temporal con caducidad | Entrevista |
+| UR-42 | Lector | Poder trabajar exclusivamente sobre los clientes asignados, con permisos operativos limitados y sin acceso a la configuración global | Entrevista |
+| UR-43 | Administrador | Poder asignar y desasignar clientes, heredando el nuevo responsable las tareas pendientes y manteniendo el histórico | Entrevista |
+| UR-44 | Administrador | Poder delegar temporalmente los clientes de un usuario (por vacaciones) sin necesidad de compartir contraseñas | Entrevista |
+| UR-45 | Lector / Administrador / Superadministrador | Poder evitar sobrescribir cambios de otros usuarios mediante la detección de conflictos de edición concurrente | Entrevista |
+| UR-46 | Superadministrador | Poder consultar y filtrar los registros de auditoría de negocio sin poder alterar el pasado | Entrevista |
+| UR-47 | Superadministrador | Poder disponer de copias de seguridad automáticas y un mecanismo de restauración probado y demostrable | Entrevista |
+| UR-48 | Lector / Administrador / Superadministrador | Poder descargar únicamente los documentos e información para los cuales posea permisos válidos | Entrevista |
+| UR-49 | Lector / Administrador | Poder redactar y enviar facturas y recordatorios previos por correo electrónico utilizando plantillas que completen automáticamente variables clave (nombre de empresa, número de factura, importe y vencimiento) | Entrevista |
+| UR-50 | Lector / Administrador | Poder abrir y seguir incidencias de facturación sobre un cliente | Entrevista |
+| UR-51 | Lector / Administrador / Superadministrador | Poder consultar informes detallados de la aplicación (incluyendo facturas que fallaron en meses anteriores) así como resúmenes semanales y mensuales | Entrevista |
+| UR-52 | Lector / Administrador | Poder utilizar la aplicación desde diferentes dispositivos (ordenador, tablet y móvil), en idioma español o inglés, adaptada a la zona horaria de España | Entrevista |
+| UR-53 | Lector | Poder distinguir entre una factura que existe pero no se pudo enviar y una factura que no se pudo crear | Entrevista |
+| UR-54 | Lector | Poder preparar un presupuesto para un cliente, enviarlo y registrar si lo acepta o lo rechaza, para convertirlo en factura sin volver a introducir los datos (opcional) | Entrevista |
+| UR-55 | Administrador | Poder corregir un error de una factura ya emitida sin alterarla, de forma que el saldo del cliente refleje la corrección | Entrevista |
+| UR-56 | Lector | Poder conocer de un vistazo el saldo, las facturas pendientes y las pagadas, y comprobar de dónde sale cada cifra (limitado a clientes asignados) | Entrevista |
+| UR-57 | Administrador | Poder revisar cada año si un cliente sigue en el plan que le corresponde y decidir el cambio, sin que se alteren las facturas pasadas | Entrevista |
+| UR-58 | Administrador | Poder conocer el estado del sistema (emails pendientes, errores de integración, último backup, última generación recurrente) | Entrevista |
+| UR-59 | Administrador | Poder consultar la historia de cada cliente | Entrevista |
+| UR-60 | Administrador | Poder garantizar que solo las personas autorizadas acceden al sistema y a cada cliente o factura | Entrevista |
+| UR-61 | Sistema externo | Poder consultar datos de clientes, deuda y facturas, y enviar solicitudes (como la de baja de un cliente), de forma que el sistema aplique siempre sus reglas de negocio | Entrevista |
+| UR-62 | Administrador | Poder identificar y localizar la causa de un error del sistema a partir de un código de incidencia | Entrevista |
+| UR-63 | Lector / Administrador | Poder ver un mensaje comprensible ante un error, sin información técnica interna del sistema | Entrevista |
+| UR-64 | Lector | Poder dar de alta clientes con datos correctos y sin duplicados, y saber qué datos faltan para poder facturarles | Entrevista |
+| UR-65 | Superadministrador | Poder configurar los datos fiscales del emisor | Entrevista |
+| UR-66 | Administrador | Poder elegir, si Turbine factura desde varias sociedades, con cuál se emite cada factura (opcional) | Entrevista |
+| UR-67 | Lector | Poder adjuntar a un cliente o a una factura los documentos que lo justifican (pedido, presupuesto aceptado, justificante) de forma segura | Entrevista |
+| UR-68 | Lector | Poder acceder rápidamente a los clientes con los que trabaja con más frecuencia | Entrevista |
+| UR-69 | Lector / Administrador | Poder comentar internamente en clientes, facturas e incidencias, con notas restringidas cuando proceda. | Entrevista |
+| UR-70 | Lector / Administrador / Superadministrador | Poder evitar duplicados por doble clic o reintento al emitir, enviar o conciliar. | Entrevistaa |
+| UR-71 | Administrador | Poder fijar objetivos mensuales/anuales de facturación y cobro. | Entrevista |
+| UR-72 | Superadministrador | Poder configurar el sistema de plazos (plazo de pago y calendario laboral). | Entrevista |
+| UR-73 | Superadministrador | Poder configurar las monedas en las que se emiten las facturas. | Entrevista |
+| UR-74 | Superadministrador | Poder cargar datos ficticios para demostraciones sin mezclarlos con los de producción (opcional) | Entrevista |
+| UR-75 | Administrador / Superadministrador | Poder localizar qué datos personales se tienen de un contacto y anonimizarlos cuando legalmente proceda, sin invalidar el histórico contable. | Entrevista |
+| UR-76 | Administrador | Poder consultar tipos de cambio y reglas de conversión de divisa aplicados a la consolidación de informes. | Entrevista |
+| UR-77 | Lector / Administrador | Poder consultar la trazabilidad y el estado detallado de entrega de cada mensaje individual enviado. | Entrevista |
+| UR-78 | Administrador / Superadministrador | Poder consultar en una bandeja el estado (aprobada, rechazada o pendiente) de las solicitudes económicas realizadas. | Entrevista |
+| UR-79 | Administrador / Superadministrador | Poder ver los comentarios explicativos del aprobador sobre una solicitud, para entender el motivo de la decisión. | Entrevista |
+| UR-80 | Administrador / Superadministrador | Poder garantizar la separación de funciones: nadie aprueba sus propias solicitudes sensibles. | Entrevista |
+| UR-81 | Administrador | Poder ejecutar el cierre formal de un mes o trimestre contable cuando finalice el periodo. | Entrevista |
+| UR-82 | Administrador | Poder evitar modificar por error facturas o cobros de un periodo cerrado. | Entrevista |
+| UR-83 | Superadministrador | Poder reabrir periodos cerrados únicamente ingresando un motivo obligatorio que quede registrado. | Entrevista |
+| UR-84 | Administrador | Poder generar y descargar en un solo archivo (ZIP/CSV) toda la información y PDF contables del periodo. | Entrevista |
+| UR-85 | Administrador | Poder consultar la fecha y autoría de la última generación del paquete contable para confirmar su envío a la gestoría. | Entrevista |
+| UR-86 | Administrador | Poder diferenciar si un paquete contable es la versión inicial o una regeneración posterior para evitar duplicidades o confusiones. | Entrevista |
+| UR-87 | Lector / Administrador | Poder registrar el idioma preferido de un contacto para enviarle las comunicaciones en su idioma. | Entrevista |
+| UR-88 | Lector / Administrador | Poder indicar el canal preferido de un contacto para recibir notificaciones e impresos. | Entrevista |
+| UR-89 | Lector / Administrador | Poder gestionar los permisos de envío de forma independiente para cada canal según la normativa de protección de datos. | Entrevista |
+| UR-90 | Superadministrador | Poder consultar en la auditoría del sistema qué usuario realizó exportaciones masivas de datos y con qué criterios. | Entrevista |
+| UR-91 | Superadministrador | Poder identificar quién y cuándo descargó cualquier fichero de datos exportado, para disuadir fugas de información. | Entrevista |
+| UR-92 | Lector / Administrador | Poder recibir una alerta cuando una factura supere el límite tolerable de días vencida. | Entrevista |
+| UR-93 | Lector / Administrador | Poder recibir una notificación cuando la deuda de un cliente supera el límite económico permitido, para bloquear nuevas acciones. | Entrevista |
+| UR-94 | Lector / Administrador | Poder recibir un aviso cuando fallen repetidamente los envíos hacia un contacto, para corregir sus datos de entrega. | Entrevista |
+| UR-95 | Lector / Administrador | Poder recibir un aviso sobre revisiones pendientes que lleven más de una semana sin gestión. | Entrevista |
+| UR-96 | Lector / Administrador / Superadministrador | Poder conservar su información redactada ante interrupciones accidentales durante la edición de facturas. | Entrevista |
+| UR-97 | Lector / Administrador / Superadministrador | Poder deshacer modificaciones accidentales exceptuando las legalmente irreversibles. | Entrevista |
+| UR-98 | Lector / Administrador / Superadministrador | Poder comprender el nivel de irreversibilidad legal y riesgo de una acción antes de su confirmación final. | Entrevista |
+| UR-99 | Lector / Administrador / Superadministrador | Poder identificar y resolver las incidencias y excepciones técnicas de los procesos de cobro. | Entrevista |
+| UR-100 | Superadministrador | Poder establecer un tiempo de retención de almacenamiento temporal para informes. | Entrevista |
+| UR-101 | Superadministrador | Poder evaluar la eficiencia operativa mediante un dashboard. | Entrevista |
+| UR-102 | Administrador | Poder confiar en que una caída breve del sistema no hace perder ni duplicar emisiones o generaciones mensuales de facturas | Entrevista |
+| UR-103 | Superadministrador | Poder gestionar la configuración global del sistema con cambios validados y auditados, sin que afecten a lo ya emitido | Entrevista |
+| UR-104 | Administrador / Superadministrador | Poder probar los cambios de plantillas y de reglas de recordatorio antes de activarlos | Entrevista |
+| UR-105 | Lector / Administrador | Poder dar de alta clientes de forma ágil, con valores por defecto y revisando el resultado antes de confirmar | Entrevista |
+| UR-106 | Lector / Administrador | Poder ejecutar acciones masivas sobre clientes con control del alcance y del resultado | Entrevista |
+| UR-107 | Lector / Administrador | Poder etiquetar clientes y clasificar facturas por proyecto o línea de negocio para organizarlos y analizarlos (opcional) | Entrevista |
+| UR-108 | Lector / Administrador | Poder buscar direcciones al registrar los datos de un cliente | Entrevista |
+| UR-109 | Administrador / Superadministrador | Poder asegurar que los datos de facturación no se usan automáticamente para campañas comerciales | Entrevista |
+| UR-110 | Superadministrador | Poder confiar en que el cálculo financiero es determinista y no depende de inteligencia artificial | Entrevista |
+| UR-111 | Administrador | Poder programar informes periódicos y su envío a las personas que indique (opcional) | Entrevista |
 
 ## 4. Requisitos del sistema
 
 ### 4.1. Requisitos funcionales
-
-Cada FR describe una capacidad del sistema (qué hace). Los pasos de interacción, las condiciones y los valores concretos de cada FR de la versión anterior se conservan como detalle en el anexo «Detalle para casos de uso» (`Anexo_detalle_casos_de_uso_v10_3.md`).
 
 | ID | Requisito | Relacionado con |
 |---|---|---|
@@ -418,18 +414,16 @@ Cada FR describe una capacidad del sistema (qué hace). Los pasos de interacció
 | Q-02 | Calendario de festivos y días laborables exacto para el cálculo de vencimientos en diferentes países | Transcripción ampliada | Automatización de recordatorios | Resuelta: configuración basada en calendario configurable de España para fase inicial |
 | Q-03 | ¿Cómo debe actuar exactamente el sistema ante un fallo en el envío masivo de correos de facturas de meses anteriores? ¿Debe reintentar de forma autónoma o registrar una alerta crítica en el informe? | Notas de notas de la app / informe de fallos | Alto para la fiabilidad de envíos | Pendiente |
 | Q-04 | ¿Qué permisos específicos tendrán los empleados suplentes sobre los clientes asignados a compañeros ausentes? | Decisiones de equipo | Medio para la gestión de incidencias | Pendiente |
-| Q-05 | Frases como: "datos ficticios para demos", "Observabilidad de emails y WhatsApp simulados." | Ampliación | FR-91. Tener que simular todo sistemas externos | Pendiente |
-| Q-06 | ¿Qué plazos legales de conservación se aplican a cada tipo de dato? | Transcripción ampliada (Página 8) | RB-17, RB-18, FR-99 | Pendiente |
-| Q-07 | ¿Un cambio de configuración afecta a facturas nuevas, a condiciones nuevas o a ambas? | Transcripción ampliada (Página 8) | FR-103 | Pendiente: el cliente dice «según definamos» |
-| Q-08 | ¿Qué son las «políticas de automatización» que el superadministrador configura? | Transcripción ampliada (Página 8) | UR-103 | Pendiente |
-| Q-09 | ¿Se necesita un entorno de prueba separado o basta con simular y previsualizar? | Transcripción ampliada (Página 8) | UR-104 | El cliente admite «al menos una forma de simular»; se cubre con simulación |
+| Q-05 | Frases como: "datos ficticios para demos", "Observabilidad de emails y WhatsApp simulados." | Transcripción ampliada | FR-91. Tener que simular todo sistemas externos | Pendiente |
+| Q-06 | ¿Qué plazos legales de conservación se aplican a cada tipo de dato? | Transcripción ampliada | RB-17, RB-18, FR-99 | Pendiente |
+| Q-07 | ¿Un cambio de configuración afecta a facturas nuevas, a condiciones nuevas o a ambas? | Transcripción ampliada | FR-103 | Pendiente: el cliente dice «según definamos» |
+| Q-08 | ¿Qué son las «políticas de automatización» que el superadministrador configura? | Transcripción ampliada | UR-103 | Pendiente |
+| Q-09 | ¿Se necesita un entorno de prueba separado o basta con simular y previsualizar? | Transcripción ampliada | UR-104 | El cliente admite «al menos una forma de simular»; se cubre con simulación |
 | Q-10 | ¿La reasignación de clientes requiere la aprobación de otro administrador? | Ampliación | FR-40 | Pendiente |
 | Q-11 | ¿Qué ocurre si el único Superadministrador es quien propone una excepción que supera el umbral, dado que nadie puede aprobar lo suyo? | Revisión del grupo | RB-04, UR-15 | Pendiente |
 | Q-12 | ¿Qué estado debe tener una factura con un cobro superior a su total y qué se hace con el importe sobrante (devolución, saldo a favor, abono en la siguiente factura)? | Revisión del grupo | FR-26 | Pendiente: el cliente solo pide señalar la diferencia para revisión |
 
 ## 8. Trazabilidad
-
-Asignación BR → UR → FR/NFR revisada UR por UR. Un UR puede colgar de más de un BR; los FR heredan los BR de su UR. Los NFR se asignan por su categoría (propuesta, pendiente de revisar por quien sea dueño de la trazabilidad).
 
 | Requisito de negocio | Requisito de usuario | Requisito funcional / no funcional |
 |---|---|---|
@@ -464,19 +458,17 @@ Asignación BR → UR → FR/NFR revisada UR por UR. Un UR puede colgar de más 
 | Entidad emisora | Sociedad jurídica desde la cual se emiten facturas, con sus respectivas series de numeración |
 | Prorrateo | Cálculo proporcional de la cuota mensual cuando un servicio inicia en un día distinto al día 1 del mes |
 | Conciliación | Proceso de asociación entre un movimiento de cobro recibido (Stripe/banco) y su factura correspondiente |
-| dashboard | Panel de control visual con métricas, números clave e indicadores financieros (facturado, cobrado, pendiente, vencido, previsión) y desglose hasta el detalle. Los administradores ven el global; el Lector, solo sus clientes asignados. |
+| Dashboard | Panel de control visual con métricas, números clave e indicadores financieros (facturado, cobrado, pendiente, vencido, previsión) y desglose hasta el detalle. Los administradores ven el global; el Lector, solo sus clientes asignados. |
 | API | Interfaz de comunicación que permite a la aplicación interna interactuar de forma controlada y segura con otros sistemas externos o futuros (como Brain u otros agentes de IA) para consultar clientes, deudas o registrar solicitudes bajo las mismas reglas de negocio. |
-| reporting | Proceso de consolidación y generación de informes de datos financieros o de gestión en el que, si intervienen monedas extranjeras, se convierten los importes a una moneda base usando un tipo de cambio registrado. |
-| aprobador | Usuario (administrador o superadministrador) encargado de revisar, autorizar o rechazar solicitudes de operaciones económicas sensibles (como descuentos o cambios manuales de importe) a través de una bandeja de entrada. |
-| claves de idempotencia | Mecanismo técnico o de interfaz utilizado en operaciones largas o críticas (emisión, envío, conciliación) para evitar que la acción se procese o ejecute dos veces al hacer doble clic o recargar la página. |
+| Reporting | Proceso de consolidación y generación de informes de datos financieros o de gestión en el que, si intervienen monedas extranjeras, se convierten los importes a una moneda base usando un tipo de cambio registrado. |
+| Aprobador | Usuario (administrador o superadministrador) encargado de revisar, autorizar o rechazar solicitudes de operaciones económicas sensibles (como descuentos o cambios manuales de importe) a través de una bandeja de entrada. |
+| Claves de idempotencia | Mecanismo técnico o de interfaz utilizado en operaciones largas o críticas (emisión, envío, conciliación) para evitar que la acción se procese o ejecute dos veces al hacer doble clic o recargar la página. |
 | NIF | Número de Identificación Fiscal utilizado para identificar unívocamente a los clientes y empresas. |
 | Plantilla de comunicación | Formato de correo predefinido que incluye campos dinámicos para automatizar la relación con el cliente. |
 | Incidencia | Seguimiento administrativo interno asociado a un cliente y, opcionalmente, a una factura. No es un sistema de tickets para clientes ni debe confundirse con el código de incidencia técnico de un error (FR-62). |
 | Estado de factura | La factura tiene tres estados independientes: documental (borrador, pendiente de aprobación, emitida, rectificada), de cobro (pendiente, vencida, parcialmente conciliada, pagada, anulada, incobrable) y de envío (enviada, fallo de envío). Sobre el estado de cobro pueden superponerse las marcas «en disputa» y «cobro excesivo». |
 
 ## 10. Condiciones para los casos de uso
-
-Condiciones y pasos concretos que no son un requisito por sí mismos, pero que el caso de uso correspondiente debe recoger. El detalle completo de cada FR de la versión anterior está en `Anexo_detalle_casos_de_uso_v10_3.md`.
 
 | Caso de uso | Condición o paso | FR |
 |---|---|---|
