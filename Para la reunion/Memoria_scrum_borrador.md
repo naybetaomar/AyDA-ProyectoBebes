@@ -2,7 +2,7 @@
 
 El equipo está formado por siete personas. Un miembro ejerció de coordinador / Scrum Master (convocar las reuniones, mantener el tablero, proponer criterios comunes y vigilar la coherencia entre las partes), y el resto del equipo se repartió la especificación de requisitos por bloques de páginas de la transcripción ampliada del cliente (págs. 1-3, 4-5, 6-7, 8-9, 10-11, 12-13 y 14-15). Cada persona fue responsable de redactar los requisitos de su bloque (requisitos de usuario, funcionales y no funcionales, reglas de negocio, suposiciones y glosario) siguiendo la plantilla de la asignatura.
 
-Herramientas y canales: repositorio compartido con un único fichero Markdown de requisitos al que cada miembro sube su bloque; tablero `[COMPLETAR: Trello / GitHub Projects / otro]`; reunión de equipo semanal los domingos; chat del grupo para dudas intermedias `[COMPLETAR: WhatsApp / Discord / otro]`.
+Herramientas y canales: repositorio compartido con un único fichero Markdown de requisitos al que cada miembro sube su bloque; tablero `Github`; reunión de equipo semanal los domingos; chat del grupo para dudas intermedias `Discord y WhatsApp`.
 
 Decisiones de organización tomadas durante la entrega:
 - Una **rúbrica común de 8 criterios** para que todos redactaran con el mismo estándar (un requisito = un comportamiento; verificable y sin diseño; relación UR↔FR; calidad del requisito de usuario; sin duplicados; uso de "deberá" y marcado de ampliaciones como "(opcional)"; cobertura del bloque; coherencia con lo dicho por el cliente).
@@ -11,7 +11,6 @@ Decisiones de organización tomadas durante la entrega:
 - Convenciones comunes: identificadores con sufijo (b, c) al dividir un requisito, sin renumerar; fuente indicada como "Transcripción ampliada, pág. N".
 - En la reunión del 18 de octubre se acordó:
   - La **lista de actores** del sistema, que se recoge en la plantilla común donde se unifica toda la especificación.
-  - Que, además de volver a revisar el propio bloque, cada miembro **revisa el bloque consecutivo** (revisión circular).
   - Que los valores concretos que el cliente no fijó (tamaños mínimos, tiempos y similares) **siguen el criterio de cada autor** en su bloque, documentándolos como suposición, y que los duplicados entre bloques se eliminan en el momento de la unificación.
   - El planteamiento del **stand del 27 de octubre**.
 
