@@ -1,16 +1,16 @@
 # Reglas para calificar los grupos
--Graficos 
-	+Calidad
-	+Tipos de Presentacion de Temas
--Contenidos
-	+Actores
-	+Divisiones de Casos (Contextos)
-	+Redaccion
-	+Cantidad de Casos de usos
-	+Formatos
-	+Toma de decisiones
--Planificacion
-	+Reparto de contenidos
-	+Uso de la IA
-	+Participacion en el Stand
-	
+
+* **Gráficos**
+    * Calidad
+    * Tipos de Presentación de Temas
+* **Contenidos**
+    * Actores
+    * Divisiones de Casos (Contextos)
+    * Redacción
+    * Cantidad de Casos de uso
+    * Formatos
+    * Toma de decisiones
+* **Planificación**
+    * Reparto de contenidos
+    * Uso de la IA
+    * Participación en el Stand
