@@ -129,7 +129,7 @@ Igualmente, se ofrecieron a explicar cualquier caso de uso.
 ---
 ### Ampliación Luca
 | Ranking final | Nombre | NOTA |
-| --- | --- | --- | --- |
+| --- | --- | --- |
 | 1 | Perritos | 9/10 |
 | 2 | Ornitorrincos | 6/10 |
 | 3 | Hienitas | 5/10 |
