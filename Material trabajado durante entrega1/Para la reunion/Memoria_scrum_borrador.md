@@ -1,3 +1,18 @@
+# Informe Scrum: Entrega 1 
+ 
+## 1. Identificación del equipo 
+ 
+| Nombre y apellidos | Rol | 
+|---|---| 
+| Abdelnaybet Aomar Hamed   | Scrum Master | 
+| Imad 	El Founti Chaib          | Miembro | 
+| Luca Fernández Cordeiro        | Miembro | 
+| Ana Guerrero Martín            | Miembro | 
+| Guillermo Herrera Lozano       | Miembro | 
+| Loraine Meijer Arboleda        | Miembro | 
+| Cristóbal Jesús Subires Macías | Miembro | 
+ 
+
 ## 2. Organización del trabajo
 
 El equipo está formado por siete personas. Un miembro ejerció de coordinador / Scrum Master (convocar las reuniones, mantener el tablero, proponer criterios comunes y vigilar la coherencia entre las partes), y el resto del equipo se repartió la especificación de requisitos por bloques de páginas de la transcripción ampliada del cliente (págs. 1-3, 4-5, 6-7, 8-9, 10-11, 12-13 y 14-15). Cada persona fue responsable de redactar los requisitos de su bloque (requisitos de usuario, funcionales y no funcionales, reglas de negocio, suposiciones y glosario) siguiendo la plantilla de la asignatura.
@@ -8,7 +23,6 @@ Decisiones de organización tomadas durante la entrega:
 - Una **rúbrica común de 8 criterios** para que todos redactaran con el mismo estándar (un requisito = un comportamiento; verificable y sin diseño; relación UR↔FR; calidad del requisito de usuario; sin duplicados; uso de "deberá" y marcado de ampliaciones como "(opcional)"; cobertura del bloque; coherencia con lo dicho por el cliente).
 - **Revisión cruzada circular**: cada miembro revisa el bloque consecutivo con la rúbrica una vez subidos todos.
 - Una **tabla de responsable por tema** para resolver los temas que aparecían en varios bloques (por ejemplo baja, envío, conciliación, PDF o API).
-- Convenciones comunes: identificadores con sufijo (b, c) al dividir un requisito, sin renumerar; fuente indicada como "Transcripción ampliada, pág. N".
 - En la reunión del 18 de octubre se acordó:
   - La **lista de actores** del sistema, que se recoge en la plantilla común donde se unifica toda la especificación.
   - Que los valores concretos que el cliente no fijó (tamaños mínimos, tiempos y similares) **siguen el criterio de cada autor** en su bloque, documentándolos como suposición, y que los duplicados entre bloques se eliminan en el momento de la unificación.
