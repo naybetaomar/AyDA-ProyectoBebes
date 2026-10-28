@@ -22,6 +22,12 @@ El lector prácticamente solo chequea las facturas de los clientes asignados.
 ### Nota personal: 7/10
 
 ---
+### Ampliación Luca
+-No se tienen en cuenta borradores para facturas en caso de interrupciones accidentales.
+-No se tiene en cuenta la numeración de las facturas.
+-No se tiene en cuenta la opción de deshacer acciones irrevocables.
+### Nota personal: 5/10
+---
 
 # 2 ELEFANTITOS
 
@@ -39,6 +45,10 @@ El profesor les explicó en su tablet que habían «atomizado» demasiado los CU
 
 Es normal perderse entre 200 CU; nos hubiese pasado igual.
 
+---
+### Ampliación Luca
+-El ciclo de emisión de facturas es vago o poco elaborado, lleno de lagunas.
+### Nota personal: 3.5/10
 ---
 
 # 3 PERRITOS
@@ -58,6 +68,13 @@ Es lo más parecido a un stand que vi, aunque tuvieron suerte de poder usar la p
 ### Nota personal: 8/10
 
 ---
+### Ampliación Luca
+-Consideran una buena usabilidad de diseño.
+-Han tenido en cuenta la gestión de incidencias.
+-Incluyen numeración de las facturas.
+-No se mencionan requisitos sobre modelado de clientes, como admitir varios contactos de la empresa.
+### Nota personal: 9/10
+---
 
 # 4 SAPITOS
 
@@ -72,6 +89,12 @@ Pillamos la presentación empezada, pero se preocuparon por que lo entendiésemo
 
 ### Nota personal: 6/10
 
+---
+### Ampliación Luca
+-Tienen en cuenta la gestión de incidencias.
+-No se mencionan requisitos sobre modelado de clientes, como admitir varios contactos de la empresa.
+La forma de presentación dejaba bastante que desear.
+### Nota personal: 4/10 (aunque faltó tiempo para estudiarlos mejor)
 ---
 
 # 5 ORNITORRINCOS
@@ -88,6 +111,11 @@ Igualmente, se ofrecieron a explicar cualquier caso de uso.
 ### Nota personal: 6/10
 
 ---
+### Ampliación Luca
+-Tienen en cuenta la posibilidad de exportación de datos de clientes en pdf o zip.
+-No hy pensado una configuración para la recurrencia de avisos por impago.
+### Nota personal: 6/10
+---
 
 ## Mi ranking final
 
@@ -98,4 +126,13 @@ Igualmente, se ofrecieron a explicar cualquier caso de uso.
 | 3 | Ornitorrincos | 10% | 6/10 |
 | 4 | Sapitos | 5% | 6/10 |
 | 5 | Elefantitos | 30% | 5/10 |
-
+---
+### Ampliación Luca
+| Ranking final | Nombre | NOTA |
+| --- | --- | --- | --- |
+| 1 | Perritos | 9/10 |
+| 2 | Ornitorrincos | 6/10 |
+| 3 | Hienitas | 5/10 |
+| 4 | Sapitos | 4/10 |
+| 5 | Elefantitos | 3.5/10 |
+---
