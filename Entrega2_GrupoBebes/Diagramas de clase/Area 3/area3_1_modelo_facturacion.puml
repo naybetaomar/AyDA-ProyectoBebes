@@ -1,0 +1,207 @@
+@startuml area3_1_modelo_facturacion
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+title Área 3 — Diagrama 1: Modelo de facturación
+
+abstract class Factura {
+  - id : Long {readOnly}
+  - numeroFactura : String [0..1] {readOnly}
+  - estadoDocumental : EstadoDocumental
+  - estadoCobro : EstadoCobro [0..1]
+  - estadoEnvio : EstadoEnvio [0..1]
+  - enDisputa : Boolean
+  - cobroExcesivo : Boolean
+  - modificacionManual : Boolean
+  - moneda : String
+  - /baseImponible : Decimal
+  - /impuestos : Decimal
+  - /total : Decimal
+  - /saldoPendiente : Decimal
+  - fechaEmision : Date [0..1]
+  - fechaEmisionProgramada : Date [0..1]
+  - fechaVencimiento : Date
+  - rutaPdf : String [0..1]
+  - hashPdf : String [0..1]
+  - migrada : Boolean
+  --
+  + getId() : Long
+  + getNumeroFactura() : String
+  + agregarLinea(linea : LineaFactura) : void
+  + quitarLinea(linea : LineaFactura) : void
+  + calcularTotales() : void
+  + superaUmbral(umbral : Decimal) : Boolean
+  + requiereAprobacion(umbral : Decimal) : Boolean
+  + marcarPendienteAprobacion() : void
+  + volverABorrador(motivo : String) : void
+  + emitir(serie : SerieFacturacion, periodo : PeriodoContable) : void
+  + marcarRectificada() : void
+}
+
+class FacturaPuntual
+
+class FacturaRecurrente {
+  - periodoInicio : Date
+  - periodoFin : Date
+  - prorrateada : Boolean
+  --
+  + aplicarProrrateo(fechaInicio : Date) : void
+}
+
+class FacturaRectificativa {
+  - motivo : String
+  --
+  + emitir(serie : SerieFacturacion, periodo : PeriodoContable) : void
+}
+
+class LineaFactura {
+  - concepto : String
+  - cantidad : Decimal
+  - precioUnitario : Decimal
+  - descuento : Decimal
+  - porcentajeImpuesto : Decimal
+  - /importe : Decimal
+  --
+  + calcularImporte() : Decimal
+}
+
+class Impuesto {
+  - id : Long
+  - nombre : String
+  - porcentaje : Decimal
+  - pais : String
+}
+
+class ConceptoCatalogo {
+  - id : Long
+  - descripcion : String
+  - precioPorDefecto : Decimal
+}
+
+class SerieFacturacion {
+  - id : Long
+  - prefijo : String
+  - siguienteNumero : Integer
+  --
+  + asignarSiguienteNumeroFactura() : String
+}
+
+class EntidadEmisora {
+  - id : Long
+  - razonSocial : String
+  - datosFiscales : String
+}
+
+class ConfiguracionRecurrente {
+  - id : Long
+  - importeMensual : Decimal [0..1]
+  - excepcionSinProrrateo : Boolean
+  - activa : Boolean
+  - fechaActivacion : Date [0..1]
+  --
+  + calcularPrimeraCuota(fechaInicio : Date) : Decimal
+  + activar() : void
+  + desactivar() : void
+}
+
+class HistorialEstadoFactura {
+  - id : Long
+  - tipoEstado : TipoEstado
+  - estadoAnterior : String [0..1]
+  - estadoNuevo : String
+  - fecha : DateTime
+  - motivo : String [0..1]
+}
+
+enum EstadoDocumental {
+  BORRADOR
+  PENDIENTE_APROBACION
+  EMITIDA
+  RECTIFICADA
+}
+enum EstadoCobro {
+  PENDIENTE
+  VENCIDA
+  PARCIALMENTE_CONCILIADA
+  PAGADA
+  ANULADA
+  INCOBRABLE
+}
+enum EstadoEnvio {
+  SIN_ENVIAR
+  ENVIADA
+  FALLO_ENVIO
+}
+enum TipoEstado {
+  DOCUMENTAL
+  COBRO
+  ENVIO
+}
+
+' Herencia
+Factura <|-- FacturaPuntual
+Factura <|-- FacturaRecurrente
+Factura <|-- FacturaRectificativa
+
+' Asociaciones
+Factura "1" *-- "1..*" LineaFactura : se compone de >
+Factura "1" *-- "0..*" HistorialEstadoFactura : registra >
+LineaFactura "0..*" --> "0..1" ConceptoCatalogo : se basa en >
+LineaFactura "0..*" --> "1" Impuesto : aplica >
+ConceptoCatalogo "0..*" --> "1" Impuesto : impuesto por defecto >
+Factura "0..*" --> "0..1" SerieFacturacion : numerada en >
+Factura "0..*" --> "1" EntidadEmisora : emitida por >
+EntidadEmisora "1" -- "0..*" SerieFacturacion : tiene >
+FacturaRecurrente "0..*" --> "1" ConfiguracionRecurrente : generada desde >
+FacturaRectificativa "0..*" --> "1" Factura : rectifica >
+
+' Enumerados
+Factura ..> EstadoDocumental
+Factura ..> EstadoCobro
+Factura ..> EstadoEnvio
+HistorialEstadoFactura ..> TipoEstado
+
+note top of Factura
+  **id**: identificador interno, existe desde el borrador.
+  **numeroFactura**: número legal; se asigna en emitir()
+  desde la serie (RB-01) y no se modifica.
+  **estadoCobro** y **estadoEnvio**: nulos hasta emitirse (A-23).
+  **/saldoPendiente**: total − conciliaciones no deshechas
+  − baja contable (RB-10).
+  Serie y periodo: 0..1 en borrador; 1 una vez emitida.
+  **emitir()**: la serie debe pertenecer a la EntidadEmisora
+  de la factura {serie.entidadEmisora = entidadEmisora}.
+end note
+
+note bottom of FacturaRectificativa
+  Sobrescribe **emitir()**: llama a super.emitir()
+  y después a facturaOriginal.marcarRectificada()
+  (CU-19, RB-11). La original no cambia mientras
+  la rectificativa siga en borrador o pendiente.
+end note
+
+note bottom of FacturaRecurrente
+  {único: configuración + periodoInicio}
+  Evita duplicar la factura del mes tras
+  una caída (FR-100, CU-17 FE-2).
+  En el E-R: restricción UNIQUE.
+end note
+
+note bottom of LineaFactura
+  **porcentajeImpuesto** copia el porcentaje
+  del Impuesto al crear la línea: si el impuesto
+  cambia, lo ya facturado no varía (RB-06).
+end note
+
+note bottom of HistorialEstadoFactura
+  Una fila por transición de cualquiera
+  de los tres estados (FR-09, decisión 1).
+end note
+
+note bottom of ConfiguracionRecurrente
+  CU-17. Si **importeMensual** es nulo, se usa
+  el precio del RangoTarifa de la relación.
+  **excepcionSinProrrateo** = true → no se
+  factura el mes de alta (FA-1).
+end note
+@enduml

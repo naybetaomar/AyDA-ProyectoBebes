@@ -1,0 +1,74 @@
+@startuml area3_2_factory_method
+skinparam classAttributeIconSize 0
+hide empty members
+title Área 3 — Diagrama 2: Patrón Factory Method (creación de facturas)
+
+abstract class GeneradorFactura {
+  + generar(datos : DatosFactura) : Factura
+  # {abstract} crearFactura(datos : DatosFactura) : Factura
+}
+class GeneradorPuntual {
+  # crearFactura(datos : DatosFactura) : Factura
+}
+class GeneradorRecurrente {
+  # crearFactura(datos : DatosFactura) : Factura
+}
+class GeneradorRectificativa {
+  # crearFactura(datos : DatosFactura) : Factura
+}
+
+class DatosFactura <<DTO>> {
+  - cliente : Cliente
+  - lineas : LineaFactura [1..*]
+  - moneda : String
+  - fechaVencimiento : Date
+  - fechaEmisionProgramada : Date [0..1]
+  - configuracion : ConfiguracionRecurrente [0..1]
+  - periodoInicio : Date [0..1]
+  - facturaOriginal : Factura [0..1]
+  - motivo : String [0..1]
+}
+
+' Productos (definidos en el diagrama 1)
+abstract class Factura
+class FacturaPuntual
+class FacturaRecurrente
+class FacturaRectificativa
+
+GeneradorFactura <|-- GeneradorPuntual
+GeneradorFactura <|-- GeneradorRecurrente
+GeneradorFactura <|-- GeneradorRectificativa
+GeneradorPuntual -[hidden]right- GeneradorRecurrente
+GeneradorRecurrente -[hidden]right- GeneradorRectificativa
+
+Factura <|-up- FacturaPuntual
+Factura <|-up- FacturaRecurrente
+Factura <|-up- FacturaRectificativa
+FacturaPuntual -[hidden]right- FacturaRecurrente
+FacturaRecurrente -[hidden]right- FacturaRectificativa
+
+GeneradorFactura .right.> DatosFactura : usa >
+GeneradorPuntual .down.> FacturaPuntual : <<create>>
+GeneradorRecurrente .down.> FacturaRecurrente : <<create>>
+GeneradorRectificativa .down.> FacturaRectificativa : <<create>>
+
+note left of GeneradorFactura
+  **Creator.** generar() es la parte común:
+  valida, calcula totales y comprueba el
+  umbral (RB-25). Llama al método fábrica
+  crearFactura(), que implementa cada
+  subclase. Los generadores solo crean;
+  no cambian estados.
+end note
+
+note right of GeneradorRectificativa
+  Precondición (CU-19): rechaza
+  la operación si la factura
+  original no está EMITIDA.
+end note
+
+note bottom of Factura
+  **Product.** Atributos y operaciones
+  en el diagrama 1.
+end note
+@enduml

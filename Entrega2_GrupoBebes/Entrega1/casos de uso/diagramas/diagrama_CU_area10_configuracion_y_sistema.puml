@@ -1,0 +1,19 @@
+@startuml
+' Diagrama  - Configuración y sistema (CU-XX = especificación en el .md)
+title Configuración y sistema 
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Administrador" as Admin
+actor "Superadministrador" as Super
+Super --|> Admin
+
+rectangle "Aplicación de facturación y cobros" {
+  usecase "CU-54\nGestionar configuración global" as CU54
+  usecase "CU-55\nCargar datos de demostración" as CU55
+  usecase "CU-56\nConsultar estado del sistema y errores" as CU56
+}
+Super -- CU54
+Super -- CU55
+Admin -- CU56
+@enduml
