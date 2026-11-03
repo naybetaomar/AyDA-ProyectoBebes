@@ -1,0 +1,25 @@
+@startuml
+' Diagrama  - Cobros, conciliación y saldo (CU-XX = especificación en el .md)
+title Cobros, conciliación y saldo 
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Lector" as Lector
+actor "Administrador" as Admin
+actor "Superadministrador" as Super
+actor "Pasarela de pagos" as Pasarela
+Admin --|> Lector
+Super --|> Admin
+
+rectangle "Aplicación de facturación y cobros" {
+  usecase "CU-33\nConsultar estado de cobro y saldo" as CU33
+  usecase "CU-34\nRegistrar cobro notificado por la pasarela" as CU34
+  usecase "CU-35\nConciliar cobros" as CU35
+  usecase "CU-36\nDar de baja contable una deuda" as CU36
+}
+Lector -- CU33
+Pasarela -- CU34
+Admin -- CU35
+Admin -- CU36
+Super -- CU36
+@enduml

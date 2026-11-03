@@ -1,0 +1,35 @@
+@startuml
+' Diagrama  - Emisión de facturas (CU-XX = especificación en el .md)
+title Emisión de facturas 
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Lector" as Lector
+actor "Administrador" as Admin
+actor "Superadministrador" as Super
+actor "Planificador" as Plan
+Admin --|> Lector
+Super --|> Admin
+
+rectangle "Aplicación de facturación y cobros" {
+  usecase "CU-15\nEmitir factura puntual" as CU15
+  usecase "CU-16\nGestionar borradores de factura" as CU16
+  usecase "CU-17\nConfigurar facturación recurrente" as CU17
+  usecase "CU-18\nProgramar emisión futura" as CU18
+  usecase "CU-19\nEmitir factura rectificativa" as CU19
+  usecase "CU-20\nGestionar presupuestos (opcional)" as CU20
+  usecase "CU-21\nConfigurar serie y numeración" as CU21
+}
+Lector --> CU15
+Lector --> CU16
+Lector --> CU17
+Plan --> CU17
+Lector --> CU18
+Plan --> CU18
+Admin --> CU19
+Lector --> CU20
+Super --> CU21
+CU16 ..> CU15 : <<extend>>
+CU19 ..> CU15 : <<dependency>>
+note right of CU19 : Precondición: factura emitida
+@enduml
