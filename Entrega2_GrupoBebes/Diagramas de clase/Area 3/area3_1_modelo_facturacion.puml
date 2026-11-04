@@ -195,8 +195,10 @@ note bottom of FacturaRectificativa
   (RD 1619/2012, art. 6.1.a).
   **esAbono()** = total negativo: compensa el saldo
   de la original y no tiene estado de cobro (A-27).
-  Al emitirse, avisa; no recalcula el cobro de la
-  original: eso lo hace el área 6 (cuestión 8.12).
+  Al emitirse un abono, emite el evento «abono
+  emitido» (evento de dominio; Observer en la E3).
+  No recalcula el cobro de la original: lo hace
+  el área 6, que escucha el evento (cuestión 8.12).
 end note
 
 note bottom of FacturaRecurrente

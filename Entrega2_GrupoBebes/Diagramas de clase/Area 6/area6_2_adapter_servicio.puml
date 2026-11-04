@@ -100,7 +100,15 @@ note right of ServicioCobros
   (aunque el estado sea PARCIALMENTE_CONCILIADA).
   Factura no calcula nada de cobros: así no depende
   del área 6.
-  Reacciona a la emisión de un abono con
-  recalcularEstadoCobro() de la original (A-27, 8.12).
+end note
+
+note bottom of ServicioCobros
+  **Eventos** (cuestión 8.12; mecanismo Observer en la E3)
+  Escucha «abono emitido» (área 3) → recalcularEstadoCobro()
+  de la original (A-27).
+  Escucha «solicitud resuelta» (área 4) → si es una baja
+  aprobada, registrarBajaAprobada() (CU-36).
+  Emite «estado de cobro cambiado» → lo escucha el área 5
+  para cancelar o reanudar recordatorios (RB-37).
 end note
 @enduml
