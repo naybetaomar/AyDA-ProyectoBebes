@@ -142,7 +142,7 @@ No son clases del dominio y **no tienen tabla en el E-R**, pero aparecen en los 
 | **EstadoEnvio** | SIN_ENVIAR, ENVIADA, FALLO_ENVIO | Factura |
 | **EstadoCliente** | PENDIENTE_ACTIVACION, ACTIVO, PAUSADO, BAJA_SOLICITADA, BAJA_EFECTIVA | Cliente (dec. 5) |
 | **TipoEstado** | DOCUMENTAL, COBRO, ENVIO | HistorialEstadoFactura |
-| **Rol** | LECTOR, ADMINISTRADOR, SUPERADMINISTRADOR | Usuario. Jerárquico (A-19): cada rol puede hacer lo del anterior |
+| **Rol** | LECTOR, ADMINISTRADOR, SUPERADMINISTRADOR -- + tienePermisoDe(requerido : Rol) : boolean| Usuario. Jerárquico (A-19): cada rol puede hacer lo del anterior |
 | **EstadoSolicitud** | PENDIENTE, APROBADA, RECHAZADA | SolicitudExcepcion |
 | **TipoPeriodo** | MES, TRIMESTRE | PeriodoContable |
 | **EstadoPeriodo** | ABIERTO, CERRADO | PeriodoContable |
