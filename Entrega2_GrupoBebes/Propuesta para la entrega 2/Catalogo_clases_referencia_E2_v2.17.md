@@ -1,10 +1,10 @@
-# Catálogo de clases de referencia — Entrega 2 (v2.11)
+# Catálogo de clases de referencia — Entrega 2 (v2.17)
 
 Tabla única de nombres y atributos que todos copian. **Fuente de verdad:** si una clase aparece en tu diagrama de clases o en el E-R, su nombre y sus atributos clave coinciden con esta tabla. Un atributo nuevo se propone al grupo antes de usarlo y se anota en el registro de cambios (sección 9).
 
 Este catálogo es también el **contrato entre quienes terminan los diagramas de clases y quienes hacen el E-R en paralelo**. Por eso cada clase indica su estado.
 
-Se genera a partir de `Propuesta_entidades_y_clases_Entrega2.md`, `Reparto_clases_por_area.md` y de los diagramas del área 3 (`area3_1_modelo_facturacion.puml`, `area3_2_factory_method.puml` y `area3_3_relaciones_otras_areas.puml`).
+Se genera a partir de `Propuesta_entidades_y_clases_Entrega2.md`, `Reparto_clases_por_area.md` y de los diagramas del área 3 (`area3_1_modelo_facturacion.puml`, `area3_2_factory_method.puml` y `area3_3_relaciones_otras_areas.puml`) y del área 6 (`area6_1_modelo_cobros.puml`, `area6_2_adapter_servicio.puml` y `area6_3_relaciones_otras_areas.puml`).
 
 **Núcleo** en este catálogo = las 11 clases que se aprueban en la sesión. La sección 1 de la propuesta se llama «Entidades principales» y es una lista más amplia.
 
@@ -33,13 +33,14 @@ Se genera a partir de `Propuesta_entidades_y_clases_Entrega2.md`, `Reparto_clase
 ## 2. Convenciones del diagrama de clases (definición de terminado)
 
 - Todos los atributos son **privados** (`-`); se accede a ellos con operaciones públicas.
-- Atributo derivado: prefijo `/` (`/total`, `/saldoPendiente`).
+- Atributo derivado: prefijo `/` (`/total`, `/importeSinAplicar`).
 - Atributo que no cambia tras asignarse: `{readOnly}`. Opcional: `[0..1]`.
 - Toda asociación lleva **multiplicidad en los dos extremos** y un nombre de rol o un verbo.
 - Una clase de otra área se dibuja con el estereotipo `<<referencia>>` y solo sus atributos clave.
 - Los estados y tipos cerrados son **enumerados** (sección 6), nunca `String`.
 - Las restricciones que no se ven en las flechas van en una nota: `{único: …}`, invariantes, precondiciones.
 - Los campos de trazabilidad `creadoPor`, `creadoEn`, `modificadoPor`, `modificadoEn` (NFR-03) **no se dibujan** en cada clase: se indica una sola vez en una nota del diagrama. En el E-R sí son columnas (sección 7).
+- **Dependencias entre áreas en un solo sentido.** Las asociaciones entre áreas pueden ser bidireccionales, pero la **lógica** no: una clase solo calcula o decide con datos de su propia área. Si necesita datos internos de otra área, lo hace el servicio de esa otra área (por ejemplo, el saldo de una factura lo calcula `ServicioCobros`, no `Factura`). Cada responsable lo comprueba en su área, y quien junte los diagramas busca ciclos entre áreas en la revisión de coherencia. Es una guía, no una regla absoluta: las excepciones se anotan en la cuestión 8.12 con su motivo.
 - Toda clase que aparezca en un diagrama de secuencia existe en algún diagrama de clases.
 - El `.puml` compila y se ha exportado a PDF en `doc/`.
 - **Recomendado:** si el diagrama de un área no se lee en una página, se parte en tres, como el área 3: (1) modelo propio del área, (2) patrones de diseño, (3) relaciones con otras áreas. Cada clase se define completa en un solo diagrama; en los demás aparece solo con su nombre.
@@ -51,10 +52,10 @@ Se genera a partir de `Propuesta_entidades_y_clases_Entrega2.md`, `Reparto_clase
 | **Cliente** | 1 | Borrador | id, razonSocial, identificadorFiscal, pais, moneda, direccion, estadoCliente : EstadoCliente, datosPendientes, anonimizado | Cliente recibe Factura (1 — 0..*)<br>Cliente tiene Contacto (1 — 1..*, RB-27)<br>Cliente tiene RelacionComercial (1 — 0..*, una activa a la vez; historial)<br>Usuario tiene asignados Cliente mediante AsignacionCliente (* — *) | 2, 3, 7, 8, 9, 11 | Dec. 5: ¿`estadoCliente` almacenado o derivado de la relación activa? Si se almacena, justificar frente a `RelacionComercial.fechaBaja` |
 | **Contacto** | 1 | Borrador | id, nombre, email, telefono, idioma, canalPreferido : Canal, esContactoFacturacion, anonimizado | Cliente tiene Contacto (1 — 1..*)<br>Contacto tiene ConsentimientoCanal (1 — 0..*) | 5 | — |
 | **RelacionComercial** | 2 | Borrador | id, fechaInicio, condicionesPago, fechaBaja [0..1] | Cliente tiene RelacionComercial (1 — 0..*)<br>RelacionComercial usa RangoTarifa (* — 1)<br>RelacionComercial tiene Pausa (1 — 0..*)<br>**RelacionComercial se factura con ConfiguracionRecurrente (1 — 0..1)** | 3 | Acordar con el área 3 la asociación con `ConfiguracionRecurrente` |
-| **Factura** *(abstracta)* | 3 | **Propuesta** | id {readOnly}, numeroFactura [0..1] {readOnly}, estadoDocumental : EstadoDocumental, estadoCobro : EstadoCobro [0..1], estadoEnvio : EstadoEnvio [0..1], enDisputa, cobroExcesivo, modificacionManual, moneda, /baseImponible, /impuestos, /total, /saldoPendiente, fechaEmision [0..1], fechaEmisionProgramada [0..1], fechaVencimiento, rutaPdf [0..1], hashPdf [0..1], migrada | Cliente recibe Factura (1 — 0..*)<br>Factura se compone de LineaFactura (1, composición — 1..*)<br>Factura numerada en SerieFacturacion (* — 0..1; 1 una vez emitida)<br>Factura pertenece a PeriodoContable (* — 0..1; 1 una vez emitida)<br>Factura emitida por EntidadEmisora (* — 1)<br>Factura se concilia en Conciliacion (1 — 0..*)<br>SolicitudExcepcion sobre Factura (* — 1)<br>Factura registra HistorialEstadoFactura (1, composición — 0..*) | 1, 4, 5, 6, 7, 8, 11 | Ver sección 8: estado de cobro de una factura `RECTIFICADA` |
+| **Factura** *(abstracta)* | 3 | **Propuesta** | id {readOnly}, numeroFactura [0..1] {readOnly}, estadoDocumental : EstadoDocumental, estadoCobro : EstadoCobro [0..1], estadoEnvio : EstadoEnvio [0..1], enDisputa, cobroExcesivo, modificacionManual, moneda, /baseImponible, /impuestos, /total, fechaEmision [0..1], fechaEmisionProgramada [0..1], fechaVencimiento, rutaPdf [0..1], hashPdf [0..1], migrada | Cliente recibe Factura (1 — 0..*)<br>Factura se compone de LineaFactura (1, composición — 1..*)<br>Factura numerada en SerieFacturacion (* — 0..1; 1 una vez emitida)<br>Factura pertenece a PeriodoContable (* — 0..1; 1 una vez emitida)<br>Factura emitida por EntidadEmisora (* — 1)<br>Factura se concilia en Conciliacion (1 — 0..*)<br>SolicitudExcepcion sobre Factura (* — 1)<br>Factura registra HistorialEstadoFactura (1, composición — 0..*) | 1, 4, 5, 6, 7, 8, 11 | `estadoCobro` también nulo en los abonos (A-27). El saldo pendiente y el vencimiento los calcula `ServicioCobros` (área 6); `Factura` solo guarda `estadoCobro` y la marca `cobroExcesivo`, que actualiza el área 6 al conciliar (A-28) |
 | **LineaFactura** | 3 | **Propuesta** | concepto, cantidad, precioUnitario, descuento, porcentajeImpuesto (copia del impuesto al crear la línea, RB-06), /importe | Factura se compone de LineaFactura<br>LineaFactura se basa en ConceptoCatalogo (* — 0..1)<br>LineaFactura aplica Impuesto (* — 1) | — | — |
-| **TransaccionPasarela** | 6 | Borrador | id, idEventoExterno (único), importe, moneda, fechaEvento, estado | Se concilia con Factura mediante Conciliacion (* — *) | — | ¿Se generaliza a `MovimientoCobro` con `origen` (pasarela / banco / manual) para cubrir FR-26? |
-| **Conciliacion** | 6 | Borrador | transaccion, factura, importeAplicado, fecha, deshecha | Factura (1 — 0..*)<br>TransaccionPasarela (1 — 0..*) | 3 | Q-12 (sobrante). Ver sección 8 |
+| **MovimientoCobro** | 6 | **Propuesta** | id, origen : OrigenCobro, idExterno, referencia [0..1], importe, moneda, fechaMovimiento, datosConfirmacion [0..1], enRevision, motivoRevision [0..1], /importeAplicado, /importeSinAplicar, /estado : EstadoMovimiento | MovimientoCobro se aplica en Conciliacion (1 — 0..*) | 3 | Sustituye a `TransaccionPasarela` (cuestión 8.2 resuelta). `{único: origen + idExterno}`. El excedente queda en `/importeSinAplicar` (A-28) |
+| **Conciliacion** | 6 | **Propuesta** | id, importeAplicado, fecha, /deshecha (= fechaDeshecho no nulo), fechaDeshecho [0..1], motivoDeshacer [0..1] | MovimientoCobro (1 — 0..*)<br>Factura (1 — 0..*)<br>Conciliacion realizada por Usuario (* — 0..1; nulo = automática)<br>Conciliacion deshecha por Usuario (* — 0..1) | 3 | La crea `MovimientoCobro.aplicarA()`. `{importeAplicado ≤ saldo pendiente}`, misma moneda, una sola no deshecha por movimiento + factura (FR-87). `{fechaDeshecho, motivoDeshacer y deshechaPor: todos nulos o todos no nulos}` |
 | **SolicitudExcepcion** | 4 | Borrador | id, tipo, importe, estado : EstadoSolicitud, comentarioAprobador, fecha | Usuario solicita / resuelve SolicitudExcepcion (1 — 0..*; dos asociaciones: solicitante y aprobador)<br>**SolicitudExcepcion sobre Factura (* — 1)** | 3 | — |
 | **PeriodoContable** | 4 | Borrador | id, tipo : TipoPeriodo, inicio, fin, estado : EstadoPeriodo | Factura pertenece a PeriodoContable (* — 0..1)<br>PeriodoContable tiene ReaperturaPeriodo / PaqueteContable (1 — 0..*) | 3, 8 | — |
 | **Usuario** | 9 | Borrador | id, nombre, email, **rol : Rol**, activo, credencial (hash) | Usuario tiene asignados Cliente mediante AsignacionCliente (* — *)<br>Usuario solicita / resuelve SolicitudExcepcion<br>Usuario genera RegistroAuditoria (0..1 — 0..*; nulo = Sistema)<br>Usuario es responsable de Tarea (1 — 0..*) | 1, 4, 6, 7, 10 | Decidido: **sin herencia por rol** (un usuario puede cambiar de rol y un objeto no puede cambiar de clase). El control de acceso se resuelve con el Proxy (sección 5). Operación `cambiarRol(nuevoRol : Rol, realizadoPor : Usuario)` (FR-110, RB-38, RB-39, CU-49 FA-1). Q-13 pendiente |
@@ -68,10 +69,10 @@ Se genera a partir de `Propuesta_entidades_y_clases_Entrega2.md`, `Reparto_clase
 |---|---|---|---|---|
 | **FacturaPuntual** | **Propuesta** | — (hereda de Factura) | Factura ← FacturaPuntual | — |
 | **FacturaRecurrente** | **Propuesta** | periodoInicio, periodoFin, prorrateada | Factura ← FacturaRecurrente<br>FacturaRecurrente generada desde ConfiguracionRecurrente (* — 1)<br>`{único: configuración + periodoInicio}` (FR-100) | — |
-| **FacturaRectificativa** | **Propuesta** | motivo | Factura ← FacturaRectificativa<br>FacturaRectificativa rectifica Factura (* — 1)<br>Sobrescribe `emitir()`: al emitirse, la original pasa a `RECTIFICADA` | — |
+| **FacturaRectificativa** | **Propuesta** | motivo, esAbono() (total negativo) | Factura ← FacturaRectificativa<br>FacturaRectificativa rectifica Factura (* — 1)<br>Sobrescribe `emitir()`: al emitirse, la original pasa a `RECTIFICADA` | Un abono compensa el saldo de la original y no tiene estado de cobro (A-27, cuestión 8.1) |
 | **HistorialEstadoFactura** | **Propuesta** | id, tipoEstado : TipoEstado, estadoAnterior [0..1], estadoNuevo, fecha, motivo [0..1] | Factura registra HistorialEstadoFactura (1, composición — 0..*)<br>HistorialEstadoFactura realizado por Usuario (* — 0..1; nulo = transición del sistema) | FR-09, decisión 1. Una fila por transición de cualquiera de los tres estados |
 | **ConfiguracionRecurrente** | **Propuesta** | id, importeMensual [0..1] (si es nulo, el precio del RangoTarifa), excepcionSinProrrateo, activa, fechaActivacion [0..1] | RelacionComercial (1 — 0..1)<br>FacturaRecurrente (1 — 0..*) | Acordar con el área 2 |
-| **SerieFacturacion** | **Propuesta** | id, prefijo, siguienteNumero | EntidadEmisora tiene SerieFacturacion (1 — 0..*)<br>Factura (0..1 — 0..*) | Invariante: la serie de `emitir()` pertenece a la EntidadEmisora de la factura |
+| **SerieFacturacion** | **Propuesta** | id, prefijo, tipo : TipoSerie, siguienteNumero | EntidadEmisora tiene SerieFacturacion (1 — 0..*)<br>Factura (0..1 — 0..*) | Las rectificativas se emiten en una serie de tipo `RECTIFICATIVA` y el resto en una `ORDINARIA` (RD 1619/2012, art. 6.1.a; se configura en CU-21). Invariante: la serie de `emitir()` pertenece a la EntidadEmisora de la factura |
 | **EntidadEmisora** | **Propuesta** | id, razonSocial, datosFiscales, logo, plantillaFactura | SerieFacturacion (1 — 0..*)<br>Factura (1 — 0..*) | — |
 | **ConceptoCatalogo** | **Propuesta** | id, descripcion, precioPorDefecto | LineaFactura (0..1 — 0..*)<br>ConceptoCatalogo usa Impuesto por defecto (* — 1) | — |
 | **Impuesto** | **Propuesta** | id, nombre, porcentaje, pais | LineaFactura (1 — 0..*)<br>ConceptoCatalogo (1 — 0..*) | — |
@@ -91,7 +92,7 @@ Se genera a partir de `Propuesta_entidades_y_clases_Entrega2.md`, `Reparto_clase
 | **PlantillaComunicacion** | 5 | Borrador | id, tipo (factura / recordatorio), asunto, cuerpo, variablesObligatorias, activa | ver propuesta de entidades | — |
 | **ReglaRecordatorio** | 5 | Borrador | cadencia, diasTrasVencimiento, activa | ver propuesta de entidades | — |
 | **Mensaje** | 5 | Borrador | factura, contacto, canal : Canal, plantilla, estadoEntrega, intentos, fechaEnvio | Factura genera Mensaje (1 — 0..*) | — |
-| **BajaContable** | 6 | Borrador | factura, tipo (anulada / incobrable), importeDadoDeBaja, motivo, aprobador, fecha | Factura puede tener BajaContable (1 — 0..1) | — |
+| **BajaContable** | 6 | **Propuesta** | id, tipo : TipoBajaContable, importeDadoDeBaja, motivo, fecha | Factura puede tener BajaContable (1 — 0..1)<br>BajaContable aprobada mediante SolicitudExcepcion (0..1 — 1) | Ya no guarda aprobador: lo da la `SolicitudExcepcion` (área 4). Invariante: `{baja.factura = baja.solicitud.factura}` |
 | **Notificacion** | 7 | Borrador | usuarioDestino, cliente, tipo, prioridad, estado : EstadoNotificacion | ver propuesta de entidades | — |
 | **PreferenciaNotificacion** | 7 | Borrador | usuario, canal (in-app / email / resumen diario) | ver propuesta de entidades | — |
 | **Incidencia** | 7 | Borrador | id, cliente, factura [0..1], estado, responsable, pausaRecordatorios | Cliente (1 — 0..*) | Nace en el área 5, se gestiona en la 7 |
@@ -127,7 +128,10 @@ No son clases del dominio y **no tienen tabla en el E-R**, pero aparecen en los 
 | **DatosFactura** `<<DTO>>` | 3 | **Propuesta** | — | Datos de entrada del generador: cliente, lineas, moneda, fechaVencimiento, fechaEmisionProgramada [0..1], configuracion [0..1], periodoInicio [0..1], facturaOriginal [0..1], motivo [0..1] |
 | Proxy de permisos (nombre por decidir) | 9 | Borrador | Proxy de protección | Comprueba rol y asignación (RB-15, RB-21, RB-22, RB-38) y registra en RegistroAuditoria antes de delegar en el servicio real. Lo define el área 9, pero protege los servicios de todas las áreas. También filtra las llamadas del planificador con una identidad de sistema (cuestión 8.11) |
 | Planificador | 10 | Borrador | — (componente interno) | Lanza las tareas automáticas a su hora: facturación recurrente (CU-17), recordatorios (CU-29), campaña anual (CU-13), caducidad de delegaciones y copias de seguridad (CU-53). Llama a los servicios a través del proxy. Cada ejecución queda en `EjecucionProceso` (FR-86). No es un actor (requisitos, sección 1.3) ni tiene tabla |
-| `PasarelaPagos`, `AdaptadorStripe`, `AdaptadorBanco` | 6 | Borrador | Adapter | Integraciones simuladas (NFR-27) |
+| `ReceptorNotificacionesPago` + `AdaptadorStripe` | 6 | **Propuesta** | Adapter | Notificaciones de pago de la pasarela (CU-34). Interfaz propia: segregación de interfaces |
+| `ProveedorExtractos` + `AdaptadorBanco` | 6 | **Propuesta** | Adapter | Movimientos del banco (CU-35). Sustituyen a `PasarelaPagos`: un banco no es una pasarela y cada adaptador solo implementa lo que usa (NFR-27) |
+| `ServicioCobros` | 6 | **Propuesta** | — (servicio) | Orquesta CU-33 a CU-36: registra los cobros de la pasarela y del banco, concilia (la conciliación la crea `MovimientoCobro.aplicarA()`), deshace, pide la aprobación de bajas al servicio de aprobaciones del área 4 calcula el saldo pendiente y el vencimiento de cada factura (`calcularSaldoPendiente()`, `estaVencida()`) y el `ResumenSaldo` (`<<DTO>>`) |
+| `ServicioAprobaciones` (nombre por decidir) | 4 | Borrador | — (servicio) | Crea y resuelve las `SolicitudExcepcion` (CU-22, CU-23). `ServicioCobros` le pide la aprobación de las bajas contables (CU-36, pasos 2-3). **Debe ser genérico:** no conoce facturas ni bajas; guarda la solicitud y avisa cuando se resuelve, y el área que la pidió actúa (patrón Observer, E3). Si llamara directamente a la factura o a la baja, habría lógica en los dos sentidos con las áreas 3 y 6 (cuestión 8.12) |
 | `CanalEnvio`, `AdaptadorCorreo`, `AdaptadorWhatsApp` | 5 | Borrador | Adapter / Bridge | Canales de envío (NFR-27) |
 | Facade de la API (nombre por decidir) | 11 | Borrador | Facade | Punto de entrada de la API externa; aplica las mismas reglas que la interfaz (RB-31) |
 
@@ -142,6 +146,10 @@ No son clases del dominio y **no tienen tabla en el E-R**, pero aparecen en los 
 | **EstadoEnvio** | SIN_ENVIAR, ENVIADA, FALLO_ENVIO | Factura |
 | **EstadoCliente** | PENDIENTE_ACTIVACION, ACTIVO, PAUSADO, BAJA_SOLICITADA, BAJA_EFECTIVA | Cliente (dec. 5) |
 | **TipoEstado** | DOCUMENTAL, COBRO, ENVIO | HistorialEstadoFactura |
+| **TipoSerie** | ORDINARIA, RECTIFICATIVA | SerieFacturacion |
+| **OrigenCobro** | PASARELA, BANCO | MovimientoCobro |
+| **EstadoMovimiento** | PENDIENTE, EN_REVISION, PARCIALMENTE_APLICADO, APLICADO | MovimientoCobro (derivado de los importes y de `enRevision`) |
+| **TipoBajaContable** | ANULADA, INCOBRABLE | BajaContable |
 | **Rol** | LECTOR, ADMINISTRADOR, SUPERADMINISTRADOR -- + tienePermisoDe(requerido : Rol) : boolean| Usuario. Jerárquico (A-19): cada rol puede hacer lo del anterior |
 | **EstadoSolicitud** | PENDIENTE, APROBADA, RECHAZADA | SolicitudExcepcion |
 | **TipoPeriodo** | MES, TRIMESTRE | PeriodoContable |
@@ -158,7 +166,6 @@ Un valor nuevo se anuncia igual que un atributo nuevo.
 | 1 | `Documento.formato`, `Documento.destino` (según la decisión 4: puede acabar siendo una FK y no un enumerado) |
 | 4 | `SolicitudExcepcion.tipo` |
 | 5 | `Mensaje.estadoEntrega`, `PlantillaComunicacion.tipo` |
-| 6 | `TransaccionPasarela.estado`, `BajaContable.tipo` |
 | 7 | `Comentario.destino` (según la decisión 4), `Incidencia.estado`, `Tarea.tipo`, `Tarea.estado`, `Notificacion.tipo`, `Notificacion.prioridad`, `PreferenciaNotificacion.canal` |
 | 9 | `CopiaSeguridad.estado`, `RestauracionCopia.resultado` |
 | 10 | `EjecucionProceso.tipo` |
@@ -198,12 +205,15 @@ Obligatorias para todos los que hagan el E-R. **Solo se traducen clases en estad
 **Atributos derivados**
 - No se almacenan, salvo justificación.
 - **Excepción justificada:** `base_imponible`, `impuestos` y `total` se guardan, porque una factura emitida es inalterable (RB-07, RB-11) y no puede depender de recalcular.
-- `saldoPendiente` no se guarda nunca: se calcula (consulta o vista) a partir de las conciliaciones y la baja contable (RB-10).
+- El saldo pendiente no es columna ni atributo de `Factura`: lo calcula `ServicioCobros` (consulta o vista) como total − conciliaciones no deshechas − baja contable − abonos emitidos que rectifican la factura (RB-10, A-27).
 
 **Restricciones que deben aparecer**
 - `UNIQUE (configuracion_recurrente_id, periodo_inicio)` en `factura` (FR-100). **No choca con las facturas puntuales ni con las rectificativas:** en ellas las dos columnas son nulas, y las bases de datos habituales (PostgreSQL, MySQL, SQLite, Oracle) admiten varias filas con nulos en una restricción única porque un nulo no se considera igual a otro. Ojo: SQL Server solo admite un nulo; si se usara, haría falta un índice único filtrado (`WHERE tipo = 'RECURRENTE'`).
 - `UNIQUE (serie_facturacion_id, numero_factura)` en `factura` (RB-01).
-- `UNIQUE (id_evento_externo)` en la transacción de pasarela (no contar dos veces el mismo cobro).
+- `UNIQUE (origen, id_externo)` en `movimiento_cobro` (no contar dos veces el mismo cobro). `id_externo` es obligatorio: todo movimiento viene de la pasarela o del banco.
+- **Índice único parcial** en `conciliacion`: `UNIQUE (movimiento_cobro_id, factura_id) WHERE fecha_deshecho IS NULL` (FR-87). Una restricción `UNIQUE` normal no sirve, porque una pareja deshecha puede volver a conciliarse. `deshecha` no es columna: se deriva de `fecha_deshecho`.
+- `CHECK` en `factura`: `estado_cobro` es nulo si la factura es un borrador o un abono (`tipo = RECTIFICATIVA` y total negativo) (A-23, A-27).
+- En `movimiento_cobro` no se guarda el estado: se deriva de los importes; solo se guardan `en_revision` y `motivo_revision`.
 
 **Qué no entra en el E-R**
 - Clases de diseño de la sección 5 (generadores, DTO, adaptadores, proxy, fachada).
@@ -217,12 +227,12 @@ Obligatorias para todos los que hagan el E-R. **Solo se traducen clases en estad
 
 ## 8. Cuestiones abiertas para la sesión
 
-1. **Estado de cobro y conciliaciones de una factura `RECTIFICADA`** (áreas 3 y 6, relacionada con Q-12). Opciones: la original conserva su estado de cobro y el saldo se compensa con la rectificativa; el saldo pendiente pasa a la rectificativa; o se anula el saldo pendiente de la original.
-2. **`TransaccionPasarela` o `MovimientoCobro`** con `origen` (área 6, FR-26).
+1. **Estado de cobro de una factura `RECTIFICADA`: resuelta.** La original conserva su estado de cobro. Un abono (rectificativa con total negativo, `esAbono()`) compensa su saldo y no tiene estado de cobro propio; si la deja a 0 pasa a `PAGADA`, con el motivo en `HistorialEstadoFactura`. La validación manual de RB-14 es la emisión de la rectificativa, que hace un Administrador (RB-21) y se aprueba sobre el umbral (RB-24). Una rectificativa positiva tiene su propio cobro. Sigue el RD 1619/2012 (art. 15) y la práctica habitual. Suposición A-27 en los requisitos.
+2. **`TransaccionPasarela` o `MovimientoCobro`: resuelta.** `MovimientoCobro` con `origen` (pasarela o banco; ningún caso de uso registra cobros a mano, así que no hay origen manual), porque CU-35 y UR-28 hablan de movimientos bancarios o de pasarela.
 3. **Dónde vive el estado del cliente** (decisión 5).
 4. **Asociación `RelacionComercial` — `ConfiguracionRecurrente`** (áreas 2 y 3).
 5. **Clases nuevas sin responsable confirmado:** Etiqueta, ObjetivoFacturacion, InformeProgramado; y si se modela Presupuesto.
-6. Q-04, Q-07 y Q-12 siguen abiertas y se anotan como supuestos.
+6. Q-04 y Q-07 siguen abiertas y se anotan como supuestos. **Q-12, supuesto:** el excedente de un cobro queda sin aplicar en el movimiento y se revisa en la bandeja de conciliación; la factura se marca con `cobroExcesivo`. El destino del sobrante (devolución, saldo a favor) sigue abierto (A-28).
 7. **Cambio de rol de un usuario (Q-13, áreas 9 y 4).** Al cambiar el rol, ¿qué pasa con sus clientes asignados (un Lector que asciende ya los ve todos; un Administrador que baja a Lector necesita asignaciones) y con las solicitudes de excepción que tenga pendientes de resolver? FR-110, RB-38 y el FA-1 de CU-49 ya están añadidos a los documentos de la Entrega 1.
 8. **Contradicciones con la propuesta de entidades: resueltas** en la versión del 3/11 de `Propuesta_entidades_y_clases_Entrega2.md` (rol sin herencia, serie y periodo `* — 0..1`, `ObjetivoFacturacion` no opcional, CU-17 en las secuencias).
 9. **Historial de un borrador eliminado: resuelta.** El historial se borra en cascada con el borrador (sección 7). Se descartan el borrado lógico (contradice UR-08 y CU-16) y la conservación del historial sin factura (filas huérfanas a cambio de poco). La composición del diagrama de clases se mantiene.
@@ -250,6 +260,14 @@ Obligatorias para todos los que hagan el E-R. **Solo se traducen clases en estad
       - Descartada: una fila fija en `usuario` para el sistema. Obligaría a darle un rol que no puede ser de `Rol`, contradiría esta misma cuestión y complicaría RB-38 y RB-39.
     - **Las reglas de negocio se siguen comprobando en el servicio real** (RB-05, RB-26, RB-30, RB-37…): el proxy decide quién puede llamar, no si la operación es válida.
     - **Un rechazo del proxy a una tarea del planificador no puede pasar en silencio** (BR-04): se registra como fallo en `EjecucionProceso` (FR-86) y genera una alerta en el estado del sistema (CU-56).
+12. **Lógica entre áreas en los dos sentidos** (convención de la sección 2):
+    - **Áreas 3 y 6: resuelta.** El saldo y el vencimiento los calcula `ServicioCobros`; `Factura` no tiene derivados de cobro.
+    - **Áreas 3 ↔ 4 y 6 ↔ 4 (aprobaciones): aviso al área 4.** El área 3 o la 6 piden la aprobación y, al resolverse, alguien tiene que emitir la factura, devolverla a borrador o registrar la baja. Para no crear un ciclo, `ServicioAprobaciones` es genérico y avisa; quien pidió la aprobación escucha y actúa (Observer).
+    - **Áreas 2 ↔ 3: aviso al área 2.** `ConfiguracionRecurrente` (área 3) lee el precio de `RangoTarifa` (área 2). Si la revisión anual (CU-13, área 2) necesita la facturación anual del cliente, debe pedírsela a un servicio del área 3, sin que sus clases recorran las facturas.
+    - **Áreas 3 ↔ 6: emisión de un abono, aviso al área 3.** Cuando un abono deja la factura original a 0, la original pasa a `PAGADA` (A-27). Calcularlo es lógica del área 6, así que `FacturaRectificativa.emitir()` no lo hace: avisa de que se ha emitido y `ServicioCobros` recalcula el estado de cobro de la original (`recalcularEstadoCobro()`). El área 3 no llama a clases del área 6.
+    - **Áreas 5 ↔ 6: recordatorios, aviso al área 5.** Los recordatorios necesitan el saldo y el vencimiento (el área 5 consulta a `ServicioCobros`), y se cancelan o se reanudan cuando cambia el estado de cobro (CU-35, RB-37). Para que el área 6 no dependa del área 5, `ServicioCobros` avisa del cambio y el área 5 reacciona.
+    - **Áreas 3 ↔ 4: periodo contable, anotada.** `emitir()` recibe un `PeriodoContable` (área 4) y el cierre de periodo consulta facturas. No se resuelve ahora: queda como excepción documentada, porque el periodo es un dato que se pasa, no lógica que se invoca.
+    - **Área 9: infraestructura transversal, aceptada.** El proxy de permisos protege los servicios de todas las áreas, y todas escriben en `RegistroAuditoria`. Se acepta porque el proxy y la auditoría no tienen lógica de negocio: solo comprueban y registran. Esto cubre también la relación entre las áreas 9 y 10.
 
 ## 9. Registro de cambios
 
@@ -348,6 +366,50 @@ Obligatorias para todos los que hagan el E-R. **Solo se traducen clases en estad
 | Cambio | Motivo |
 |---|---|
 | El estado «Congelada» pasa a llamarse **«Aprobada»** | «Congelada» podía entenderse como «detenida»; «Aprobada» expresa que el grupo la ha revisado y dado por buena |
+
+### v2.12 (4/11/2026)
+
+| Cambio | Motivo |
+|---|---|
+| `SerieFacturacion.tipo : TipoSerie` (ORDINARIA / RECTIFICATIVA) y nuevo enumerado `TipoSerie`; las rectificativas solo se emiten en series de tipo `RECTIFICATIVA` | El RD 1619/2012 (art. 6.1.a) obliga a expedir las rectificativas en series específicas. Se modela como tipo configurable (CU-21) para no fijar la norma española en el código (BR-12) |
+
+### v2.13 (4/11/2026)
+
+| Cambio | Motivo |
+|---|---|
+| `MovimientoCobro` sustituye a `TransaccionPasarela`; `Conciliacion` y `BajaContable` actualizadas; enumerados `OrigenCobro`, `EstadoMovimiento` y `TipoBajaContable` | Diagramas del área 6; cuestiones 8.1 y 8.2 resueltas |
+| `Factura`: `/cobroExcesivo` pasa a derivado; nuevo `/vencida`; `FacturaRectificativa.esAbono()` | Con el excedente en el movimiento, la marca no podía activarse si se guardaba; una factura parcialmente cobrada perdía la información de vencida |
+| Adapter con dos interfaces (`ReceptorNotificacionesPago`, `ProveedorExtractos`) en lugar de `PasarelaPagos` | Segregación de interfaces: cada adaptador solo implementa lo que usa |
+| E-R: `UNIQUE (origen, id_externo)`, índice único parcial en `conciliacion`, `CHECK` de `estado_cobro` para abonos | Reglas del área 6 |
+
+### v2.14 (4/11/2026)
+
+| Cambio | Motivo |
+|---|---|
+| Se elimina el cobro manual: `OrigenCobro` queda en PASARELA y BANCO, `idExterno` es obligatorio y desaparece `registrarCobroManual()` | Ningún caso de uso registra un cobro a mano (UR-28 y CU-35 hablan de movimientos bancarios o de pasarela) |
+| `Conciliacion.deshecha` pasa a derivado de `fechaDeshecho`, con invariante; el índice parcial usa `fecha_deshecho IS NULL` | `deshecha` y `fechaDeshecho` decían lo mismo |
+| `/cobroExcesivo` se define con la referencia del movimiento (área 3) | Evitar falsos positivos cuando un movimiento paga varias facturas y aún no se ha repartido |
+| `saldoPendiente` en la sección 7 resta también los abonos; nueva fila `ServicioAprobaciones` en la sección 5 | Faltaban en la v2.13 |
+
+### v2.15 (4/11/2026)
+
+| Cambio | Motivo |
+|---|---|
+| `cobroExcesivo` vuelve a ser una marca guardada en `Factura`; la pone `ServicioCobros` al conciliar, como `estadoCobro`. Regla: los derivados de `Factura` (`/saldoPendiente`, `/vencida`) solo usan sus asociaciones directas | Como derivado obligaba a `Factura` (área 3) a conocer `MovimientoCobro` (área 6): dependencia en los dos sentidos. Así va solo del área 6 a la 3, y coincide con la E1, que lo define como marca |
+
+### v2.16 (4/11/2026)
+
+| Cambio | Motivo |
+|---|---|
+| `Factura` pierde `/saldoPendiente` y `/vencida`: los calcula `ServicioCobros` (`calcularSaldoPendiente()`, `estaVencida()`). Sustituye a la regla de la v2.15 | Esos derivados usaban clases del área 6 mientras el área 6 actualiza `Factura`: lógica en los dos sentidos. Reparto: el área 3 es lo que se factura y la 6, lo que se cobra |
+| Nueva convención: dependencias de lógica entre áreas en un solo sentido. Nueva cuestión 8.12 con avisos a las áreas 2 y 4 | Evitar problemas de mantenimiento: un cambio en un área no debe obligar a cambiar otra |
+
+### v2.17 (4/11/2026)
+
+| Cambio | Motivo |
+|---|---|
+| Cuestión 8.12: tres casos nuevos (abono entre las áreas 3 y 6, recordatorios entre las 5 y 6, periodo contable entre las 3 y 4) y el área 9 tratada como infraestructura transversal | Completar el repaso de la lógica entre áreas |
+| La convención de dependencias se presenta como guía, con excepciones documentadas en la 8.12 | No todas las relaciones entre áreas se pueden ni conviene evitar |
 
 ### Cambios posteriores
 

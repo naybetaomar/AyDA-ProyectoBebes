@@ -481,6 +481,8 @@ Marcas superpuestas, que no cambian el estado de cobro:
 | A-24 | La anulación o la declaración de incobrable de una factura parcialmente cobrada se aplica al saldo pendiente; lo cobrado sigue cobrado | Decisión del equipo: es el caso habitual de una deuda parcial que no se va a cobrar | RB-08, FR-24 |
 | A-25 | La baja efectiva de un cliente es un estado final; para volver a trabajar con él se crea una nueva relación comercial | Decisión del equipo: evita estados intermedios no pedidos y mantiene el recobro de lo adeudado | RB-13, FR-15 |
 | A-26 | Un usuario interno puede cambiar de rol (por ejemplo, un Lector que asciende a Administrador) sin dar de baja su cuenta | Inferencia del equipo: el cliente pidió roles jerárquicos (A-19) y gestionar altas y desactivaciones (UR-40); sin cambio de rol, un ascenso obligaría a desactivar la cuenta y crear otra, rompiendo la continuidad de su histórico | FR-110, RB-38, RB-39 |
+| A-27 | Una factura rectificativa con total negativo (abono) no tiene estado de cobro: compensa el saldo pendiente de la factura original. Si lo deja a 0, la original pasa a «pagada»; la validación manual que pide RB-14 es la propia emisión de la rectificativa, que hace un Administrador (RB-21) y se aprueba si supera el umbral (RB-24). Una rectificativa positiva tiene su propio cobro. La rectificación por sustitución queda fuera del alcance | Decisión del equipo (Entrega 2): sigue el RD 1619/2012 (art. 15) y la práctica habitual de facturación; matiza A-23 | FR-52, RB-14, A-23 |
+| A-28 | El importe cobrado que supera el saldo de una factura no se aplica a ella: queda sin aplicar en el movimiento de cobro, se revisa en la bandeja de conciliación (CU-35) y la factura se marca con cobro excesivo. El destino del sobrante (devolución, saldo a favor) sigue pendiente (Q-12) | Decisión del equipo (Entrega 2): concreta dónde queda el sobrante sin decidir qué se hace con él | FR-26, Q-12 |
 
 ## 7. Dudas, ambigüedades y cuestiones pendientes
 
@@ -497,7 +499,7 @@ Marcas superpuestas, que no cambian el estado de cobro:
 | Q-09 | ¿Se necesita un entorno de prueba separado o basta con simular y previsualizar? | Transcripción ampliada | UR-104 | El cliente admite «al menos una forma de simular»; se cubre con simulación |
 | Q-10 | ¿La reasignación de clientes requiere la aprobación de otro administrador? | Ampliación | FR-40 | Pendiente |
 | Q-11 | ¿Qué ocurre si el único Superadministrador es quien propone una excepción que supera el umbral, dado que nadie puede aprobar lo suyo? | Revisión del grupo | RB-04, UR-15 | Pendiente |
-| Q-12 | ¿Qué estado debe tener una factura con un cobro superior a su total y qué se hace con el importe sobrante (devolución, saldo a favor, abono en la siguiente factura)? | Revisión del grupo | FR-26 | Pendiente: el cliente solo pide señalar la diferencia para revisión |
+| Q-12 | ¿Qué estado debe tener una factura con un cobro superior a su total y qué se hace con el importe sobrante (devolución, saldo a favor, abono en la siguiente factura)? | Revisión del grupo | FR-26 | Pendiente: el cliente solo pide señalar la diferencia para revisión. Dónde queda el sobrante: supuesto A-28 |
 | Q-13 | Al cambiar el rol de un usuario, ¿qué ocurre con sus clientes asignados (un Lector que asciende ya ve todos; un Administrador que baja a Lector necesita asignaciones) y con las solicitudes de excepción que tenga pendientes de resolver? | Revisión del grupo (Entrega 2) | FR-110, FR-40, RB-15 | Pendiente |
 
 ## 8. Trazabilidad

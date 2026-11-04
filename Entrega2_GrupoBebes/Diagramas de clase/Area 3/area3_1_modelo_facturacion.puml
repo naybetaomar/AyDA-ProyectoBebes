@@ -17,7 +17,6 @@ abstract class Factura {
   - /baseImponible : Decimal
   - /impuestos : Decimal
   - /total : Decimal
-  - /saldoPendiente : Decimal
   - fechaEmision : Date [0..1]
   - fechaEmisionProgramada : Date [0..1]
   - fechaVencimiento : Date
@@ -51,6 +50,7 @@ class FacturaRecurrente {
 class FacturaRectificativa {
   - motivo : String
   --
+  + esAbono() : Boolean
   + emitir(serie : SerieFacturacion, periodo : PeriodoContable) : void
 }
 
@@ -81,6 +81,7 @@ class ConceptoCatalogo {
 class SerieFacturacion {
   - id : Long
   - prefijo : String
+  - tipo : TipoSerie
   - siguienteNumero : Integer
   --
   + asignarSiguienteNumeroFactura() : String
@@ -132,6 +133,10 @@ enum EstadoEnvio {
   ENVIADA
   FALLO_ENVIO
 }
+enum TipoSerie {
+  ORDINARIA
+  RECTIFICATIVA
+}
 enum TipoEstado {
   DOCUMENTAL
   COBRO
@@ -160,17 +165,24 @@ Factura ..> EstadoDocumental
 Factura ..> EstadoCobro
 Factura ..> EstadoEnvio
 HistorialEstadoFactura ..> TipoEstado
+SerieFacturacion ..> TipoSerie
 
 note top of Factura
   **id**: identificador interno, existe desde el borrador.
   **numeroFactura**: número legal; se asigna en emitir()
   desde la serie (RB-01) y no se modifica.
-  **estadoCobro** y **estadoEnvio**: nulos hasta emitirse (A-23).
-  **/saldoPendiente**: total − conciliaciones no deshechas
-  − baja contable (RB-10).
+  **estadoCobro** y **estadoEnvio**: nulos hasta emitirse (A-23);
+  estadoCobro también es nulo en los abonos (A-27).
+  **Lo que se factura (área 3) / lo que se cobra (área 6).**
+  El saldo pendiente y el vencimiento los calcula
+  ServicioCobros (área 6). Factura solo guarda estadoCobro
+  y cobroExcesivo (marca de la E1), que actualiza el área 6
+  al conciliar. La lógica va solo del área 6 a la 3.
   Serie y periodo: 0..1 en borrador; 1 una vez emitida.
   **emitir()**: la serie debe pertenecer a la EntidadEmisora
-  de la factura {serie.entidadEmisora = entidadEmisora}.
+  de la factura {serie.entidadEmisora = entidadEmisora}
+  y, en puntuales y recurrentes, de tipo ORDINARIA
+  {serie.tipo = ORDINARIA}; la rectificativa, ver su nota.
 end note
 
 note bottom of FacturaRectificativa
@@ -178,6 +190,13 @@ note bottom of FacturaRectificativa
   y después a facturaOriginal.marcarRectificada()
   (CU-19, RB-11). La original no cambia mientras
   la rectificativa siga en borrador o pendiente.
+  Se emite en una serie específica
+  {serie.tipo = RECTIFICATIVA}
+  (RD 1619/2012, art. 6.1.a).
+  **esAbono()** = total negativo: compensa el saldo
+  de la original y no tiene estado de cobro (A-27).
+  Al emitirse, avisa; no recalcula el cobro de la
+  original: eso lo hace el área 6 (cuestión 8.12).
 end note
 
 note bottom of FacturaRecurrente

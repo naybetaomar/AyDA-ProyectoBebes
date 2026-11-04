@@ -1,0 +1,106 @@
+@startuml area6_2_adapter_servicio
+skinparam classAttributeIconSize 0
+hide empty members
+title Área 6 — Diagrama 2: Servicio de cobros y adaptadores de proveedores
+
+class ServicioCobros {
+  + registrarNotificacion(receptor : ReceptorNotificacionesPago, contenido : String) : MovimientoCobro
+  + importarMovimientos(proveedor : ProveedorExtractos, desde : DateTime) : MovimientoCobro [0..*]
+  + conciliarAutomaticamente(movimiento : MovimientoCobro) : void
+  + conciliarManualmente(movimiento : MovimientoCobro, factura : Factura, importe : Decimal, realizadoPor : Usuario) : Conciliacion
+  + deshacerConciliacion(conciliacion : Conciliacion, motivo : String, realizadoPor : Usuario) : void
+  + solicitarBajaContable(factura : Factura, tipo : TipoBajaContable, motivo : String, solicitante : Usuario) : SolicitudExcepcion
+  + registrarBajaAprobada(solicitud : SolicitudExcepcion) : BajaContable
+  + calcularSaldoPendiente(factura : Factura) : Decimal
+  + estaVencida(factura : Factura) : Boolean
+  + recalcularEstadoCobro(factura : Factura) : void
+  + consultarSaldo(cliente : Cliente) : ResumenSaldo
+}
+
+interface ReceptorNotificacionesPago {
+  + traducirNotificacion(contenido : String) : MovimientoCobro
+}
+interface ProveedorExtractos {
+  + obtenerMovimientosDesde(desde : DateTime) : MovimientoCobro [0..*]
+}
+
+class AdaptadorStripe {
+  + traducirNotificacion(contenido : String) : MovimientoCobro
+}
+class AdaptadorBanco {
+  + obtenerMovimientosDesde(desde : DateTime) : MovimientoCobro [0..*]
+}
+
+class ClienteStripe <<externo>>
+class ApiBanco <<externo>>
+
+class ServicioAprobaciones <<referencia>>
+
+class MovimientoCobro
+class Conciliacion
+class BajaContable
+class ResumenSaldo <<DTO>>
+
+ReceptorNotificacionesPago <|.. AdaptadorStripe
+ProveedorExtractos <|.. AdaptadorBanco
+AdaptadorStripe --> ClienteStripe : traduce >
+AdaptadorBanco --> ApiBanco : traduce >
+AdaptadorStripe ..> MovimientoCobro : <<create>>
+AdaptadorBanco ..> MovimientoCobro : <<create>>
+
+ServicioCobros ..> ReceptorNotificacionesPago : usa >
+ServicioCobros ..> ProveedorExtractos : usa >
+ServicioCobros ..> MovimientoCobro : usa >
+ServicioCobros ..> Conciliacion : usa >
+ServicioCobros ..> BajaContable : <<create>>
+ServicioCobros ..> ResumenSaldo : <<create>>
+ServicioCobros ..> ServicioAprobaciones : solicita aprobación >
+
+note top of ReceptorNotificacionesPago
+  **Dos interfaces pequeñas** (Target del Adapter) en lugar de una:
+  ningún adaptador implementa métodos que no usa
+  (principio de segregación de interfaces).
+  Notificaciones: la pasarela avisa de un pago (CU-34).
+  Extractos: movimientos del banco (CU-35).
+  Un proveedor que ofrezca ambas cosas implementa las dos.
+  Cambiar de proveedor = otro adaptador (NFR-27).
+end note
+
+note bottom of ClienteStripe
+  **Adaptee**: interfaz del proveedor,
+  que no se modifica. Hoy simulada (A-03).
+end note
+
+note bottom of ServicioAprobaciones
+  Área 4 (nombre por decidir).
+  Crea y resuelve la SolicitudExcepcion
+  de la baja contable (CU-36 pasos 2-3).
+end note
+
+note left of ServicioCobros
+  **Orquesta**; no crea las conciliaciones:
+  conciliarManualmente() comprueba las reglas,
+  llama a MovimientoCobro.aplicarA() y actualiza
+  estadoCobro y la marca cobroExcesivo de la factura
+  (si un movimiento con referencia = numeroFactura le
+  deja importe sin aplicar; compara texto, A-28).
+  Así el acoplamiento va del área 6 a la 3, no al revés.
+  Reglas: evento repetido → se ignora (CU-34 FE-1),
+  estados de cobro y recordatorios (RB-14, RB-37),
+  nunca «pagada» por acción masiva (RB-23).
+  Lo invocan la interfaz, la API y el planificador
+  a través del Proxy de permisos (área 9).
+end note
+
+note right of ServicioCobros
+  **calcularSaldoPendiente()** = total − conciliaciones no
+  deshechas − baja contable − abonos que la rectifican
+  (RB-10, A-27). Negativo → saldo a favor (Q-12).
+  **estaVencida()** = vencimiento pasado y saldo > 0
+  (aunque el estado sea PARCIALMENTE_CONCILIADA).
+  Factura no calcula nada de cobros: así no depende
+  del área 6.
+  Reacciona a la emisión de un abono con
+  recalcularEstadoCobro() de la original (A-27, 8.12).
+end note
+@enduml

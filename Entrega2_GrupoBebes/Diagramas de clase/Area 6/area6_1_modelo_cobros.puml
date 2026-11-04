@@ -1,0 +1,138 @@
+@startuml area6_1_modelo_cobros
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+title Área 6 — Diagrama 1: Modelo de cobros, conciliación y saldo
+
+class MovimientoCobro {
+  - id : Long {readOnly}
+  - origen : OrigenCobro {readOnly}
+  - idExterno : String {readOnly}
+  - referencia : String [0..1]
+  - importe : Decimal {readOnly}
+  - moneda : String {readOnly}
+  - fechaMovimiento : DateTime
+  - datosConfirmacion : String [0..1]
+  - enRevision : Boolean
+  - motivoRevision : String [0..1]
+  - /importeAplicado : Decimal
+  - /importeSinAplicar : Decimal
+  - /estado : EstadoMovimiento
+  --
+  + aplicarA(factura : Factura, importe : Decimal, realizadoPor : Usuario [0..1]) : Conciliacion
+  + marcarEnRevision(motivo : String) : void
+}
+
+class Conciliacion {
+  - id : Long {readOnly}
+  - importeAplicado : Decimal {readOnly}
+  - fecha : DateTime
+  - /deshecha : Boolean
+  - fechaDeshecho : DateTime [0..1]
+  - motivoDeshacer : String [0..1]
+  --
+  + deshacer(motivo : String, realizadoPor : Usuario) : void
+}
+
+class BajaContable {
+  - id : Long {readOnly}
+  - tipo : TipoBajaContable {readOnly}
+  - importeDadoDeBaja : Decimal {readOnly}
+  - motivo : String
+  - fecha : DateTime
+}
+
+class ResumenSaldo <<DTO>> {
+  - facturacionAcumulada : Decimal
+  - cobrado : Decimal
+  - saldoPendiente : Decimal
+  - saldoVencido : Decimal
+  - saldoAFavor : Decimal
+}
+
+enum OrigenCobro {
+  PASARELA
+  BANCO
+}
+enum EstadoMovimiento {
+  PENDIENTE
+  EN_REVISION
+  PARCIALMENTE_APLICADO
+  APLICADO
+}
+enum TipoBajaContable {
+  ANULADA
+  INCOBRABLE
+}
+
+abstract class Factura <<referencia>> {
+  - id : Long
+  - numeroFactura : String [0..1]
+  - estadoCobro : EstadoCobro [0..1]
+  - /total : Decimal
+  - fechaVencimiento : Date
+  - cobroExcesivo : Boolean
+}
+
+MovimientoCobro "1" -- "0..*" Conciliacion : se aplica en >
+Factura "1" -- "0..*" Conciliacion : se concilia en >
+Factura "1" -- "0..1" BajaContable : puede tener >
+MovimientoCobro ..> Conciliacion : <<create>>
+
+MovimientoCobro ..> OrigenCobro
+MovimientoCobro ..> EstadoMovimiento
+BajaContable ..> TipoBajaContable
+
+note top of MovimientoCobro
+  Cualquier entrada de dinero de la pasarela o del banco (UR-28, FR-26).
+  {único: origen + idExterno} → un evento no se cuenta dos veces (CU-34 FE-1).
+  **referencia** = numeroFactura; si no identifica una única
+  factura → enRevision (CU-35 FE-1).
+  **/importeSinAplicar** = importe − conciliaciones no deshechas.
+  El excedente se queda aquí, no en la factura (CU-35 FA-2; supuesto de Q-12).
+  **/estado**: EN_REVISION si enRevision; si no, PENDIENTE (nada aplicado),
+  PARCIALMENTE_APLICADO (queda sin aplicar) o APLICADO (todo aplicado).
+  Solo se guarda lo que no se puede calcular: enRevision y su motivo.
+end note
+
+note bottom of Conciliacion
+  La crea MovimientoCobro.aplicarA(): el movimiento
+  contiene sus conciliaciones y sabe cuánto le queda.
+  Un movimiento puede pagar varias facturas y una
+  factura cobrarse con varios movimientos.
+  {importeAplicado > 0}
+  {importeAplicado ≤ saldo pendiente de la factura}
+  {movimiento.moneda = factura.moneda} (FR-84)
+  {una sola conciliación no deshecha por
+   movimiento + factura} (FR-87)
+  **deshacer()** no borra: marca y conserva la traza (FR-27).
+  **/deshecha** = fechaDeshecho no nulo.
+  {fechaDeshecho, motivoDeshacer y deshechaPor:
+   todos nulos o todos no nulos}
+end note
+
+note bottom of BajaContable
+  CU-36. Se crea solo tras aprobarse la
+  SolicitudExcepcion (diagrama 3), y ambas
+  apuntan a la misma factura.
+  **importeDadoDeBaja** = saldo pendiente al
+  aprobarse; lo cobrado sigue cobrado (A-24).
+  El tipo nunca puede ser «pagada» (RB-08).
+end note
+
+note right of Factura
+  Definida en el área 3. 
+  No usa todos sus atributos.
+end note
+
+note bottom of ResumenSaldo
+  CU-33. Facturación acumulada y saldo
+  pendiente son conceptos distintos (RB-10).
+end note
+
+note as Trazabilidad
+  Todas las clases persistentes de este diagrama llevan
+  creadoPor, creadoEn, modificadoPor y modificadoEn (NFR-03);
+  no se dibujan. Usuario nulo = acción automática (Sistema).
+end note
+@enduml

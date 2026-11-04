@@ -2,7 +2,7 @@
 
 Borrador de trabajo para que el equipo fije **una lista común de entidades y nombres** antes de repartir los diagramas (E-R físico, clases, secuencia y componentes). Se ha extraído de `Especificacion Requisitos.md` (FR, RB, glosario y estados) y de los 59 casos de uso. Está actualizada a la forma actual de la entrega (estados, permisos y CU-59). Es una propuesta, no una decisión: la sección 6 recoge lo que hay que decidir entre todos.
 
-**Actualizada el 3/11/2026** para coincidir con `Catalogo_clases_referencia_E2_v2.11.md`. Si los dos documentos no coinciden, manda el catálogo.
+**Actualizada el 3/11/2026** para coincidir con `Catalogo_clases_referencia_E2_v2.17.md`. Si los dos documentos no coinciden, manda el catálogo.
 
 **Convenciones propuestas**
 - Nombres de entidad en español, singular, `PascalCase` (en el E-R físico: tabla en `snake_case`, p. ej. `RelacionComercial` → `relacion_comercial`).
@@ -21,17 +21,17 @@ Borrador de trabajo para que el equipo fije **una lista común de entidades y no
 | 4 | **RelacionComercial** | id, fechaInicio, condicionesPago, fechaBaja (el estado no se repite aquí: vive en `Cliente.estadoCliente`) | FR-03, FR-07, FR-16, RB-12, RB-30 |
 | 5 | **RangoTarifa** (plan) | id, facturacionDesde, facturacionHasta, precioMensual | FR-10, UR-10 |
 | 6 | **Pausa** | relacionComercial, motivo, fechaInicio, fechaPrevistaReactivacion, reactivacionConfirmada | FR-15, RB-05, RB-29 |
-| 7 | **Factura** | id (clave técnica, existe desde el borrador), numeroFactura [0..1] (único, solo al emitirse, RB-01), estadoDocumental (borrador / pendiente de aprobación / emitida / rectificada), estadoCobro [0..1] (nulo hasta emitirse, A-23), estadoEnvio [0..1] (nulo hasta emitirse), enDisputa, cobroExcesivo, modificacionManual, moneda, baseImponible, impuestos, total y saldoPendiente (derivados), fechaEmision [0..1], fechaEmisionProgramada [0..1], fechaVencimiento, rutaPdf [0..1], hashPdf [0..1], migrada. El tipo no es atributo: es la herencia `FacturaPuntual` / `FacturaRecurrente` / `FacturaRectificativa` (en el E-R, una columna `tipo`) | FR-04, FR-06, FR-09, FR-19, FR-23, RB-01, RB-07, RB-11 |
+| 7 | **Factura** | id (clave técnica, existe desde el borrador), numeroFactura [0..1] (único, solo al emitirse, RB-01), estadoDocumental (borrador / pendiente de aprobación / emitida / rectificada), estadoCobro [0..1] (nulo hasta emitirse, A-23, y en los abonos, A-27), estadoEnvio [0..1] (nulo hasta emitirse), enDisputa, cobroExcesivo (marca que pone el servicio de cobros, A-28), modificacionManual, moneda, baseImponible, impuestos y total (derivados; el saldo pendiente y el vencimiento los calcula el servicio de cobros del área 6), fechaEmision [0..1], fechaEmisionProgramada [0..1], fechaVencimiento, rutaPdf [0..1], hashPdf [0..1], migrada. El tipo no es atributo: es la herencia `FacturaPuntual` / `FacturaRecurrente` / `FacturaRectificativa` (en el E-R, una columna `tipo`) | FR-04, FR-06, FR-09, FR-19, FR-23, RB-01, RB-07, RB-11 |
 | 7b | **HistorialEstadoFactura** | id, tipoEstado (documental / cobro / envío), estadoAnterior [0..1], estadoNuevo, fecha, motivo [0..1], usuario [0..1] (nulo = transición del sistema) | FR-09, decisión 1 |
 | 8 | **LineaFactura** | factura, concepto, cantidad, precioUnitario, descuento, porcentajeImpuesto (copia del impuesto al crear la línea, RB-06), importe (derivado) | FR-04, FR-17 |
-| 9 | **SerieFacturacion** | id, prefijo, siguienteNumero, entidadEmisora | FR-13 |
+| 9 | **SerieFacturacion** | id, prefijo, tipo (ordinaria / rectificativa: las rectificativas van en serie específica, RD 1619/2012 art. 6.1.a), siguienteNumero, entidadEmisora | FR-13 |
 | 10 | **ConceptoCatalogo** | id, descripcion, precioPorDefecto (el impuesto por defecto es una asociación a `Impuesto`) | FR-17, RB-06 |
 | 11 | **Impuesto** | id, nombre, porcentaje, pais | FR-04 |
 | 11b | **ConfiguracionRecurrente** (propuesta; acordar con el área 2) | id, importeMensual [0..1] (si es nulo se usa el `RangoTarifa`), excepcionSinProrrateo, activa, fechaActivacion [0..1] | FR-05, FR-06, FR-100 |
 | 12 | **EntidadEmisora** | id, razonSocial, datosFiscales, logo, plantillaFactura | FR-65, FR-66 (opcional), FR-104 |
-| 13 | **TransaccionPasarela** | id, idEventoExterno (único), importe, moneda, fechaEvento, estado | FR-25, FR-87, NFR-27 |
-| 14 | **Conciliacion** | transaccion, factura, importeAplicado, fecha, deshecha | FR-26, FR-27, RB-14, RB-23 |
-| 15 | **BajaContable** | factura, tipo (anulada / incobrable), importeDadoDeBaja (saldo pendiente, A-24), motivo, aprobador, fecha | FR-24, RB-08 |
+| 13 | **MovimientoCobro** (sustituye a TransaccionPasarela) | id, origen (pasarela / banco), idExterno (único con el origen), referencia [0..1], importe, moneda, fechaMovimiento, datosConfirmacion [0..1], enRevision, motivoRevision [0..1]; importe aplicado, importe sin aplicar y estado, derivados | FR-25, FR-26, FR-87, NFR-27 |
+| 14 | **Conciliacion** | movimiento, factura, importeAplicado, fecha, deshecha (derivado de fechaDeshecho), fechaDeshecho [0..1], motivoDeshacer [0..1], realizadaPor [0..1] (nulo = automática), deshechaPor [0..1] | FR-26, FR-27, FR-87, RB-14, RB-23 |
+| 15 | **BajaContable** | factura, tipo (anulada / incobrable), importeDadoDeBaja (saldo pendiente, A-24), motivo, fecha; la aprobación es una SolicitudExcepcion (área 4) | FR-24, RB-08 |
 | 16 | **SolicitudExcepcion** | id, tipo, importe, estado (pendiente / aprobada / rechazada), comentarioAprobador, fecha | FR-11, FR-73, FR-74, RB-04, RB-25 |
 | 17 | **PeriodoContable** | id, tipo (mes / trimestre), inicio, fin, estado (abierto / cerrado) | FR-75, FR-76 |
 | 18 | **ReaperturaPeriodo** | periodo, motivo, usuario, fecha | FR-76, UR-83 |
@@ -101,8 +101,9 @@ Borrador de trabajo para que el equipo fije **una lista común de entidades y no
 | Factura | la emite | EntidadEmisora | * — 1 |
 | Factura | rectifica | Factura | 0..1 — 0..* (asociación reflexiva, FR-52) |
 | LineaFactura | se basa en | ConceptoCatalogo | * — 0..1 |
-| Factura | se concilia con | TransaccionPasarela, mediante Conciliacion | * — * |
+| Factura | se concilia con | MovimientoCobro, mediante Conciliacion | * — * |
 | Factura | puede tener | BajaContable | 1 — 0..1 |
+| BajaContable | aprobada mediante | SolicitudExcepcion | 0..1 — 1 (la misma factura en ambas) |
 | Factura | registra | HistorialEstadoFactura | 1 (composición) — 0..* |
 | HistorialEstadoFactura | realizado por | Usuario | * — 0..1 (nulo = transición del sistema) |
 | SolicitudExcepcion | se refiere a | Factura | * — 1 |
