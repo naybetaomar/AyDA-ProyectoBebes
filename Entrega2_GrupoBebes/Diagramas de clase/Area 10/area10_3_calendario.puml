@@ -1,0 +1,53 @@
+@startuml area10_1c_calendario
+title Área 10 — Calendario laboral (modelo propio, 3/3)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide empty members
+
+note "Trazabilidad (NFR-03):\ncreadoPor, creadoEn, modificadoPor, modificadoEn\nen todas las clases auditables.\ncreadoPor y modificadoPor admiten nulo = Sistema.\nNo se dibujan en cada clase." as NFR03
+
+package "Área 10 — Calendario laboral" #LightYellow {
+
+  class CalendarioLaboral {
+    - id : Long {readOnly}
+    - nombre : String
+    - pais : String
+    - anio : int
+    - diasLaborables : Set<DiaSemana>
+    + esLaborable(fecha : Date) : boolean
+    + siguienteDiaLaborable(fecha : Date) : Date
+    + anadirFestivo(fecha : Date, descripcion : String, ambito : AmbitoFestivo) : void
+    + eliminarFestivo(fecha : Date) : void
+    + festivosDelAnio(anio : int) : List<FechaFestiva>
+  }
+
+  class FechaFestiva {
+    - fecha : Date {readOnly}
+    - descripcion : String
+    - ambito : AmbitoFestivo
+  }
+}
+
+enum AmbitoFestivo {
+  NACIONAL
+  REGIONAL
+  LOCAL
+}
+
+CalendarioLaboral "1" *-- "0..*" FechaFestiva : contiene >
+FechaFestiva --> AmbitoFestivo : usa >
+
+NFR03 .. CalendarioLaboral
+
+note bottom of CalendarioLaboral
+  **FR-83:** si un vencimiento o recordatorio cae en
+  fin de semana o festivo, se traslada al siguiente
+  día laborable. **Q-02:** calendario configurable de
+  España para la fase inicial.
+  El Área 10 **no** conoce `Mensaje` ni `Factura`:
+  son ellas las que consultan `siguienteDiaLaborable()`.
+end note
+
+@enduml

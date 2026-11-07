@@ -1,0 +1,141 @@
+@startuml area10_3_relaciones_otras_areas
+title Área 10 — Relaciones con otras áreas (solo referencia)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide empty members
+
+' ============================================================
+' CENTRO: Área 10
+' ============================================================
+package "Área 10 — Configuración y Sistema" #LightYellow {
+  class ConfiguracionGlobal
+  class CalendarioLaboral
+  class EjecucionProceso
+  class ErrorTecnico
+  class Planificador <<componente interno>>
+}
+
+' ============================================================
+' ÁREA 9 — Seguridad y Auditoría (la más fuerte)
+' ============================================================
+package "Área 9 — Seguridad y Auditoría" {
+  class ProxyPermisos <<referencia>>
+  class RegistroAuditoria <<referencia>>
+  class CopiaSeguridad <<referencia>>
+  class Usuario <<referencia>>
+}
+
+' ============================================================
+' ÁREA 3 — Emisión de facturas
+' ============================================================
+package "Área 3 — Emisión de facturas" {
+  class Factura <<referencia>>
+  class GeneradorFactura <<referencia>>
+  class ConfiguracionRecurrente <<referencia>>
+}
+
+' ============================================================
+' ÁREA 4 — Aprobaciones y cierre contable
+' ============================================================
+package "Área 4 — Aprobaciones y cierre contable" {
+  class SolicitudExcepcion <<referencia>>
+  class PeriodoContable <<referencia>>
+}
+
+' ============================================================
+' ÁREA 5 — Envío y comunicaciones
+' ============================================================
+package "Área 5 — Envío y comunicaciones" {
+  class ReglaRecordatorio <<referencia>>
+  class Mensaje <<referencia>>
+  class PlantillaComunicacion <<referencia>>
+}
+
+' ============================================================
+' ÁREA 6 — Cobros, conciliación y saldo
+' ============================================================
+package "Área 6 — Cobros, conciliación y saldo" {
+  class ServicioCobros <<referencia>>
+}
+
+' ============================================================
+' ÁREA 2 — Relación comercial
+' ============================================================
+package "Área 2 — Relación comercial" {
+  class RevisionAnualPlan <<referencia>>
+}
+
+' ============================================================
+' ÁREA 8 — Informes y contabilidad
+' ============================================================
+package "Área 8 — Informes y contabilidad" {
+  class TipoCambio <<referencia>>
+  class PaqueteContable <<referencia>>
+}
+
+' ============================================================
+' ÁREA 11 — API externa
+' ============================================================
+package "Área 11 — API externa" {
+  class LlamadaAPI <<referencia>>
+  class ConsumidorAPI <<referencia>>
+}
+
+' ============================================================
+' RELACIONES — sentido único (convención sección 2 / cuestión 8.12)
+' ============================================================
+
+' --- El Planificador es el único que LLAMA a otras áreas ---
+Planificador ..> ProxyPermisos : invoca con identidad de sistema (8.11) >
+Planificador ..> GeneradorFactura : dispara CU-17 >
+Planificador ..> ServicioCobros : dispara CU-33..CU-36 >
+Planificador ..> RevisionAnualPlan : dispara CU-13 >
+Planificador ..> ReglaRecordatorio : dispara CU-29 >
+Planificador ..> CopiaSeguridad : dispara CU-53 >
+Planificador ..> PeriodoContable : dispara cierre/reapeertura (CU-25/26) >
+
+' --- ConfiguracionGlobal es LEÍDA por otras áreas (no las conoce) ---
+ConfiguracionGlobal <.. GeneradorFactura : lee umbral RB-25 >
+ConfiguracionGlobal <.. SolicitudExcepcion : lee umbral RB-04/RB-24 >
+ConfiguracionGlobal <.. ServicioCobros : lee moneda base (NFR-85) >
+ConfiguracionGlobal <.. ReglaRecordatorio : lee cadencia (UR-31) >
+ConfiguracionGlobal <.. PlantillaComunicacion : lee variables (RB-16) >
+ConfiguracionGlobal <.. TipoCambio : lee moneda base (FR-85) >
+ConfiguracionGlobal <.. PaqueteContable : lee configuración >
+ConfiguracionGlobal <.. LlamadaAPI : lee límites (FR-61) >
+ConfiguracionGlobal <.. ConsumidorAPI : lee límites (A-12) >
+
+' --- CalendarioLaboral es CONSULTADO por otras áreas ---
+CalendarioLaboral <.. ReglaRecordatorio : ajusta a día hábil (FR-83) >
+CalendarioLaboral <.. Mensaje : ajusta a día hábil (FR-83) >
+CalendarioLaboral <.. ServicioCobros : calcula vencimiento (FR-83) >
+
+' --- EjecucionProceso y ErrorTecnico se AUDITAN en área 9 ---
+EjecucionProceso ..> RegistroAuditoria : audita ejecución >
+ErrorTecnico ..> RegistroAuditoria : audita error (si aplica) >
+ErrorTecnico ..> LlamadaAPI : correlaciona por codigoIncidencia (FR-61/62) >
+
+' --- Usuario (solo para realizadoPor en auditoría) ---
+ConfiguracionGlobal ..> Usuario : realizadoPor >
+EjecucionProceso ..> Usuario : nulo = Sistema >
+ErrorTecnico ..> Usuario : resueltoPor [0..1] >
+
+note bottom of ConfiguracionGlobal
+  **Q-07 (abierta):** ¿un cambio de configuración
+  afecta a facturas nuevas, a condiciones nuevas
+  o a ambas? El modelo lo soporta con
+  `fechaVigenciaDesde/Hasta` en `EntradaConfiguracion`,
+  pero la **política** la decide el grupo.
+end note
+
+note bottom of Planificador
+  **Cuestión 8.11 (opción A):**
+  el Planificador **nunca** llama directamente
+  a un servicio real: siempre pasa por el Proxy.
+  Un rechazo del Proxy se registra como fallo
+  en `EjecucionProceso` y genera alerta (BR-04, CU-56).
+end note
+
+@enduml
