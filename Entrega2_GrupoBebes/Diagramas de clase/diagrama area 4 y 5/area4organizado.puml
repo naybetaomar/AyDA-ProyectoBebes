@@ -1,0 +1,75 @@
+@startuml
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 70
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam roundCorner 8
+skinparam ArrowColor #444444
+skinparam class {
+  BackgroundColor #F7F9FC
+  BorderColor #3B5B92
+}
+skinparam enum {
+  BackgroundColor #FFF8E5
+  BorderColor #B88A00
+}
+
+enum EstadoSolicitud {
+    PENDIENTE
+    APROBADA
+    RECHAZADA
+}
+
+enum TipoPeriodo {
+    MES
+    TRIMESTRE
+}
+
+enum EstadoPeriodo {
+    ABIERTO
+    CERRADO
+}
+
+class Usuario
+class Factura
+class PaqueteContable
+
+class SolicitudExcepcion {
+  - id : Long
+  - importe : BigDecimal
+  - estado : EstadoSolicitud
+  - comentarioAprobador : String
+  - fecha : LocalDateTime
+}
+
+class PeriodoContable {
+  - id : Long
+  - tipo : TipoPeriodo
+  - inicio : LocalDateTime
+  - fin : LocalDateTime
+  - estado : EstadoPeriodo
+}
+
+class ReaperturaPeriodo {
+    periodo : PeriodoContable
+    motivo : String
+    usuario : Usuario
+    fecha : LocalDateTime
+}
+
+' --- Relaciones (flujo vertical) ---
+Usuario "1" -down-> "0..*" SolicitudExcepcion : solicita
+Usuario "0..1" -down-> "0..*" SolicitudExcepcion : resuelve
+SolicitudExcepcion "0..*" -down-> "1" Factura : sobre
+Factura "0..*" -down-> "0..1" PeriodoContable : pertenece a
+PeriodoContable "1" -down-> "0..*" ReaperturaPeriodo : tiene
+PeriodoContable "1" -down-> "0..*" PaqueteContable : tiene
+ReaperturaPeriodo "0..*" -left-> "1" Usuario : realizada por
+
+' --- Enums a los lados ---
+SolicitudExcepcion .right.> EstadoSolicitud
+SolicitudExcepcion .left.> TipoSolicitud
+PeriodoContable .left.> TipoPeriodo
+PeriodoContable .right.> EstadoPeriodo
+@enduml
