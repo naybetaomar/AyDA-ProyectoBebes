@@ -156,6 +156,7 @@ No son clases del dominio y **no tienen tabla en el E-R**, pero aparecen en los 
 | **EstadoPeriodo** | ABIERTO, CERRADO | PeriodoContable |
 | **Canal** | EMAIL, WHATSAPP | Contacto, ConsentimientoCanal, Mensaje |
 | **EstadoNotificacion** | NUEVA, LEIDA, RESUELTA | Notificacion |
+| **TipoPlantilla** | FACTURA, RECORDATORIO | PlantillaComunicacion |
 
 Un valor nuevo se anuncia igual que un atributo nuevo.
 
