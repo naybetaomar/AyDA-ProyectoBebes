@@ -157,6 +157,7 @@ No son clases del dominio y **no tienen tabla en el E-R**, pero aparecen en los 
 | **Canal** | EMAIL, WHATSAPP | Contacto, ConsentimientoCanal, Mensaje |
 | **EstadoNotificacion** | NUEVA, LEIDA, RESUELTA | Notificacion |
 | **TipoPlantilla** | FACTURA, RECORDATORIO | PlantillaComunicacion |
+| **EstadoEntrega** | PENDIENTE, ENVIADO, ENTREGADO, FALLIDO | Mensaje |
 
 Un valor nuevo se anuncia igual que un atributo nuevo.
 
