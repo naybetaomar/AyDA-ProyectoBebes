@@ -35,6 +35,9 @@ abstract class Factura {
   + volverABorrador(motivo : String) : void
   + emitir(serie : SerieFacturacion, periodo : PeriodoContable) : void
   + marcarRectificada() : void
+  + registrarEstadoEnvio(estado : EstadoEnvio) : void
+  + marcarEnDisputa(motivo : String) : void
+  + quitarDisputa() : void
 }
 
 class FacturaPuntual

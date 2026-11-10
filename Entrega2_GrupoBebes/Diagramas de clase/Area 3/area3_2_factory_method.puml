@@ -1,7 +1,19 @@
 @startuml area3_2_factory_method
 skinparam classAttributeIconSize 0
 hide empty members
-title Área 3 — Diagrama 2: Patrón Factory Method (creación de facturas)
+title Área 3 — Diagrama 2: Servicio de facturación y patrón Factory Method
+
+class ServicioFacturacion {
+  + emitirPuntual(datos : DatosFactura) : Factura
+  + generarRecurrentes(fecha : Date) : FacturaRecurrente [0..*]
+  + emitirRectificativa(datos : DatosFactura) : FacturaRectificativa
+  + emitir(factura : Factura) : void
+  + consultarFacturas(cliente : Cliente) : Factura [0..*]
+  + registrarEstadoEnvio(factura : Factura, estado : EstadoEnvio) : void
+  + marcarEnDisputa(factura : Factura, motivo : String) : void
+  + quitarDisputa(factura : Factura) : void
+  + alResolverSolicitud(solicitud : SolicitudExcepcion) : void
+}
 
 abstract class GeneradorFactura {
   + generar(datos : DatosFactura) : Factura
@@ -35,6 +47,9 @@ class FacturaPuntual
 class FacturaRecurrente
 class FacturaRectificativa
 
+ServicioFacturacion .down.> GeneradorFactura : usa >
+ServicioFacturacion .down.> Factura : gestiona >
+
 GeneradorFactura <|-- GeneradorPuntual
 GeneradorFactura <|-- GeneradorRecurrente
 GeneradorFactura <|-- GeneradorRectificativa
@@ -51,6 +66,18 @@ GeneradorFactura .right.> DatosFactura : usa >
 GeneradorPuntual .down.> FacturaPuntual : <<create>>
 GeneradorRecurrente .down.> FacturaRecurrente : <<create>>
 GeneradorRectificativa .down.> FacturaRectificativa : <<create>>
+
+note right of ServicioFacturacion
+  **Punto de entrada del área 3** (igual que ServicioCobros en el 6).
+  Las demás áreas lo llaman a través del proxy de permisos:
+  · área 11: consultarFacturas() (CU-57)
+  · área 5: registrarEstadoEnvio(), marcarEnDisputa() / quitarDisputa() (CU-27, CU-28, CU-31)
+  · área 10: generarRecurrentes() desde la tarea programada (CU-17)
+  Escucha «solicitud resuelta» (área 4, 8.12) con alResolverSolicitud():
+  aprobada → emitir(); rechazada → factura.volverABorrador() conservando lo propuesto.
+  emitir() pide la serie y el periodo y llama a factura.emitir().
+  No calcula saldo ni vencimiento: eso es del área 6.
+end note
 
 note left of GeneradorFactura
   **Creator.** generar() es la parte común:
