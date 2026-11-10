@@ -1,0 +1,101 @@
+@startuml area8_1_modelo_informes
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+title Área 8 — Diagrama 1: Modelo de informes y contabilidad
+
+class ObjetivoFacturacion {
+    - id : Long {readOnly}
+    - tipoPeriodo : TipoPeriodo
+    - periodo : String
+    - importeObjetivoFacturado : Decimal
+    - importeObjetivoCobrado : Decimal
+    --
+    + calcularProgresoFacturacion(importeReal : Decimal) : Decimal
+    + calcularProgresoCobro(importeReal : Decimal) : Decimal
+}
+
+class PaqueteContable {
+    - id : Long {readOnly}
+    - version : Integer
+    - fechaGeneracion : DateTime
+    - rutaZip : String
+    - hashFichero : String
+    - /esRegeneracion : Boolean
+    --
+    + estaCompleto() : Boolean
+}
+
+class TipoCambio {
+    - id : Long {readOnly}
+    - moneda : String
+    - fecha : Date
+    - valor : Decimal
+    --
+    + convertirAMonedaBase(importe : Decimal) : Decimal
+}
+
+class ExportacionMasiva {
+    - id : Long {readOnly}
+    - criterios : String
+    - fechaExportacion : DateTime
+    - rutaFichero : String
+    - fechaCaducidad : DateTime
+    - /estaCaducado : Boolean
+    --
+    + verificarDescarga() : Boolean
+}
+
+class InformeProgramado {
+    - id : Long {readOnly}
+    - tipoInforme : TipoInforme
+    - periodicidad : Periodicidad
+    - destinatarios : String
+    - activo : Boolean
+    --
+    + ejecutar() : void
+}
+
+enum TipoPeriodo {
+    MES
+    TRIMESTRE
+    ANIO
+}
+
+enum TipoInforme {
+    DASHBOARD_FINANCIERO
+    RESUMEN_VENTAS
+    INCIDENCIAS_ENVIO
+    EFICIENCIA_OPERATIVA
+}
+
+enum Periodicidad {
+    SEMANAL
+    MENSUAL
+    TRIMESTRAL
+}
+
+ObjetivoFacturacion ..> TipoPeriodo
+InformeProgramado ..> TipoInforme
+InformeProgramado ..> Periodicidad
+
+note top of ObjetivoFacturacion
+    **Objetivos de Facturación (CU-45, FR-82)**
+    Registra objetivos de facturación
+    y cobro con trazabilidad histórica mediante RegistroAuditoria.
+end note
+
+note bottom of PaqueteContable
+    **Paquete Contable (CU-46, FR-77)**
+    Compila ficheros CSV y PDFs del periodo en un ZIP inalterable.
+end note
+
+note right of TipoCambio
+    **Consolidación de Divisas (FR-85 / CU-43)**
+    Convierte importes a la moneda base para informes sin alterar el total legal
+    de las facturas originales.
+end note
+
+@enduml
