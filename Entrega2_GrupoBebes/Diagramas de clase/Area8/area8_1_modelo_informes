@@ -4,12 +4,13 @@ skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide empty members
 
-title Área 8 — Diagrama 1: Modelo de informes y contabilidad
+title Área 8 — Diagrama 1: Modelo de informes y contabilidad (v3)
 
 class ObjetivoFacturacion {
     - id : Long {readOnly}
-    - tipoPeriodo : TipoPeriodo
-    - periodo : String
+    - tipoPeriodo : PeriodoObjetivo
+    - anio : Integer
+    - mes : Integer [0..1]
     - importeObjetivoFacturado : Decimal
     - importeObjetivoCobrado : Decimal
     --
@@ -52,16 +53,15 @@ class InformeProgramado {
     - id : Long {readOnly}
     - tipoInforme : TipoInforme
     - periodicidad : Periodicidad
-    - destinatarios : String
     - activo : Boolean
     --
-    + ejecutar() : void
+    + estaActivo() : Boolean
 }
 
-enum TipoPeriodo {
-    MES
-    TRIMESTRE
-    ANIO
+enum PeriodoObjetivo {
+    MENSUAL
+    TRIMESTRAL
+    ANUAL
 }
 
 enum TipoInforme {
@@ -77,7 +77,7 @@ enum Periodicidad {
     TRIMESTRAL
 }
 
-ObjetivoFacturacion ..> TipoPeriodo
+ObjetivoFacturacion ..> PeriodoObjetivo
 InformeProgramado ..> TipoInforme
 InformeProgramado ..> Periodicidad
 
@@ -89,13 +89,19 @@ end note
 
 note bottom of PaqueteContable
     **Paquete Contable (CU-46, FR-77)**
-    Compila ficheros CSV y PDFs del periodo en un ZIP inalterable.
+    Compila ficheros CSV y PDFs del periodo en un ZIP inalterable. 
+    Solo se genera si el PeriodoContable está CERRADO.
 end note
 
 note right of TipoCambio
-    **Consolidación de Divisas (FR-85 / CU-43)**
-    Convierte importes a la moneda base para informes sin alterar el total legal
-    de las facturas originales.
+    **Consolidación de Divisas (FR-85)**
+    Convierte importes a la moneda base para informes sin alterar el total legal de las facturas originales.
+end note
+
+note bottom of InformeProgramado
+    **Informes Programados (CU-44)**
+    La ejecución es orquestada por ServicioInformes e invocada por el Job Scheduler (Área 10). 
+    Destinatarios vinculados a Usuario.
 end note
 
 @enduml
