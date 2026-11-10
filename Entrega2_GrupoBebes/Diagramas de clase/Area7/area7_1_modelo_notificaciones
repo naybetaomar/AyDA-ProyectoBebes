@@ -1,0 +1,175 @@
+@startuml area7_1_modelo_notificaciones
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+title Área 7 — Diagrama 1: Modelo de notificaciones y colaboración
+
+class Notificacion {
+    - id : Long {readOnly}
+    - tipo : TipoNotificacion
+    - prioridad : PrioridadNotificacion
+    - estado : EstadoNotificacion
+    - titulo : String
+    - mensaje : String
+    - fechaCreacion : DateTime
+    - fechaLectura : DateTime [0..1]
+    - fechaResolucion : DateTime [0..1]
+    - /esLeida : Boolean
+    - /esResuelta : Boolean
+    --
+    + marcarLeida() : void
+    + resolver() : void
+}
+
+class PreferenciaNotificacion {
+    - id : Long
+    - canal : Canal
+    - inAppActiva : Boolean
+    - emailActivo : Boolean
+    - resumenDiarioActivo : Boolean
+    --
+    + estaActivo(canal : Canal) : Boolean
+}
+
+class Incidencia {
+    - id : Long {readOnly}
+    - tipo : TipoIncidencia
+    - estado : EstadoIncidencia
+    - prioridad : PrioridadNotificacion
+    - descripcion : String
+    - fechaApertura : DateTime
+    - fechaCierre : DateTime [0..1]
+    - pausaRecordatorios : Boolean
+    - /esActiva : Boolean
+    --
+    + abrir() : void
+    + actualizarEstado(nuevoEstado : EstadoIncidencia) : void
+    + pausarRecordatorios() : void
+    + reanudarRecordatorios() : void
+    + cerrar(motivo : String) : void
+}
+
+class Comentario {
+    - id : Long {readOnly}
+    - texto : String
+    - restringido : Boolean
+    - fecha : DateTime
+    --
+    + esVisiblePara(rolUsuario : Rol) : Boolean
+}
+
+class Tarea {
+    - id : Long {readOnly}
+    - tipo : TipoTarea
+    - estado : EstadoTarea
+    - prioridad : PrioridadNotificacion
+    - descripcion : String
+    - origen : String
+    - fechaCreacion : DateTime
+    - fechaVencimiento : Date [0..1]
+    - fechaCompletada : DateTime [0..1]
+    - /estaVencida : Boolean
+    --
+    + completar() : void
+    + reasignar() : void
+}
+
+enum EstadoNotificacion {
+    NUEVA
+    LEIDA
+    RESUELTA
+}
+
+enum PrioridadNotificacion {
+    ALTA
+    MEDIA
+    BAJA
+}
+
+enum TipoNotificacion {
+    ALERTA_DEUDA
+    ALERTA_INCIDENCIA_ENVIO
+    REVISION_PENDIENTE
+    TAREA_ASIGNADA
+    FACTURA_VENCIDA
+}
+
+enum EstadoIncidencia {
+    ABIERTA
+    EN_PROCESO
+    RESUELTA
+    CANCELADA
+}
+
+enum TipoIncidencia {
+    FACTURACION
+    COBRO
+    ENVIO
+    REVISION
+}
+
+enum EstadoTarea {
+    PENDIENTE
+    EN_PROCESO
+    COMPLETADA
+    CANCELADA
+}
+
+enum TipoTarea {
+    ACCION_MASIVA
+    REVISION_PLAN
+    REVISION_BAJA
+    INCIDENCIA_COBRO
+    CONCILIACION_MANUAL
+}
+
+enum Canal {
+    EMAIL
+    WHATSAPP
+}
+
+enum Rol {
+    LECTOR
+    ADMINISTRADOR
+    SUPERADMINISTRADOR
+}
+
+Notificacion ..> EstadoNotificacion
+Notificacion ..> PrioridadNotificacion
+Notificacion ..> TipoNotificacion
+PreferenciaNotificacion ..> Canal
+Incidencia ..> EstadoIncidencia
+Incidencia ..> TipoIncidencia
+Incidencia ..> PrioridadNotificacion
+Comentario ..> Rol
+Tarea ..> EstadoTarea
+Tarea ..> TipoTarea
+Tarea ..> PrioridadNotificacion
+
+note top of Notificacion
+    **Notificaciones y Alertas (CU-37, CU-38)**
+    Se generan automáticamente ante eventos del sistema (impago que supera límite
+    o 3 fallos de envío seguidos, FR-80). Mantiene distinción entre leída y resuelta.
+end note
+
+note bottom of Incidencia
+    **Incidencias (CU-40, RB-20)**
+    Seguimiento administrativo interno (no sistema de tickets de clientes).
+    Un Administrador puede pausar los recordatorios de las facturas afectadas (RB-22).
+end note
+
+note bottom of Comentario
+    **Comentarios Internos (CU-41, RB-32)**
+    No se envían al cliente. Los comentarios marcados como 'restringido = true'
+    solo son visibles para Administradores y Superadministradores.
+end note
+
+note right of Tarea
+    **Tareas Operativas y Acciones Masivas (CU-07, FR-86, FR-107)**
+    Las tareas se procesan en segundo plano. Sirve de soporte para el seguimiento
+    de ejecuciones masivas y asignaciones de expedientes.
+end note
+
+@enduml
