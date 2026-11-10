@@ -1,41 +1,45 @@
-@startuml area8_2_relaciones_informes
+@startuml area8_2_patrones_informes
 
 skinparam classAttributeIconSize 0
-skinparam linetype ortho
 hide empty members
 
-title Área 8 — Diagrama 2: Relaciones con otras áreas
+title Área 8 — Diagrama 2: Patrones de diseño y servicios
 
-' Clases del Área 8 (definidas en el diagrama 1)
-class ObjetivoFacturacion
-class PaqueteContable
-class TipoCambio
-class ExportacionMasiva
-class InformeProgramado
-
-' Clases de otras áreas (referencias)
-class PeriodoContable <<referencia>> {
-    - id : Long
-    - inicio : Date
-    - fin : Date
-    - estado : EstadoPeriodo
+class ServicioInformes {
+    + generarDashboardFinanciero(periodoId : Long) : ResumenFinancieroDTO
+    + exportarInformeCSV(tipo : TipoInforme, criterios : String) : ExportacionMasiva
+    + compilarPaqueteContable(periodoId : Long) : PaqueteContable
+    + ejecutarInformeProgramado(informeId : Long) : void
 }
 
-class Usuario <<referencia>> {
-    - id : Long
-    - nombre : String
-    - rol : Rol
+class ResumenFinancieroDTO <<DTO>> {
+    - totalFacturado : Decimal
+    - totalCobrado : Decimal
+    - totalPendiente : Decimal
+    - totalVencido : Decimal
+    - porcentajeObjetivoCumplido : Decimal
+    --
+    + getTotalFacturado() : Decimal
+    + getTotalCobrado() : Decimal
 }
 
-' Asociaciones entre el Área 8 y otras áreas
-PeriodoContable "1" -- "0..*" PaqueteContable : genera >
-Usuario "1" -- "0..*" PaqueteContable : generado por >
+class GeneradorPaqueteContable {
+    + compilarZIP(facturas : List, cobros : List) : String
+    + calcularHash(ruta : String) : String
+}
 
-Usuario "1" -- "0..*" ExportacionMasiva : realizada por >
-Usuario "1" -- "0..*" InformeProgramado : creado por >
+ServicioInformes .right.> ResumenFinancieroDTO : genera >
+ServicioInformes "1" *-- "1" GeneradorPaqueteContable : utiliza >
 
-note right of PaqueteContable
-    Un paquete contable pertenece a un PeriodoContable cerrado (Área 4).
+note left of ServicioInformes
+    **Servicio**
+    Punto de entrada único al Área 8 (CU-42, CU-43, CU-46). Solicita datos a ServicioFacturacion (Área 3)
+    y ServicioCobros (Área 6). Valida que PeriodoContable esté CERRADO antes de compilar el ZIP.
+end note
+
+note right of GeneradorPaqueteContable
+    **Compilador (CU-46).**
+    Ensambla el archivo ZIP y calcula el hash de inalterabilidad.
 end note
 
 @enduml
