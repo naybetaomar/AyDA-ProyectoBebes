@@ -16,6 +16,8 @@ Proporcionar una herramienta interna de gestión administrativa, facturación y 
 - Conciliación de cobros con Stripe y banco (simulados), pagos parciales o excesivos y revisión manual de inconsistencias.
 - Notificaciones internas, pantalla de trabajo diaria, dashboards e informes, búsqueda, importación de clientes e histórico, auditoría, roles y permisos, copias de seguridad, monitorización y API para sistemas externos.
 
+La prioridad entre estas funciones se define en el apartado 1.4.
+
 **Fuera del alcance**
 
 - Altas o bajas comerciales del producto principal (Brain).
@@ -50,6 +52,22 @@ Gestoría y persona de contacto del cliente son partes interesadas, no actores d
 El **Planificador** (tareas automáticas) no es un actor: es un mecanismo interno del sistema que dispara por tiempo la generación mensual, los recordatorios, la campaña anual, la caducidad de delegaciones y las copias de seguridad. En las fichas aparece como «Sistema (tarea programada)». Los actores externos son la pasarela de pagos y los sistemas externos que usan la API.
 
 El cliente habla de «usuario operativo», «administrador» y «superadministrador» y pidió no aferrarse al nombre de los perfiles. En este documento el usuario operativo se llama **Lector**: trabaja sobre los clientes que tiene asignados y puede ver y modificar su información operativa; no es un perfil de solo lectura. La asignación de operaciones a cada rol se recoge en `Matriz_permisos.md`.
+
+### 1.4. Primera versión del sistema
+
+Los casos de uso se clasifican en tres niveles para identificar el producto mínimo viable y el orden de trabajo:
+
+- **Núcleo:** sin ellos Turbine no puede facturar, enviar, cobrar ni controlar quién accede. Forman la primera versión.
+- **Complementario:** completan o facilitan el trabajo diario y entran en las siguientes iteraciones.
+- **Opcional:** ampliaciones sugeridas por el cliente (A-13).
+
+| Nivel | Casos de uso |
+|---|---|
+| **Núcleo** (27) | Clientes: CU-01, CU-02, CU-03, CU-09 · Relación comercial: CU-10, CU-14 · Facturación: CU-15, CU-16, CU-17, CU-19, CU-21 · Aprobaciones: CU-22, CU-23, CU-24 · Envío y recordatorios: CU-27, CU-28, CU-29, CU-30 · Cobros: CU-33, CU-34, CU-35 · Notificaciones: CU-37 · Usuarios y auditoría: CU-48, CU-49, CU-50, CU-52 · Configuración: CU-54 |
+| **Complementario** (29) | CU-04, CU-05, CU-06, CU-07, CU-11, CU-12, CU-13, CU-18, CU-25, CU-26, CU-31, CU-32, CU-36, CU-38, CU-39, CU-40, CU-41, CU-42, CU-43, CU-45, CU-46, CU-47, CU-51, CU-53, CU-55, CU-56, CU-57, CU-58, CU-59 |
+| **Opcional** (3) | CU-08, CU-20, CU-44 |
+
+El núcleo es coherente consigo mismo: sus casos se apoyan en otros del núcleo (por ejemplo, CU-23 usa el umbral de CU-54; CU-29 usa la configuración de CU-30; CU-27 usa los contactos de CU-03 y deriva los fallos de envío a CU-28; la restricción por cartera, RB-15, se apoya en CU-50). Las únicas referencias a casos complementarios son consultas o configuraciones con valores por defecto (CU-31, CU-38, CU-56). CU-09 entra en el núcleo por ser una obligación legal (protección de datos). Dentro de un caso del núcleo, los requisitos marcados «(opcional)» siguen siéndolo (por ejemplo, FR-66 en CU-15 y FR-98 en CU-54).
 
 ## 2. Requisitos de negocio
 
@@ -467,8 +485,8 @@ Marcas superpuestas, que no cambian el estado de cobro:
 | A-10 | Los criterios de detección de duplicados son nombre o razón social, identificador fiscal, email y teléfono | El cliente habló de duplicados "razonables" y citó el identificador fiscal | FR-64 |
 | A-11 | El teléfono del contacto es el dato "conveniente" que puede faltar | Es el único ejemplo citado por el cliente | FR-70 |
 | A-12 | Los límites de uso de la API quedan por definir | El cliente pidió límites "razonables" | FR-61 |
-| A-13 | Los requisitos marcados como (opcional) son ampliaciones | El cliente los presentó como ampliaciones y no como parte del primer despliegue | FR-51, FR-66, FR-98 |
-| A-14 | La clasificación de facturas por proyecto o línea de negocio se considera opcional y no se implementa en el primer despliegue | El cliente dice "Si lo implementáis", no deja claro que sea un requisito. | FR-81 |
+| A-13 | Los requisitos marcados como (opcional) son ampliaciones | El cliente los presentó como ampliaciones y no como parte de la primera versión (apartado 1.4). El nivel opcional de 1.4 agrupa los casos de uso formados por estas ampliaciones (CU-08, CU-20, CU-44) | FR-51, FR-66, FR-98 |
+| A-14 | La clasificación de facturas por proyecto o línea de negocio se considera opcional y no se implementa en la primera versión (apartado 1.4) | El cliente dice "Si lo implementáis", no deja claro que sea un requisito. | FR-81 |
 | A-15 | Los informes programados se envían como notificación con enlace autenticado, no como adjunto | El cliente planteó el adjunto y el enlace como alternativas y pidió cuidado con la información sensible | FR-102 |
 | A-16 | Se consideran opcionales los informes programados y las etiquetas | El cliente los presentó con «puede estar bien» y «pueden ayudarnos» | FR-102, FR-108 |
 | A-17 | Las cifras de los criterios de rendimiento y de uso (3 segundos, 5.000 clientes, 300 usuarios, 5 clics) son concreciones del equipo | El cliente pidió «prácticamente inmediato» y «pocos clics» sin dar cifras | NFR-13, NFR-14, NFR-34 |
