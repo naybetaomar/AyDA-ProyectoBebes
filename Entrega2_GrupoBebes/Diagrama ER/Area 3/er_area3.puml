@@ -1,0 +1,163 @@
+@startuml er_area3
+title E-R físico — Área 3: Emisión de facturas — PROPUESTA
+hide circle
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 60
+
+package "Área 3 — Emisión de facturas" #FFF8E5 {
+  entity factura {
+    * id : BIGINT <<PK>>
+    --
+    * tipo : VARCHAR(20) {PUNTUAL, RECURRENTE, RECTIFICATIVA}
+    numero_factura : VARCHAR(30)
+    * estado_documental : VARCHAR(25)
+    estado_cobro : VARCHAR(25)
+    estado_envio : VARCHAR(15)
+    * en_disputa : BOOLEAN
+    * cobro_excesivo : BOOLEAN
+    * modificacion_manual : BOOLEAN
+    * moneda : CHAR(3)
+    * base_imponible : DECIMAL(12,2)
+    * impuestos : DECIMAL(12,2)
+    * total : DECIMAL(12,2)
+    fecha_emision : DATE
+    fecha_emision_programada : DATE
+    * fecha_vencimiento : DATE
+    ruta_pdf : VARCHAR(500)
+    hash_pdf : VARCHAR(128)
+    * migrada : BOOLEAN
+    .. solo RECURRENTE ..
+    periodo_inicio : DATE
+    periodo_fin : DATE
+    prorrateada : BOOLEAN
+    configuracion_recurrente_id : BIGINT <<FK>>
+    .. solo RECTIFICATIVA ..
+    motivo : VARCHAR(500)
+    factura_rectificada_id : BIGINT <<FK>>
+    .. asociaciones ..
+    * cliente_id : BIGINT <<FK>>
+    * entidad_emisora_id : BIGINT <<FK>>
+    serie_facturacion_id : BIGINT <<FK>>
+    periodo_contable_id : BIGINT <<FK>>
+  }
+
+  entity linea_factura {
+    * id : BIGINT <<PK>>
+    --
+    * factura_id : BIGINT <<FK>> (CASCADE)
+    concepto_catalogo_id : BIGINT <<FK>>
+    * impuesto_id : BIGINT <<FK>>
+    * concepto : VARCHAR(255)
+    * cantidad : DECIMAL(12,3)
+    * precio_unitario : DECIMAL(12,2)
+    * descuento : DECIMAL(5,2)
+    * porcentaje_impuesto : DECIMAL(5,2)
+  }
+
+  entity historial_estado_factura {
+    * id : BIGINT <<PK>>
+    --
+    * factura_id : BIGINT <<FK>> (CASCADE)
+    * tipo_estado : VARCHAR(15)
+    estado_anterior : VARCHAR(25)
+    * estado_nuevo : VARCHAR(25)
+    * fecha : TIMESTAMP
+    motivo : VARCHAR(500)
+    realizado_por_id : BIGINT <<FK>>
+  }
+
+  entity configuracion_recurrente {
+    * id : BIGINT <<PK>>
+    --
+    * relacion_comercial_id : BIGINT <<FK>> <<UNIQUE>>
+    importe_mensual : DECIMAL(12,2)
+    * excepcion_sin_prorrateo : BOOLEAN
+    * activa : BOOLEAN
+    fecha_activacion : DATE
+  }
+
+  entity serie_facturacion {
+    * id : BIGINT <<PK>>
+    --
+    * entidad_emisora_id : BIGINT <<FK>>
+    * prefijo : VARCHAR(20)
+    * tipo : VARCHAR(20) {ORDINARIA, RECTIFICATIVA}
+    * siguiente_numero : INTEGER
+  }
+
+  entity entidad_emisora {
+    * id : BIGINT <<PK>>
+    --
+    * razon_social : VARCHAR(255)
+    * datos_fiscales : TEXT
+  }
+
+  entity impuesto {
+    * id : BIGINT <<PK>>
+    --
+    * nombre : VARCHAR(100)
+    * porcentaje : DECIMAL(5,2)
+    * pais : CHAR(2)
+  }
+
+  entity concepto_catalogo {
+    * id : BIGINT <<PK>>
+    --
+    * descripcion : VARCHAR(255)
+    * precio_por_defecto : DECIMAL(12,2)
+    * impuesto_id : BIGINT <<FK>>
+  }
+}
+
+package "Otras áreas (referencias)" #EEEEEE {
+  entity cliente <<área 1>> {
+    * id : BIGINT <<PK>>
+  }
+  entity relacion_comercial <<área 2>> {
+    * id : BIGINT <<PK>>
+  }
+  entity periodo_contable <<área 4>> {
+    * id : BIGINT <<PK>>
+  }
+  entity usuario <<área 9>> {
+    * id : BIGINT <<PK>>
+  }
+}
+
+factura ||--|{ linea_factura
+factura ||--o{ historial_estado_factura
+factura |o--o{ factura : rectifica
+configuracion_recurrente |o--o{ factura
+serie_facturacion |o--o{ factura
+entidad_emisora ||--o{ factura
+entidad_emisora ||--o{ serie_facturacion
+impuesto ||--o{ linea_factura
+impuesto ||--o{ concepto_catalogo
+concepto_catalogo |o--o{ linea_factura
+cliente ||--o{ factura
+periodo_contable |o--o{ factura
+relacion_comercial ||--o| configuracion_recurrente
+usuario |o--o{ historial_estado_factura : realizado por
+
+note right of factura
+  **Herencia en una tabla** con discriminador tipo:
+  CHECK: las columnas de RECURRENTE y RECTIFICATIVA
+  solo se rellenan (y obligatoriamente) en su tipo.
+  **UNIQUE** (serie_facturacion_id, numero_factura) — RB-01
+  **UNIQUE** (configuracion_recurrente_id, periodo_inicio) — FR-100
+  CHECK: sin estado de cobro ni de envío hasta emitirse (A-23);
+  sin estado de cobro en un abono (A-27).
+  CHECK: emitida ⇒ número, serie, periodo y fecha de emisión.
+  CHECK: total = base_imponible + impuestos.
+  **Trigger BEFORE DELETE**: solo se borran borradores (RB-11).
+end note
+
+note as Auditoria
+  **Trazabilidad (NFR-03):** todas las tablas salvo
+  historial_estado_factura llevan creado_por, creado_en,
+  modificado_por, modificado_en (FK a usuario; nulo = Sistema).
+  No se dibujan. Saldo pendiente: no es columna (lo calcula
+  ServicioCobros, área 6). Leyenda: * = NOT NULL.
+end note
+@enduml
