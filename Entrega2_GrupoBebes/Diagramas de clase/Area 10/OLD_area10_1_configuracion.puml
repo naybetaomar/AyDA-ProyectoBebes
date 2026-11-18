@@ -1,0 +1,65 @@
+@startuml area10_1a_configuracion
+title Área 10 — Configuración (modelo propio, 1/3)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide empty members
+
+note "Trazabilidad (NFR-03):\ncreadoPor, creadoEn, modificadoPor, modificadoEn\nen todas las clases auditables.\ncreadoPor y modificadoPor admiten nulo = Sistema.\nNo se dibujan en cada clase." as NFR03
+
+package "Área 10 — Configuración" #LightYellow {
+
+  class ConfiguracionGlobal {
+    - id : Long {readOnly}
+    - nombre : String
+    - descripcion : String
+    - /numeroEntradas : int
+    + obtenerEntrada(clave : String) : EntradaConfiguracion
+    + obtenerValor(clave : String, fecha : Date) : Object
+    + validarEntrada(clave : String, valor : String) : ResultadoValidacion
+    + actualizarEntrada(clave : String, valor : String, realizadoPor : Usuario) : ResultadoActualizacion
+    + listarVigentes(fecha : Date) : List<EntradaConfiguracion>
+  }
+
+  class EntradaConfiguracion {
+    - clave : String {readOnly}
+    - valor : String
+    - tipoDato : TipoDatoConfig
+    - descripcion : String
+    - validada : boolean
+    - fechaVigenciaDesde : Date
+    - fechaVigenciaHasta : Date [0..1]
+    + esVigente(fecha : Date) : boolean
+    + validar() : ResultadoValidacion
+  }
+}
+
+enum TipoDatoConfig {
+  ENTERO
+  DECIMAL
+  BOOLEANO
+  TEXTO
+  JSON
+  MONEDA
+  FECHA
+}
+
+package "Área 9 — Seguridad y Auditoría" {
+  class Usuario <<referencia>>
+}
+
+ConfiguracionGlobal "1" *-- "1..*" EntradaConfiguracion : contiene >
+EntradaConfiguracion --> TipoDatoConfig : usa >
+ConfiguracionGlobal ..> Usuario : realizadoPor (auditoría) >
+
+NFR03 .. ConfiguracionGlobal
+
+note bottom of ConfiguracionGlobal
+  **Q-07 (abierta):** ¿un cambio de configuración
+  afecta a facturas nuevas, a condiciones nuevas
+  o a ambas? El modelo lo soporta con
+  `fechaVigenciaDesde/Hasta`; la política la decide el grupo.
+end note
+
+@enduml

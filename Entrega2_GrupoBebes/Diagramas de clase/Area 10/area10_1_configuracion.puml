@@ -45,21 +45,17 @@ enum TipoDatoConfig {
   FECHA
 }
 
-package "Área 9 — Seguridad y Auditoría" {
-  class Usuario <<referencia>>
-}
-
 ConfiguracionGlobal "1" *-- "1..*" EntradaConfiguracion : contiene >
 EntradaConfiguracion --> TipoDatoConfig : usa >
-ConfiguracionGlobal ..> Usuario : realizadoPor (auditoría) >
 
 NFR03 .. ConfiguracionGlobal
 
 note bottom of ConfiguracionGlobal
-  **Q-07 (abierta):** ¿un cambio de configuración
-  afecta a facturas nuevas, a condiciones nuevas
-  o a ambas? El modelo lo soporta con
+  **Q-07 (abierta):** ¿un cambio de configuración afecta a facturas
+  nuevas, a condiciones nuevas o a ambas? El modelo lo soporta con
   `fechaVigenciaDesde/Hasta`; la política la decide el grupo.
+  **CU-55 (Decisión 8):** los datos de demostración no usan flags en
+  las tablas; van en un esquema separado con la misma estructura.
 end note
 
 @enduml

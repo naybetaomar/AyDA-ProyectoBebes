@@ -10,15 +10,15 @@ note "Trazabilidad (NFR-03):\ncreadoPor, creadoEn, modificadoPor, modificadoEn\n
 
 package "Área 10 — Planificador y ejecución" #LightYellow {
 
+  interface TareaAutomatica {
+    + ejecutar() : void
+  }
+
   class Planificador <<componente interno>> {
     - id : Long {readOnly}
     - nombre : String
     - identidadSistema : String {readOnly}
-    + ejecutarFacturacionRecurrente() : EjecucionProceso
-    + ejecutarRecordatorios() : EjecucionProceso
-    + ejecutarCampanaAnual() : EjecucionProceso
-    + gestionarCaducidades() : EjecucionProceso
-    + ejecutarCopiasSeguridad() : EjecucionProceso
+    + ejecutar(tipo : TipoProceso) : EjecucionProceso
     + programar(tipo : TipoProceso, cron : String) : void
     + registrarEjecucion(ejecucion : EjecucionProceso) : void
   }
@@ -76,8 +76,9 @@ enum TipoProceso {
   COPIA_SEGURIDAD
   CONCILIACION
   INFORMES_PROGRAMADOS
-  CIERRE_PERIODO
-  REAPERTURA_PERIODO
+  ACTUALIZACION_VENCIMIENTOS
+  BORRADO_EXPORTACIONES_CADUCADAS
+  CARGA_DATOS_DEMO
 }
 
 enum EstadoEjecucion {
@@ -100,6 +101,7 @@ package "Área 9 — Seguridad y Auditoría" {
 }
 
 Planificador "1" *-- "0..*" TareaProgramada : programa >
+Planificador "1" --> "0..*" TareaAutomatica : ejecuta >
 Planificador "1" --> "0..*" EjecucionProceso : crea >
 EjecucionProceso "1" *-- "0..*" DetalleFallo : registra >
 EjecucionProceso "1" --> "0..*" ErrorTecnico : agrega >
@@ -107,18 +109,19 @@ TareaProgramada --> TipoProceso : usa >
 EjecucionProceso --> TipoProceso : usa >
 EjecucionProceso --> EstadoEjecucion : usa >
 ErrorTecnico --> SeveridadError : usa >
-ErrorTecnico ..> Usuario : resueltoPor [0..1] >
+ErrorTecnico "0..*" --> "0..1" Usuario : resueltoPor >
 
 NFR03 .. Planificador
 NFR03 .. EjecucionProceso
 NFR03 .. ErrorTecnico
 
 note bottom of Planificador
-  **Cuestión 8.11:** siempre pasa por el `Proxy`
-  (área 9) con identidad de sistema.
-  No es un actor; es un componente interno.
-  Un rechazo del Proxy se registra como fallo
-  en `EjecucionProceso` (BR-04) y genera alerta (CU-56).
+  **Cuestión 8.11 y desacoplamiento:** el Planificador no conoce
+  servicios de otras áreas; invoca `TareaAutomatica.ejecutar()`
+  pasando por el `Proxy` (área 9) con identidad de sistema.
+  Cada área implementa `TareaAutomatica` para sus procesos.
+  Un rechazo del Proxy se registra como fallo en `EjecucionProceso`
+  (BR-04) y genera alerta (CU-56).
 end note
 
 @enduml
