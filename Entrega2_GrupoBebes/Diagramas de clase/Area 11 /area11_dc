@@ -1,0 +1,166 @@
+@startuml area11_api_externa
+title Área 11 — API externa (CU-57, CU-58)
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam classBackgroundColor #FFFFFF
+skinparam noteBackgroundColor #FFFBE6
+hide empty members
+
+note as NTraza
+  **Trazabilidad (NFR-03)**
+  Ninguna clase dibuja ''creadoPor'', ''creadoEn'', ''modificadoPor'' ni ''modificadoEn''.
+  ''creadoPor'' / ''modificadoPor'' admiten nulo: nulo = Sistema
+  (acción automática, no hecha por una persona).
+  La recepción de una ''SolicitudExterna'' queda a nombre de «Sistema».
+  Si una persona la aprueba después, ese cambio queda a su nombre (RB-31).
+end note
+
+' ---------- Enumerados propios del área (propuestos) ----------
+enum OperacionAPI {
+  CONSULTAR_DATOS
+  ENVIAR_SOLICITUD
+}
+
+enum ResultadoLlamada {
+  CORRECTA
+  NO_AUTORIZADA
+  LIMITE_EXCEDIDO
+  ERROR
+}
+
+enum TipoSolicitudExterna {
+  BAJA
+}
+
+enum EstadoValidacion {
+  PENDIENTE
+  VALIDADA
+  RECHAZADA
+}
+
+enum PeriodoLimite {
+  MINUTO
+  HORA
+  DIA
+}
+
+' ---------- Modelo propio del área 11 ----------
+class ConsumidorAPI {
+  - id : Long {readOnly}
+  - credencialHash : String
+  - limiteSolicitudes : Integer
+  - periodoLimite : PeriodoLimite
+  - activo : Boolean
+  + autenticar(credencial : String) : Boolean
+  + haAlcanzadoLimite() : Boolean
+}
+
+class LlamadaAPI {
+  - id : Long {readOnly}
+  - fecha : DateTime {readOnly}
+  - operacion : OperacionAPI {readOnly}
+  - resultado : ResultadoLlamada
+  - codigoIncidencia : String [0..1]
+}
+
+class SolicitudExterna {
+  - id : Long {readOnly}
+  - tipo : TipoSolicitudExterna {readOnly}
+  - estadoValidacion : EstadoValidacion
+  - motivoRechazo : String [0..1]
+}
+
+class DatosConsultaCliente <<DTO>> {
+  - cliente : Cliente
+  - facturas : Factura [0..*]
+  - saldo : ResumenSaldo
+}
+
+' ---------- Patrón Facade ----------
+class FachadaAPI <<Facade>> {
+  + consultarDatos(credencial : String, clienteId : Long) : DatosConsultaCliente
+  + enviarSolicitud(credencial : String, tipo : TipoSolicitudExterna, datos : String) : ResultadoLlamada
+}
+
+note right of FachadaAPI
+  Nombre por decidir (catálogo §5).
+  Todo pasa por el ''ProxyPermisos'' (permisos y auditoría);
+  la fachada nunca llama directamente a los servicios.
+  Recibe la credencial (no el consumidor) porque una
+  credencial mala no tiene ''ConsumidorAPI''.
+  Las reglas de la baja las valida el área 2 y la
+  "Tarea" la crea el área 7 (RB-31).
+  Cada invocación crea una ''LlamadaAPI''.
+end note
+
+' ---------- Referencias de otras áreas ----------
+class ProxyPermisos <<referencia>> <<Proxy>> {
+}
+
+class ServicioCobros <<referencia>> {
+  + consultarSaldo(clienteId : cliente) : ResumenSaldo
+}
+
+class ServicioRelacionComercial <<referencia>> {
+}
+
+class ServicioTareas <<referencia>> {
+}
+
+class ResumenSaldo <<referencia>> {
+}
+
+class Cliente <<referencia>> {
+  - id : Long {readOnly}
+  - razonSocial : String
+}
+
+abstract class Factura <<referencia>> {
+  - id : Long {readOnly}
+  - numeroFactura : String [0..1] {readOnly}
+}
+
+class Tarea <<referencia>> {
+}
+
+class ServicioClientes <<referencia>> {
+}
+
+class ServicioFacturas <<referencia>> {
+}
+
+' ---------- Asociaciones ----------
+ConsumidorAPI "0..1" -- "0..*" LlamadaAPI : realiza >
+ConsumidorAPI "1" -- "0..*" SolicitudExterna : envía >
+SolicitudExterna "0..*" --> "1" Cliente : se refiere a
+SolicitudExterna "1" --> "0..1" Tarea : genera
+
+' ---------- Uso de enumerados ----------
+ConsumidorAPI ..> PeriodoLimite
+LlamadaAPI ..> OperacionAPI
+LlamadaAPI ..> ResultadoLlamada
+SolicitudExterna ..> TipoSolicitudExterna
+SolicitudExterna ..> EstadoValidacion
+
+' ---------- Facade ----------
+FachadaAPI ..> ConsumidorAPI : autentica
+FachadaAPI ..> LlamadaAPI : registra
+FachadaAPI ..> SolicitudExterna : crea
+FachadaAPI ..> DatosConsultaCliente : devuelve
+FachadaAPI ..> ProxyPermisos : pide a través de
+
+' ---------- Proxy y servicios de cada área ----------
+ProxyPermisos ..> ServicioCobros : delega en
+ProxyPermisos ..> ServicioFacturas : delega en
+ProxyPermisos ..> ServicioClientes : delega en
+ProxyPermisos ..> ServicioRelacionComercial : delega en
+ProxyPermisos ..> ServicioTareas : delega en
+ServicioCobros ..> ResumenSaldo : devuelve
+
+' ---------- Contenido del DTO ----------
+DatosConsultaCliente ..> Cliente
+DatosConsultaCliente ..> Factura
+DatosConsultaCliente ..> ResumenSaldo
+
+@enduml
