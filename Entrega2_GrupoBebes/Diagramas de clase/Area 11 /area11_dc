@@ -72,15 +72,31 @@ class SolicitudExterna {
 }
 
 class DatosConsultaCliente <<DTO>> {
-  - cliente : Cliente
-  - facturas : Factura [0..*]
+  - clienteId : Long
+  - razonSocial : String
+  - facturas : ResumenFacturaAPI [0..*]
   - saldo : ResumenSaldo
 }
+
+class ResumenFacturaAPI <<DTO>> {
+  - numeroFactura : String
+  - fechaEmision : Date
+  - fechaVencimiento : Date
+  - total : Decimal
+  - moneda : String
+  - estadoCobro : EstadoCobro
+}
+
+note bottom of ResumenFacturaAPI
+  Detalle mínimo autorizado (CU-57):
+  solo los datos que se exponen,
+  nunca la entidad Factura completa.
+end note
 
 ' ---------- Patrón Facade ----------
 class FachadaAPI <<Facade>> {
   + consultarDatos(credencial : String, clienteId : Long) : DatosConsultaCliente
-  + enviarSolicitud(credencial : String, tipo : TipoSolicitudExterna, datos : String) : ResultadoLlamada
+  + enviarSolicitud(credencial : String, tipo : TipoSolicitudExterna, clienteId : Long) : ResultadoLlamada
 }
 
 note right of FachadaAPI
@@ -89,8 +105,8 @@ note right of FachadaAPI
   la fachada nunca llama directamente a los servicios.
   Recibe la credencial (no el consumidor) porque una
   credencial mala no tiene ''ConsumidorAPI''.
-  Las reglas de la baja las valida el área 2 y la
-  "Tarea" la crea el área 7 (RB-31).
+  Las reglas de la baja las valida el área 2,
+  y la ''Tarea'' la crea el área 7 (RB-31).
   Cada invocación crea una ''LlamadaAPI''.
 end note
 
@@ -99,7 +115,7 @@ class ProxyPermisos <<referencia>> <<Proxy>> {
 }
 
 class ServicioCobros <<referencia>> {
-  + consultarSaldo(clienteId : cliente) : ResumenSaldo
+  + consultarSaldo(cliente : Cliente) : ResumenSaldo
 }
 
 class ServicioRelacionComercial <<referencia>> {
@@ -116,18 +132,13 @@ class Cliente <<referencia>> {
   - razonSocial : String
 }
 
-abstract class Factura <<referencia>> {
-  - id : Long {readOnly}
-  - numeroFactura : String [0..1] {readOnly}
-}
-
 class Tarea <<referencia>> {
 }
 
 class ServicioClientes <<referencia>> {
 }
 
-class ServicioFacturas <<referencia>> {
+class ServicioFacturacion <<referencia>> {
 }
 
 ' ---------- Asociaciones ----------
@@ -152,15 +163,14 @@ FachadaAPI ..> ProxyPermisos : pide a través de
 
 ' ---------- Proxy y servicios de cada área ----------
 ProxyPermisos ..> ServicioCobros : delega en
-ProxyPermisos ..> ServicioFacturas : delega en
+ProxyPermisos ..> ServicioFacturacion : delega en
 ProxyPermisos ..> ServicioClientes : delega en
 ProxyPermisos ..> ServicioRelacionComercial : delega en
 ProxyPermisos ..> ServicioTareas : delega en
 ServicioCobros ..> ResumenSaldo : devuelve
 
 ' ---------- Contenido del DTO ----------
-DatosConsultaCliente ..> Cliente
-DatosConsultaCliente ..> Factura
+DatosConsultaCliente "1" *-- "0..*" ResumenFacturaAPI : facturas
 DatosConsultaCliente ..> ResumenSaldo
 
 @enduml
