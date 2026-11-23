@@ -1,4 +1,4 @@
-@startuml area7_3_propuesta
+@startuml area7_3
 
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
@@ -72,3 +72,4 @@ note right of Tarea
 end note
 
 @enduml
+
