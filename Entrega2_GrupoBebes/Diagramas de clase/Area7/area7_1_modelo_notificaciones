@@ -1,10 +1,10 @@
-@startuml area7_1_modelo_notificaciones
+@startuml area7_1
 
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide empty members
 
-title Área 7 — Diagrama 1: Modelo de notificaciones y colaboración
+title Área 7 — Diagrama 1 (propuesta): Modelo de notificaciones y colaboración
 
 class Notificacion {
     - id : Long {readOnly}
@@ -73,7 +73,7 @@ class Tarea {
     - /estaVencida : Boolean
     --
     + completar() : void
-    + reasignar() : void
+    + reasignar(responsable : Usuario) : void
 }
 
 enum EstadoNotificacion {
@@ -130,11 +130,7 @@ enum Canal {
     WHATSAPP
 }
 
-enum Rol {
-    LECTOR
-    ADMINISTRADOR
-    SUPERADMINISTRADOR
-}
+enum Rol <<referencia>>
 
 Notificacion ..> EstadoNotificacion
 Notificacion ..> PrioridadNotificacion
