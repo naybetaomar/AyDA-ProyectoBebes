@@ -63,18 +63,18 @@ class TokenRecuperacion {
 }
 
 class AsignacionCliente {
-  -desde : Fecha
-  -hasta : Fecha [0..1]
+  -desde : Date
+  -hasta : Date [0..1]
   --
-  +estaVigente(fecha : Fecha) : boolean
+  +estaVigente(fecha : Date) : boolean
 }
 
 class Delegacion {
   -id : Long {readOnly}
-  -desde : Fecha
-  -caducidad : Fecha
+  -desde : Date
+  -caducidad : Date
   --
-  +estaVigente(fecha : Fecha) : boolean
+  +estaVigente(fecha : Date) : boolean
 }
 
 class Cliente <<referencia>> {
@@ -94,9 +94,6 @@ class DescargaFichero {
   -fecha : Date {readOnly}
 }
 
-' ============================================================
-' Copias de seguridad (CU-53, CU-59)
-' ============================================================
 class CopiaSeguridad {
   -id : Long {readOnly}
   -fecha : Date {readOnly}
@@ -111,9 +108,6 @@ class RestauracionCopia {
   +ejecutar() : ResultadoRestauracion
 }
 
-' ============================================================
-' Asociaciones (multiplicidad en los dos extremos y verbo)
-' ============================================================
 Usuario "1" -- "0..*" Sesion : abre >
 Usuario "1" -- "0..*" TokenRecuperacion : solicita >
 Usuario "1" -- "0..*" AsignacionCliente : tiene asignados >
