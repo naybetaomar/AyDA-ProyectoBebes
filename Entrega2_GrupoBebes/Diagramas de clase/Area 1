@@ -1,0 +1,122 @@
+@startuml area1_1_modelo_clientes
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+title Área 1 — Diagrama 1: Modelo de clientes
+
+class Cliente <<Borrador>> {
+  - id : Long {readOnly}
+  - razonSocial : String
+  - identificadorFiscal : String
+  - pais : String
+  - moneda : String
+  - direccion : String
+  - estadoCliente : EstadoCliente
+  - datosPendientes : Boolean
+  - anonimizado : Boolean
+  + anonimizar() : void
+}
+
+class Contacto <<Borrador>> {
+  - id : Long {readOnly}
+  - nombre : String
+  - email : String
+  - telefono : String
+  - idioma : String
+  - canalPreferido : Canal
+  - esContactoFacturacion : Boolean
+  - anonimizado : Boolean
+}
+
+class ConsentimientoCanal <<Borrador>> {
+  - canal : Canal
+  - otorgado : Boolean
+  - fecha : LocalDate
+}
+
+class Documento <<Borrador>> {
+  - id : Long {readOnly}
+  - nombre : String
+  - formato : String
+  - tamano : Long
+  - ruta : String
+}
+
+class Etiqueta <<opcional>> {
+  - nombre : String
+}
+
+class CategoriaFactura <<opcional>> {
+  - nombre : String
+}
+
+' Clases de otras áreas (solo referencia)
+class Factura <<área 3>>
+class RelacionComercial <<área 2>>
+class RevisionAnualPlan <<área 2>>
+class Presupuesto <<área 3, opcional>>
+class Usuario <<área 9>>
+class AsignacionCliente <<área 9>> {
+  - desde : LocalDate
+  - hasta : LocalDate [0..1]
+}
+class Incidencia <<área 7>>
+class Tarea <<área 7>>
+class Comentario <<área 7>>
+
+enum EstadoCliente {
+  PENDIENTE_ACTIVACION
+  ACTIVO
+  PAUSADO
+  BAJA_SOLICITADA
+  BAJA_EFECTIVA
+}
+
+enum Canal {
+  EMAIL
+  WHATSAPP
+}
+
+' Núcleo del área 1
+Cliente "1" -- "1..*" Contacto : tiene >
+Contacto "1" -- "0..*" ConsentimientoCanal : tiene >
+Cliente "*" -- "*" Etiqueta
+CategoriaFactura "0..1" -- "*" Factura
+Documento "*" -- "0..1" Cliente
+Documento "*" -- "0..1" Factura
+
+' Relaciones con otras áreas
+Cliente "1" -- "0..*" Factura : recibe >
+Cliente "1" -- "0..*" RelacionComercial : tiene >
+Cliente "1" -- "0..*" RevisionAnualPlan : tiene >
+Cliente "1" -- "0..*" Presupuesto : tiene >
+Cliente "1" -- "0..*" Incidencia : tiene >
+Cliente "1" -- "0..*" Tarea : tiene >
+Cliente "1" -- "0..*" Comentario : admite >
+Usuario "1" -- "0..*" AsignacionCliente
+AsignacionCliente "0..*" -- "1" Cliente
+
+Cliente ..> EstadoCliente
+Contacto ..> Canal
+ConsentimientoCanal ..> Canal
+
+note right of Cliente
+  RB-27: al menos un Contacto.
+  Dec. 5 pendiente: ¿estadoCliente
+  almacenado o derivado de la
+  relación activa?
+end note
+
+note bottom of Documento
+  Dec. 4/6 pendiente: destino
+  (Cliente o Factura). Si se decide
+  FK, quizá desaparezca uno de los
+  dos extremos. formato sin enumerar.
+end note
+
+note bottom of Etiqueta
+  Etiqueta y CategoriaFactura: opcionales
+  (CU-08, FR-81, FR-108). No sustituyen
+  a los estados derivados (RB-34).
+end note
+@enduml
