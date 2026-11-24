@@ -1,0 +1,117 @@
+@startuml modelo_fisico_area10
+title Modelo físico de datos · Área 10 (Configuración y sistema)
+
+hide circle
+skinparam linetype ortho
+
+entity "CONFIGURACION_GLOBAL" as ConfigGlobal {
+  * id : BIGINT <<PK>>
+  --
+  * nombre : VARCHAR(100)
+  * descripcion : VARCHAR(255)
+}
+
+entity "ENTRADA_CONFIGURACION" as EntradaConfig {
+  * id : BIGINT <<PK>>
+  --
+  * configuracion_global_id : BIGINT <<FK>>
+  * clave : VARCHAR(100)
+  * valor : TEXT
+  * tipo_dato : VARCHAR(20)
+  * descripcion : VARCHAR(255)
+  * validada : BOOLEAN
+  * fecha_vigencia_desde : DATE
+  * fecha_vigencia_hasta : DATE [NULL]
+}
+
+entity "TAREA_PROGRAMADA" as TareaProg {
+  * id : BIGINT <<PK>>
+  --
+  * tipo : VARCHAR(50)
+  * cron : VARCHAR(50)
+  * activa : BOOLEAN
+}
+
+entity "EJECUCION_PROCESO" as Ejecucion {
+  * id : BIGINT <<PK>>
+  --
+  * tipo : VARCHAR(50)
+  * fecha_inicio : TIMESTAMP
+  * fecha_fin : TIMESTAMP [NULL]
+  * procesados : INTEGER
+  * fallos : INTEGER
+  * causa : TEXT [NULL]
+  * estado : VARCHAR(30)
+}
+
+entity "DETALLE_FALLO" as DetalleFallo {
+  * id : BIGINT <<PK>>
+  --
+  * ejecucion_proceso_id : BIGINT <<FK>>
+  * entidad_afectada : VARCHAR(150)
+  * motivo : TEXT
+  * codigo_incidencia : VARCHAR(50) [NULL]
+}
+
+entity "ERROR_TECNICO" as ErrorTec {
+  * id : BIGINT <<PK>>
+  --
+  * ejecucion_proceso_id : BIGINT <<FK>> [NULL]
+  * resuelto_por : BIGINT <<FK>> [NULL]
+  * codigo_incidencia : VARCHAR(50)
+  * mensaje_interno : TEXT
+  * fecha : TIMESTAMP
+  * severidad : VARCHAR(20)
+  * origen : VARCHAR(100)
+  * traza : TEXT [NULL]
+  * resuelto : BOOLEAN
+  * fecha_resolucion : TIMESTAMP [NULL]
+}
+
+entity "CALENDARIO_LABORAL" as Calendario {
+  * id : BIGINT <<PK>>
+  --
+  * nombre : VARCHAR(100)
+  * pais : VARCHAR(50)
+  * anio : INTEGER
+  * dias_laborables : VARCHAR(100)
+}
+
+entity "FECHA_FESTIVA" as Festivo {
+  * id : BIGINT <<PK>>
+  --
+  * calendario_laboral_id : BIGINT <<FK>>
+  * fecha : DATE
+  * descripcion : VARCHAR(150)
+  * ambito : VARCHAR(20)
+}
+
+' Relaciones de composición y agregación propias del Área 10
+ConfigGlobal ||--|{ EntradaConfig : contiene
+Ejecucion ||--o{ DetalleFallo : registra
+Ejecucion |o--o{ ErrorTec : agrega
+Calendario ||--o{ Festivo : contiene
+
+note bottom of EntradaConfig
+  **Restricciones (Catálogo §7):**
+  - UNIQUE (configuracion_global_id, clave, fecha_vigencia_desde)
+  - CHECK (tipo_dato IN ('ENTERO','DECIMAL','BOOLEANO','TEXTO','JSON','MONEDA','FECHA'))
+  - CHECK (fecha_vigencia_hasta IS NULL OR fecha_vigencia_hasta >= fecha_vigencia_desde)
+end note
+
+note bottom of ErrorTec
+  **Restricciones (Catálogo §7):**
+  - UNIQUE (codigo_incidencia)
+  - CHECK (severidad IN ('INFO','WARNING','ERROR','CRITICO'))
+  - CHECK ((resuelto = FALSE AND fecha_resolucion IS NULL AND resuelto_por IS NULL)
+           OR (resuelto = TRUE AND fecha_resolucion IS NOT NULL))
+end note
+
+note bottom of Festivo
+  **Restricciones (Catálogo §7):**
+  - UNIQUE (calendario_laboral_id, fecha)
+  - CHECK (ambito IN ('NACIONAL','REGIONAL','LOCAL'))
+  - En CALENDARIO_LABORAL: UNIQUE (pais, anio)
+end note
+
+@enduml

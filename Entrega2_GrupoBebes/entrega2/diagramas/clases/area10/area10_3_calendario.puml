@@ -1,5 +1,5 @@
 @startuml area10_1c_calendario
-title Área 10 — Calendario laboral (modelo propio, 3/3)
+title Área 10 — Calendario laboral
 
 skinparam classAttributeIconSize 0
 skinparam linetype ortho

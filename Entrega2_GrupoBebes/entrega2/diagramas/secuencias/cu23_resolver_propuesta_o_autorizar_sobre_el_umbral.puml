@@ -1,0 +1,120 @@
+@startuml seq_cu23_resolver_propuesta
+title CU-23 · Resolver propuesta o autorizar sobre el umbral
+
+actor "Administrador /\nSuperadministrador" as Admin
+boundary "InterfazAprobaciones" as UI
+control "ProxyPermisos" as Proxy
+control "ServicioAprobaciones" as ServAprob
+entity "SolicitudExcepcion" as Sol
+entity "ConfiguracionGlobal" as Config
+control "ServicioFacturacion" as ServFact
+entity "Factura" as Fact
+entity "RegistroAuditoria" as Audit
+
+Admin -> UI : abrirBandejaPropuestas()
+activate UI
+UI -> Proxy : listarSolicitudesPendientes(admin)
+activate Proxy
+Proxy -> ServAprob : obtenerPendientes()
+activate ServAprob
+ServAprob --> Proxy : listaSolicitudes
+deactivate ServAprob
+Proxy --> UI : listaSolicitudes
+deactivate Proxy
+UI --> Admin : mostrarPropuestas(listaSolicitudes)
+
+Admin -> UI : resolverSolicitud(solicitudId, decision, comentario)
+UI -> Proxy : resolver(admin, solicitudId, decision, comentario)
+activate Proxy
+Proxy -> Proxy : comprobarRol(admin, ADMINISTRADOR)
+
+Proxy -> ServAprob : resolver(solicitudId, admin, decision, comentario)
+activate ServAprob
+
+ServAprob -> Sol : obtenerDetalle()
+activate Sol
+Sol --> ServAprob : solicitante, importe, estado
+deactivate Sol
+
+alt FE-1: Autoaprobación (admin == solicitante, FR-74)
+  ServAprob --> Proxy : errorAutoaprobacion()
+  Proxy --> UI : error("No puede aprobar su propia solicitud")
+  UI --> Admin : mostrarErrorAutoaprobacion()
+
+else Usuario distinto del solicitante
+  ServAprob -> Config : obtenerUmbralAprobacion()
+  activate Config
+  Config --> ServAprob : umbralConfigurado
+  deactivate Config
+
+  alt FA-1: importe > umbralConfigurado y admin.rol != SUPERADMINISTRADOR (RB-04)
+    ServAprob --> Proxy : errorRequiereSuperadministrador()
+    Proxy --> UI : error("Requiere autorización de Superadministrador")
+    UI --> Admin : mostrarErrorUmbralSuperado()
+
+  else Rol suficiente para resolver
+    alt decision == APROBAR
+      ServAprob -> Sol : aprobar(admin, comentario)
+      activate Sol
+      Sol --> ServAprob : ok
+      deactivate Sol
+
+      ServAprob -> Audit : registrar(admin, "SolicitudExcepcion", "APROBAR", PENDIENTE, APROBADA)
+      activate Audit
+      Audit --> ServAprob : ok
+      deactivate Audit
+
+      note over ServAprob, ServFact
+        Desacoplamiento entre áreas (Catálogo §8.12):
+        ServicioAprobaciones emite el evento "solicitud resuelta"
+        y ServicioFacturacion lo escucha para actuar sobre la factura.
+      end note
+
+      ServAprob ->> ServFact : alResolverSolicitud(solicitud)
+      activate ServFact
+      ServFact -> Fact : emitir(serie, periodo, admin)
+      activate Fact
+      note right of Fact
+        Asigna numeroFactura único (RB-01),
+        genera PDF inalterable (RB-07) y
+        pasa a estadoDocumental = EMITIDA.
+      end note
+      Fact --> ServFact : ok
+      deactivate Fact
+      deactivate ServFact
+
+    else decision == RECHAZAR
+      ServAprob -> Sol : rechazar(admin, comentario)
+      activate Sol
+      Sol --> ServAprob : ok
+      deactivate Sol
+
+      ServAprob -> Audit : registrar(admin, "SolicitudExcepcion", "RECHAZAR", PENDIENTE, RECHAZADA)
+      activate Audit
+      Audit --> ServAprob : ok
+      deactivate Audit
+
+      ServAprob ->> ServFact : alResolverSolicitud(solicitud)
+      activate ServFact
+      ServFact -> Fact : devolverABorrador(comentario, admin)
+      activate Fact
+      note right of Fact
+        Vuelve a estadoDocumental = BORRADOR
+        conservando lo propuesto para que el
+        solicitante pueda corregirlo (CU-23 POST-2).
+      end note
+      Fact --> ServFact : ok
+      deactivate Fact
+      deactivate ServFact
+    end
+
+    ServAprob --> Proxy : resultadoResolucion
+    Proxy --> UI : resultadoResolucion
+    UI --> Admin : confirmarResolucion(resultadoResolucion)
+  end
+end
+
+deactivate ServAprob
+deactivate Proxy
+deactivate UI
+@enduml
