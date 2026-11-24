@@ -22,7 +22,7 @@ Cada clase se define completa en un solo diagrama. En los demás aparece solo co
 | 6. Cobros, conciliación y saldo | Abdelnaybet | `area6_1_modelo_cobros`, `area6_2_adapter_servicio`, `area6_3_relaciones_otras_areas` |
 | 7. Notificaciones y colaboración | Luca | `area7_1_modelo_notificaciones`, `area7_2_patrones_notificaciones`, `area7_3_relaciones_notificaciones` |
 | 8. Informes y contabilidad | Luca | `area8_1_modelo_informes`, `area8_2_patrones_informes`, `area8_3_relaciones_informes` |
-| 9. Usuarios, seguridad y auditoría | Imad | *pendiente* |
+| 9. Usuarios, seguridad y auditoría | Imad | `area9_1_modelo_usuarios_y_auditoria` , `area9_2_patron_proxy_permisos` , `area9_3_relaciones_otras_areas`, `area9_4_acceso_y_copias`|
 | 10. Configuración y sistema | Cristóbal | `area10_1_configuracion`, `area10_2_planificador`, `area10_3_calendario` |
 | 11. API externa | Guille | `area11_api_externa` |
 
