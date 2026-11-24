@@ -1,0 +1,162 @@
+@startuml er_area9
+title E-R físico — Área 9: Usuarios, seguridad y auditoría
+hide circle
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 60
+
+package "Área 9 — Usuarios, seguridad y auditoría" #FFF8E5 {
+  entity usuario {
+    * id : BIGINT <<PK>>
+    --
+    * nombre : VARCHAR(200)
+    * email : VARCHAR(255)
+    * rol : VARCHAR(20) {OPERATIVO, ADMINISTRADOR, SUPERADMINISTRADOR}
+    * activo : BOOLEAN
+    * credencial_hash : VARCHAR(255)
+    * intentos_fallidos : INTEGER
+    bloqueado_hasta : TIMESTAMP
+  }
+
+  entity sesion {
+    * id : BIGINT <<PK>>
+    --
+    * usuario_id : BIGINT <<FK>>
+    * inicio : TIMESTAMP
+    * ultima_actividad : TIMESTAMP
+    cerrada_en : TIMESTAMP
+  }
+
+  entity token_recuperacion {
+    * id : BIGINT <<PK>>
+    --
+    * usuario_id : BIGINT <<FK>>
+    * token_hash : CHAR(64) <<UNIQUE>> (SHA-256 hex)
+    * emitido_en : TIMESTAMP
+    * caduca_en : TIMESTAMP
+    usado_en : TIMESTAMP
+  }
+
+  entity asignacion_cliente {
+    * id : BIGINT <<PK>>
+    --
+    * usuario_id : BIGINT <<FK>>
+    * cliente_id : BIGINT <<FK>>
+    * desde : DATE
+    hasta : DATE
+  }
+
+  entity delegacion {
+    * id : BIGINT <<PK>>
+    --
+    * origen_id : BIGINT <<FK>>
+    * suplente_id : BIGINT <<FK>>
+    * desde : DATE
+    * caducidad : DATE
+  }
+
+  entity registro_auditoria {
+    * id : BIGINT <<PK>>
+    --
+    * fecha : TIMESTAMP
+    usuario_id : BIGINT <<FK>>
+    * entidad_afectada : VARCHAR(100)
+    * accion : VARCHAR(100)
+    valor_anterior : TEXT
+    valor_nuevo : TEXT
+  }
+
+  entity descarga_fichero {
+    * id : BIGINT <<PK>>
+    --
+    * usuario_id : BIGINT <<FK>>
+    * fecha : TIMESTAMP
+    documento_id : BIGINT <<FK>>
+    exportacion_masiva_id : BIGINT <<FK>>
+  }
+
+  entity copia_seguridad {
+    * id : BIGINT <<PK>>
+    --
+    * fecha : TIMESTAMP
+    * estado : VARCHAR(10) {EN_CURSO, CORRECTA, FALLIDA}
+  }
+
+  entity restauracion_copia {
+    * id : BIGINT <<PK>>
+    --
+    * copia_seguridad_id : BIGINT <<FK>>
+    * usuario_id : BIGINT <<FK>>
+    * fecha : TIMESTAMP
+    * resultado : VARCHAR(10) {CORRECTA, FALLIDA}
+  }
+}
+
+package "Otras áreas (referencias)" #EEEEEE {
+  entity cliente <<área 1>> {
+    * id : BIGINT <<PK>>
+  }
+  entity documento <<área 1>> {
+    * id : BIGINT <<PK>>
+  }
+  entity exportacion_masiva <<área 8>> {
+    * id : BIGINT <<PK>>
+  }
+}
+
+usuario ||--o{ sesion
+usuario ||--o{ token_recuperacion
+usuario ||--o{ asignacion_cliente
+cliente ||--o{ asignacion_cliente
+usuario ||--o{ delegacion : origen
+usuario ||--o{ delegacion : suplente
+usuario |o--o{ registro_auditoria
+usuario ||--o{ descarga_fichero
+documento |o--o{ descarga_fichero
+exportacion_masiva |o--o{ descarga_fichero
+copia_seguridad ||--o{ restauracion_copia
+usuario ||--o{ restauracion_copia
+
+note right of usuario
+  **Índice único** sobre lower(email): sin distinguir
+  mayúsculas. Solo el hash de la credencial.
+  Bloqueo: 5 fallos = 15 min (A-07).
+  Las demás áreas apuntan a usuario
+  (nulo = Sistema).
+end note
+
+note bottom of token_recuperacion
+  CHECK: token_hash ~ '^[0-9a-f]{64}$'.
+  CHECK: caduca_en = emitido_en + 24 h;
+  usado_en entre emisión y caducidad.
+end note
+
+note bottom of asignacion_cliente
+  **EXCLUDE** (gist) sobre [desde, hasta) por cliente:
+  un solo responsable vigente. Reasignar cierra
+  la vigente y abre otra.
+end note
+
+note bottom of delegacion
+  CHECK: desde ≤ caducidad; origen ≠ suplente.
+end note
+
+note bottom of registro_auditoria
+  **Triggers BEFORE UPDATE OR DELETE** y
+  **BEFORE TRUNCATE**: inalterable.
+  usuario nulo = Sistema.
+end note
+
+note bottom of descarga_fichero
+  CHECK num_nonnulls(documento_id,
+  exportacion_masiva_id) = 1 (FR-79, FR-95).
+end note
+
+note as Traza
+  **Trazabilidad (NFR-03):** usuario, delegacion,
+  asignacion_cliente, copia_seguridad y
+  restauracion_copia llevan creado_ y modificado_.
+  sesion, token_recuperacion, registro_auditoria y
+  descarga_fichero no: son en sí un registro.
+end note
+@enduml
