@@ -1,0 +1,74 @@
+@startuml area10_2_patrones
+title Área 10 — Patrones de diseño (Facade + uso del Proxy)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide empty members
+
+package "Facade — ConfiguracionGlobal" #LightYellow {
+  class ConfiguracionGlobal <<Facade>> {
+    + obtenerValor(clave : String, fecha : Date) : Object
+    + actualizarEntrada(clave : String, valor : String, realizadoPor : Usuario) : ResultadoActualizacion
+    + validarEntrada(clave : String, valor : String) : ResultadoValidacion
+  }
+  class EntradaConfiguracion
+}
+
+ConfiguracionGlobal "1" *-- "1..*" EntradaConfiguracion : subsistema interno >
+
+package "Facade / Mediator — Planificador" #LightYellow {
+  class Planificador <<Facade>> <<componente interno>> {
+    - identidadSistema : String {readOnly}
+    + ejecutar(tipo : TipoProceso) : EjecucionProceso
+    + llamarServicio(nombre : String, datos : Object) : Resultado
+  }
+}
+
+package "Área 9 — Seguridad y Auditoría" {
+  class ProxyPermisos <<referencia>> {
+    + autorizar(identidad : String, operacion : String) : boolean
+  }
+  class RegistroAuditoria <<referencia>>
+}
+
+package "Servicios de otras áreas (referencia)" {
+  class GeneradorFactura <<referencia>>
+  class ServicioCobros <<referencia>>
+  class ServicioAprobaciones <<referencia>>
+  class ServicioRecordatorios <<referencia>>
+  class ServicioCopias <<referencia>>
+}
+
+Planificador ..> ProxyPermisos : usa identidad de sistema (8.11) >
+ProxyPermisos ..> RegistroAuditoria : audita >
+
+Planificador ..> GeneradorFactura : delega CU-17 >
+Planificador ..> ServicioCobros : delega CU-33..CU-36 >
+Planificador ..> ServicioAprobaciones : delega CU-22/23 >
+Planificador ..> ServicioRecordatorios : delega CU-29 >
+Planificador ..> ServicioCopias : delega CU-53 >
+
+ConfiguracionGlobal <.. GeneradorFactura : lee umbral RB-25 >
+ConfiguracionGlobal <.. ServicioAprobaciones : lee umbral RB-24 >
+ConfiguracionGlobal <.. ServicioCobros : lee moneda base >
+ConfiguracionGlobal <.. ServicioRecordatorios : lee cadencia >
+
+note bottom of ConfiguracionGlobal
+  **Facade**, no Singleton y no Proxy.
+  No absorbe datos de otras áreas:
+  solo expone `obtenerValor`/`actualizarEntrada`
+  sobre el subsistema `EntradaConfiguracion`.
+  Las demás áreas **dependen de él**, no al revés.
+  El **Proxy** que lo protege es el del área 9.
+end note
+
+note bottom of Planificador
+  **Cuestión 8.11 (opción A):**
+  siempre pasa por el Proxy con identidad
+  de sistema. No es un actor.
+  Un rechazo del Proxy → fallo en
+  `EjecucionProceso` (BR-04) y alerta (CU-56).
+end note
+
+@enduml

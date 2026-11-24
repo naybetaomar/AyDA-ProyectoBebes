@@ -1,0 +1,124 @@
+@startuml area10_1b_planificador
+title Área 10 — Planificador y ejecución (modelo propio, 2/3)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide empty members
+
+note "Trazabilidad (NFR-03):\ncreadoPor, creadoEn, modificadoPor, modificadoEn\nen todas las clases auditables.\ncreadoPor y modificadoPor admiten nulo = Sistema.\nNo se dibujan en cada clase." as NFR03
+
+package "Área 10 — Planificador y ejecución" #LightYellow {
+
+  class Planificador <<componente interno>> {
+    - id : Long {readOnly}
+    - nombre : String
+    - identidadSistema : String {readOnly}
+    + ejecutarFacturacionRecurrente() : EjecucionProceso
+    + ejecutarRecordatorios() : EjecucionProceso
+    + ejecutarCampanaAnual() : EjecucionProceso
+    + gestionarCaducidades() : EjecucionProceso
+    + ejecutarCopiasSeguridad() : EjecucionProceso
+    + programar(tipo : TipoProceso, cron : String) : void
+    + registrarEjecucion(ejecucion : EjecucionProceso) : void
+  }
+
+  class TareaProgramada {
+    - tipo : TipoProceso
+    - cron : String
+    - activa : boolean
+  }
+
+  class EjecucionProceso {
+    - id : Long {readOnly}
+    - tipo : TipoProceso
+    - fechaInicio : Timestamp
+    - fechaFin : Timestamp [0..1]
+    - /duracion : Duration
+    - procesados : int
+    - fallos : int
+    - causa : String [0..1]
+    - estado : EstadoEjecucion
+    + iniciar(tipo : TipoProceso) : void
+    + registrarProcesado(cantidad : int) : void
+    + registrarFallo(motivo : String, entidad : String) : void
+    + finalizar() : void
+    + esExitosa() : boolean
+  }
+
+  class DetalleFallo {
+    - entidadAfectada : String
+    - motivo : String
+    - codigoIncidencia : String [0..1]
+  }
+
+  class ErrorTecnico {
+    - id : Long {readOnly}
+    - codigoIncidencia : String {readOnly}
+    - mensajeInterno : String
+    - fecha : Timestamp {readOnly}
+    - severidad : SeveridadError
+    - origen : String
+    - traza : String [0..1]
+    - resuelto : boolean
+    - fechaResolucion : Timestamp [0..1]
+    + registrar(codigo : String, mensaje : String, severidad : SeveridadError, origen : String) : ErrorTecnico
+    + marcarResuelto(realizadoPor : Usuario) : void
+    + /mensajeParaUsuario() : String
+  }
+}
+
+enum TipoProceso {
+  FACTURACION_RECURRENTE
+  RECORDATORIOS
+  CAMPANIA_ANUAL
+  CADUCIDAD_DELEGACIONES
+  COPIA_SEGURIDAD
+  CONCILIACION
+  INFORMES_PROGRAMADOS
+  CIERRE_PERIODO
+  REAPERTURA_PERIODO
+}
+
+enum EstadoEjecucion {
+  EN_CURSO
+  COMPLETADA
+  COMPLETADA_CON_FALLOS
+  FALLIDA
+  CANCELADA
+}
+
+enum SeveridadError {
+  INFO
+  WARNING
+  ERROR
+  CRITICO
+}
+
+package "Área 9 — Seguridad y Auditoría" {
+  class Usuario <<referencia>>
+}
+
+Planificador "1" *-- "0..*" TareaProgramada : programa >
+Planificador "1" --> "0..*" EjecucionProceso : crea >
+EjecucionProceso "1" *-- "0..*" DetalleFallo : registra >
+EjecucionProceso "1" --> "0..*" ErrorTecnico : agrega >
+TareaProgramada --> TipoProceso : usa >
+EjecucionProceso --> TipoProceso : usa >
+EjecucionProceso --> EstadoEjecucion : usa >
+ErrorTecnico --> SeveridadError : usa >
+ErrorTecnico ..> Usuario : resueltoPor [0..1] >
+
+NFR03 .. Planificador
+NFR03 .. EjecucionProceso
+NFR03 .. ErrorTecnico
+
+note bottom of Planificador
+  **Cuestión 8.11:** siempre pasa por el `Proxy`
+  (área 9) con identidad de sistema.
+  No es un actor; es un componente interno.
+  Un rechazo del Proxy se registra como fallo
+  en `EjecucionProceso` (BR-04) y genera alerta (CU-56).
+end note
+
+@enduml

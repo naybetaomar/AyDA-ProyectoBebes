@@ -1,0 +1,127 @@
+@startuml area2_1_relacion_comercial
+skinparam classAttributeIconSize 0
+hide empty members
+title Área 2 — Diagrama 1: Relación comercial, tarifas y revisión anual
+
+class RelacionComercial {
+  - id : Long {readOnly}
+  - fechaInicio : Date
+  - condicionesPago : String
+  - fechaBaja : Date [0..1]
+  - motivoBaja : String [0..1]
+  --
+  + estadoCliente(fecha : Date) : EstadoCliente
+  + rangoVigente(fecha : Date) : RangoTarifa
+  + pausar(motivo : String, fechaInicio : Date, fechaPrevistaReactivacion : Date) : Pausa
+  + reactivar(fecha : Date) : void
+  + darDeBaja(motivo : String, fecha : Date) : void
+  + modificar(condicionesPago : String, fechaInicio : Date, rango : RangoTarifa) : void
+  + tieneRevisionAplicada() : Boolean
+}
+
+class Pausa {
+  - id : Long {readOnly}
+  - motivo : String
+  - fechaInicio : Date
+  - fechaPrevistaReactivacion : Date
+  - fechaReactivacion : Date [0..1]
+  --
+  + estaEnCurso(fecha : Date) : Boolean
+  + confirmarReactivacion(fecha : Date) : void
+}
+
+class RangoTarifa {
+  - id : Long {readOnly}
+  - facturacionDesde : Decimal
+  - facturacionHasta : Decimal [0..1]
+  - precioMensual : Decimal
+  --
+  + contiene(facturacion : Decimal) : Boolean
+}
+
+class RevisionAnualPlan {
+  - id : Long {readOnly}
+  - anio : Integer
+  - facturacionAnual : Decimal [0..1]
+  - fuenteFacturacion : String [0..1]
+  - fechaDatoFacturacion : Date [0..1]
+  - fechaEfecto : Date [0..1]
+  - estado : EstadoRevision
+  - fechaResolucion : DateTime [0..1]
+  --
+  + corregirFacturacion(importe : Decimal, fuente : String, fecha : Date, usuario : Usuario) : void
+  + aplicar(fechaEfecto : Date, aprobador : Usuario) : void
+  + mantenerPlan(aprobador : Usuario) : void
+}
+
+enum EstadoRevision {
+  PENDIENTE
+  APLICADA
+  PLAN_MANTENIDO
+}
+
+' Clases de otras áreas
+class Cliente <<referencia>>
+class Usuario <<referencia>>
+class ConfiguracionRecurrente <<referencia>>
+enum EstadoCliente <<referencia>>
+
+' Relaciones
+Cliente "1" -down- "0..*" RelacionComercial : tiene >
+RelacionComercial "1" *-left- "0..*" Pausa : tiene >
+RelacionComercial "0..*" -right- "1" RangoTarifa : contratado con >
+RelacionComercial "1" -up-> "0..1" ConfiguracionRecurrente : se factura con >
+RelacionComercial "1" -down- "0..*" RevisionAnualPlan : se revisa con >
+RevisionAnualPlan "0..*" -up- "1" RangoTarifa : rango anterior >
+RevisionAnualPlan "0..*" -up- "0..1" RangoTarifa : rango propuesto >
+RevisionAnualPlan "0..*" -down- "0..1" Usuario : aprobada por >
+RevisionAnualPlan "0..*" -down- "0..1" Usuario : corregida por >
+RelacionComercial .right.> EstadoCliente
+RevisionAnualPlan .right.> EstadoRevision
+
+note top of RelacionComercial
+  {a lo sumo una relación activa por cliente}:
+  activa = no está en baja efectiva.
+  el historial se conserva (RB-12).
+  La baja efectiva es final (A-25): volver a trabajar
+  con la empresa crea una relación nueva.
+  **estadoCliente(fecha)** se calcula sobre la relación
+  más reciente del cliente, en este orden:
+  1. fecha de baja ≤ fecha → BAJA_EFECTIVA
+  2. fecha de baja > fecha → BAJA_SOLICITADA
+     (si estaba pausado, la baja termina la pausa)
+  3. fecha de inicio > fecha → PENDIENTE_ACTIVACION
+  4. pausa en curso → PAUSADO
+  5. si no → ACTIVO
+  Un cliente sin ninguna relación → PENDIENTE_ACTIVACION.
+  **rangoVigente(fecha)**: el rango propuesto de la última
+  revisión APLICADA con fecha de efecto ≤ fecha; si no hay,
+  el rango contratado (RB-36). No hace falta tarea diaria.
+  modificar() solo corrige el rango contratado si
+  todavía no hay ninguna revisión aplicada.
+end note
+
+note bottom of Pausa
+  estaEnCurso(fecha): fechaInicio ≤ fecha y sin
+  fechaReactivacion. Sigue en curso hasta que se confirma la
+  reactivación, aunque haya pasado la fecha
+  prevista (RB-29, CU-11 FA-1).
+  RelacionComercial.reactivar() llama a
+  confirmarReactivacion().
+end note
+
+note bottom of RangoTarifa
+  {rangos sin solapes ni huecos} (CU-14 FE-1).
+  facturacionHasta nulo = último rango, sin tope.
+end note
+
+note bottom of RevisionAnualPlan
+  Campaña anual (CU-13, RB-26, RB-36).
+  {único: relación + año}.
+  facturacionAnual nula = dato no disponible
+  (sin rango propuesto todavía):
+  la revisión queda PENDIENTE hasta que se
+  introduce con fuente y fecha (FA-2).
+  {aprobada por ≠ corregida por} (FR-74, FE-1).
+end note
+@enduml

@@ -1,0 +1,112 @@
+@startuml area1_2_servicio_clientes
+skinparam classAttributeIconSize 0
+hide empty members
+title Área 1 — Diagrama 2: Servicio de clientes
+
+class ServicioClientes {
+  .. Clientes y contactos (CU-01 a CU-03) ..
+  + registrarCliente(datos : DatosCliente) : Cliente
+  + modificarCliente(cliente : Cliente, datos : DatosCliente) : void
+  + consultarFicha(cliente : Cliente) : FichaCliente
+  + agregarContacto(cliente : Cliente, datos : DatosContacto) : Contacto
+  + modificarContacto(contacto : Contacto, datos : DatosContacto) : void
+  + quitarContacto(contacto : Contacto) : void
+  + registrarConsentimiento(contacto : Contacto, canal : Canal, otorgado : Boolean) : void
+  .. Documentos (CU-04) ..
+  + adjuntarACliente(cliente : Cliente, nombre : String, contenido : Byte [0..*]) : Documento
+  + adjuntarAFactura(factura : Factura, nombre : String, contenido : Byte [0..*]) : Documento
+  .. Importación y acciones masivas (CU-05 a CU-08) ..
+  + importarClientes(contenidoCsv : Byte [0..*]) : ResultadoImportacion
+  + importarHistoricoFacturas(contenidoCsv : Byte [0..*]) : ResultadoImportacion
+  + ejecutarAccionMasiva(clientes : Cliente [1..*], accion : AccionMasiva) : Tarea
+  + etiquetar(cliente : Cliente, etiqueta : Etiqueta) : void
+  .. Privacidad (CU-09) ..
+  + localizarDatosPersonales(contacto : Contacto) : InformeDatosPersonales
+  + anonimizarContacto(contacto : Contacto) : ResultadoAnonimizacion
+}
+
+enum AccionMasiva {
+  ETIQUETAR
+  CAMBIAR_CANAL_PREFERIDO
+  REASIGNAR
+}
+
+package "DTO del área 1" <<Rectangle>> {
+  class DatosCliente <<DTO>> {
+    - razonSocial : String
+    - identificadorFiscal : String
+    - pais : String
+    - moneda : String
+    - direccion : String
+    - contactos : DatosContacto [1..*]
+  }
+  class DatosContacto <<DTO>> {
+    - nombre : String
+    - email : String
+    - telefono : String
+    - idioma : String
+    - canalPreferido : Canal
+    - esContactoFacturacion : Boolean
+  }
+  class FichaCliente <<DTO>> {
+    - clienteId : Long
+    - razonSocial : String
+    - identificadorFiscal : String
+    - estado : EstadoCliente
+    - contactos : DatosContacto [1..*]
+    - facturas : ResumenFactura [0..*]
+  }
+  class ResultadoImportacion <<DTO>> {
+    - filasLeidas : Integer
+    - filasImportadas : Integer
+    - errores : String [0..*]
+  }
+  class InformeDatosPersonales <<DTO>> {
+    - contactoId : Long
+    - datos : String [0..*]
+    - ubicaciones : String [0..*]
+  }
+  class ResultadoAnonimizacion <<DTO>> {
+    - anonimizados : String [0..*]
+    - conservados : String [0..*]
+    - motivosConservacion : String [0..*]
+  }
+}
+
+class ServicioFacturacion <<referencia>>
+class ServicioRelacionComercial <<referencia>>
+class ServicioNotificaciones <<referencia>>
+class GestorDocumentos <<referencia>>
+class ServicioUsuarios <<referencia>> {
+  + reasignarCliente(cliente : Cliente, nuevoResponsable : Usuario) : void
+}
+class Tarea <<referencia>>
+class ResumenFactura <<referencia>>
+
+ServicioClientes .down.> "DTO del área 1" : usa >
+ServicioClientes .left.> AccionMasiva
+ServicioClientes .left.> ServicioUsuarios : REASIGNAR, a través\ndel proxy >
+ServicioClientes .down.> Tarea
+"DTO del área 1" ..> ResumenFactura : facturas de la ficha\n(DTO del área 3) >
+ServicioClientes .up.> ServicioFacturacion : facturas de la ficha,\nhistórico importado >
+ServicioClientes .up.> ServicioRelacionComercial : estado del cliente >
+ServicioClientes .up.> ServicioNotificaciones : crea la tarea de\nla acción masiva >
+ServicioClientes .up.> GestorDocumentos : guarda el fichero >
+
+note right of ServicioClientes
+  **Punto de entrada del área 1** (CU-01 a CU-09),
+  a través del proxy de permisos (área 9).
+  registrarCliente(): rechaza un identificador fiscal
+  repetido y exige un contacto de facturación (RB-27).
+  ejecutarAccionMasiva(): crea la Tarea (área 7) para
+  seguir el progreso y aplica la acción cliente a cliente,
+  registrando éxitos y fallos (CU-07). REASIGNAR llama a
+  ServicioUsuarios.reasignarCliente() (área 9) y es
+  solo para Administrador (RB-15).
+  anonimizarContacto(): anonimización parcial si hay datos
+  que deben conservarse (CU-09 FE-1); el resultado dice
+  qué se conserva y por qué.
+  Dependencias en un solo sentido: el área 1 llama
+  a las áreas 2, 3, 7 y 9, y ellas no llaman al área 1.
+end note
+@enduml

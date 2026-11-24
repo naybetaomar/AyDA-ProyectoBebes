@@ -1,0 +1,72 @@
+@startuml arquitectura_3_despliegue
+title Arquitectura de Turbine — 3. Vista de despliegue — BORRADOR
+
+node "Puesto del usuario" {
+  artifact "Navegador web" as Nav
+}
+
+node "Sistema externo (p. ej. Brain)" as Ext
+
+node "Servidor de aplicación" {
+  node "Contenedor Docker: aplicación Turbine" {
+    artifact "Interfaz web + FachadaAPI\n+ receptor de webhooks" as App1
+    artifact "Proxy + servicios + dominio" as App2
+    artifact "Planificador" as App3
+  }
+}
+
+node "Servidor de base de datos" {
+  database "PostgreSQL\n(producción)" as BD
+  database "PostgreSQL\n<<solo demostración>>" as BDDemo
+}
+
+node "Almacenamiento de ficheros" as FS {
+  artifact "PDF de facturas\n(hash, inalterables)"
+  artifact "Exportaciones temporales\n(caducan, FR-95)"
+  artifact "Documentos adjuntos"
+}
+
+node "Almacenamiento de copias\n(ubicación separada, NFR-11)" as Copias {
+  artifact "Copias de la BD"
+  artifact "Copias de ficheros"
+}
+
+cloud "Servicios externos (simulados, A-03)" {
+  node "Stripe" as Stripe
+  node "Banco" as Banco
+  node "Correo (servicio de pruebas)" as Correo
+  node "WhatsApp" as WA
+}
+
+Nav --> App1 : HTTPS
+Ext --> App1 : HTTPS / REST
+Stripe --> App1 : webhook (notificación de pago)
+App1 --> App2 : llamada interna
+App3 --> App2 : identidad de sistema
+App2 --> BD : SQL
+App2 --> BDDemo : SQL
+App2 --> FS : ficheros
+App2 --> Banco : HTTPS (extractos)
+App2 --> Correo : SMTP
+App2 --> WA : HTTPS
+BD --> Copias : copia periódica
+FS --> Copias : copia periódica
+
+note right of App3
+  **Una sola instancia** del planificador
+  (o bloqueo en la BD): si se escalara a varias,
+  las tareas se ejecutarían por duplicado (FR-100).
+end note
+
+note bottom of BDDemo
+  Esquema separado con las mismas tablas,
+  solo para CU-55 (decisión 8). No es una
+  segunda base de producción.
+end note
+
+note bottom of Copias
+  Fuera del almacén principal: una copia en el
+  mismo sitio que el dato no protege si ese sitio
+  falla. Se prueban restaurándolas (NFR-11, CU-59).
+end note
+@enduml

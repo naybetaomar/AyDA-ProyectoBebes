@@ -1,0 +1,98 @@
+@startuml cu15_1_emitir_factura
+title CU-15 Emitir factura puntual — 1. Emisión directa (no supera el umbral)
+hide footbox
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Usuario operativo__" as L
+participant "__: InterfazWeb__" as UI
+participant "__: ProxyFacturacion__" as PX
+participant "__: ServicioFacturacion__" as SF
+participant "__: GeneradorPuntual__" as GP
+participant "__: ConfiguracionGlobal__" as CG
+participant "__: SerieFacturacion__" as SE
+participant "__: GestorDocumentos__" as GD
+
+L -> UI ++ : emitirFacturaPuntual(datos : DatosFactura)
+UI -> PX ++ : emitirPuntual(datos : DatosFactura)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente)
+note right of PX
+  Solicitante: el Usuario de la sesión
+  (ContextoSeguridad). Rol y cliente en
+  su cartera (RB-15).
+  Registra la acción en RegistroAuditoria.
+end note
+PX -> SF ++ : emitirPuntual(datos : DatosFactura)
+
+SF -> GP ++ : generar(datos : DatosFactura)
+GP -> GP : crearFactura(datos : DatosFactura)
+create participant "__f : FacturaPuntual__" as F
+GP --> F : FacturaPuntual(datos)
+loop para cada línea de datos
+  create participant "__: LineaFactura__" as LF
+  GP --> LF : LineaFactura(concepto, cantidad, precioUnitario, impuesto)
+  GP -> F ++ : agregarLinea(linea : LineaFactura)
+  autonumber stop
+  return
+  autonumber resume
+end
+GP -> F ++ : calcularTotales()
+autonumber stop
+return
+autonumber resume
+GP -> CG ++ : obtenerValor(clave = "umbral", fecha : Date)
+autonumber stop
+return umbral
+autonumber resume
+GP -> F ++ : requiereAprobacion(umbral : Decimal)
+autonumber stop
+return false
+autonumber resume
+autonumber stop
+return f
+autonumber resume
+
+SF ->o] : buscar PeriodoContable abierto en BD
+autonumber stop
+SF <--o] : periodo
+autonumber resume
+SF ->o] : buscar SerieFacturacion ORDINARIA de la entidad en BD
+autonumber stop
+SF <--o] : serie
+autonumber resume
+SF -> F ++ : emitir(serie : SerieFacturacion, periodo : PeriodoContable)
+F -> SE ++ : asignarSiguienteNumeroFactura()
+autonumber stop
+return numeroFactura
+autonumber resume
+create participant "__: HistorialEstadoFactura__" as H
+F --> H : HistorialEstadoFactura(DOCUMENTAL, BORRADOR, EMITIDA)
+autonumber stop
+return
+autonumber resume
+SF -> GD ++ : generarPdf(f : Factura)
+autonumber stop
+return rutaPdf, hashPdf
+autonumber resume
+SF ->o] : guardar factura, líneas e historial en BD
+
+autonumber stop
+return f
+autonumber resume
+autonumber stop
+return f (EMITIDA)
+autonumber resume
+autonumber stop
+return factura emitida con su número y su PDF
+autonumber resume
+
+note over SF, F
+  La serie y el periodo los pide el servicio
+  (no Factura): el área 3 no depende de la 4.
+  FE-1 (doble clic): la petición repetida se
+  detecta y solo se emite una factura (FR-87).
+end note
+@enduml

@@ -1,0 +1,256 @@
+@startuml area10_1_modelo_propio_global
+title Área 10 — Modelo propio completo (Configuración y Sistema)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+hide empty members
+
+' ============================================================
+' NOTA ÚNICA DE TRAZABILIDAD (NFR-03, convención sección 2)
+' ============================================================
+note "Trazabilidad (NFR-03):\ncreadoPor, creadoEn, modificadoPor, modificadoEn\nen todas las clases auditables.\ncreadoPor y modificadoPor admiten nulo = Sistema\n(acción automática: Planificador o API externa).\nNo se dibujan en cada clase." as NFR03
+
+' ============================================================
+' ENUMERADOS
+' ============================================================
+package "Enumerados (Área 10)" {
+  enum TipoDatoConfig {
+    ENTERO
+    DECIMAL
+    BOOLEANO
+    TEXTO
+    JSON
+    MONEDA
+    FECHA
+  }
+
+  enum AmbitoFestivo {
+    NACIONAL
+    REGIONAL
+    LOCAL
+  }
+
+  enum TipoProceso {
+    FACTURACION_RECURRENTE
+    RECORDATORIOS
+    CAMPANIA_ANUAL
+    CADUCIDAD_DELEGACIONES
+    COPIA_SEGURIDAD
+    CONCILIACION
+    INFORMES_PROGRAMADOS
+    CIERRE_PERIODO
+    REAPERTURA_PERIODO
+  }
+
+  enum EstadoEjecucion {
+    EN_CURSO
+    COMPLETADA
+    COMPLETADA_CON_FALLOS
+    FALLIDA
+    CANCELADA
+  }
+
+  enum SeveridadError {
+    INFO
+    WARNING
+    ERROR
+    CRITICO
+  }
+}
+
+' ============================================================
+' CLASES DEL ÁREA 10
+' ============================================================
+package "Área 10 — Configuración y Sistema" #LightYellow {
+
+  ' ---------- Bloque Configuración ----------
+  class ConfiguracionGlobal <<Facade>> {
+    - id : Long {readOnly}
+    - nombre : String
+    - descripcion : String
+    - /numeroEntradas : int
+    + obtenerEntrada(clave : String) : EntradaConfiguracion
+    + obtenerValor(clave : String, fecha : Date) : Object
+    + validarEntrada(clave : String, valor : String) : ResultadoValidacion
+    + actualizarEntrada(clave : String, valor : String, realizadoPor : Usuario) : ResultadoActualizacion
+    + listarVigentes(fecha : Date) : List<EntradaConfiguracion>
+  }
+
+  class EntradaConfiguracion {
+    - clave : String {readOnly}
+    - valor : String
+    - tipoDato : TipoDatoConfig
+    - descripcion : String
+    - validada : boolean
+    - fechaVigenciaDesde : Date
+    - fechaVigenciaHasta : Date [0..1]
+    + esVigente(fecha : Date) : boolean
+    + validar() : ResultadoValidacion
+  }
+
+  ' ---------- Bloque Planificador y ejecución ----------
+  class Planificador <<Facade>> <<componente interno>> {
+    - id : Long {readOnly}
+    - nombre : String
+    - identidadSistema : String {readOnly}
+    + ejecutarFacturacionRecurrente() : EjecucionProceso
+    + ejecutarRecordatorios() : EjecucionProceso
+    + ejecutarCampanaAnual() : EjecucionProceso
+    + gestionarCaducidades() : EjecucionProceso
+    + ejecutarCopiasSeguridad() : EjecucionProceso
+    + programar(tipo : TipoProceso, cron : String) : void
+    + registrarEjecucion(ejecucion : EjecucionProceso) : void
+  }
+
+  class TareaProgramada {
+    - tipo : TipoProceso
+    - cron : String
+    - activa : boolean
+  }
+
+  class EjecucionProceso {
+    - id : Long {readOnly}
+    - tipo : TipoProceso
+    - fechaInicio : Timestamp
+    - fechaFin : Timestamp [0..1]
+    - /duracion : Duration
+    - procesados : int
+    - fallos : int
+    - causa : String [0..1]
+    - estado : EstadoEjecucion
+    + iniciar(tipo : TipoProceso) : void
+    + registrarProcesado(cantidad : int) : void
+    + registrarFallo(motivo : String, entidad : String) : void
+    + finalizar() : void
+    + esExitosa() : boolean
+  }
+
+  class DetalleFallo {
+    - entidadAfectada : String
+    - motivo : String
+    - codigoIncidencia : String [0..1]
+  }
+
+  class ErrorTecnico {
+    - id : Long {readOnly}
+    - codigoIncidencia : String {readOnly}
+    - mensajeInterno : String
+    - fecha : Timestamp {readOnly}
+    - severidad : SeveridadError
+    - origen : String
+    - traza : String [0..1]
+    - resuelto : boolean
+    - fechaResolucion : Timestamp [0..1]
+    + registrar(codigo : String, mensaje : String, severidad : SeveridadError, origen : String) : ErrorTecnico
+    + marcarResuelto(realizadoPor : Usuario) : void
+    + /mensajeParaUsuario() : String
+  }
+
+  ' ---------- Bloque Calendario ----------
+  class CalendarioLaboral {
+    - id : Long {readOnly}
+    - nombre : String
+    - pais : String
+    - anio : int
+    - diasLaborables : Set<DiaSemana>
+    + esLaborable(fecha : Date) : boolean
+    + siguienteDiaLaborable(fecha : Date) : Date
+    + anadirFestivo(fecha : Date, descripcion : String, ambito : AmbitoFestivo) : void
+    + eliminarFestivo(fecha : Date) : void
+    + festivosDelAnio(anio : int) : List<FechaFestiva>
+  }
+
+  class FechaFestiva {
+    - fecha : Date {readOnly}
+    - descripcion : String
+    - ambito : AmbitoFestivo
+  }
+}
+
+' ============================================================
+' REFERENCIAS A OTRAS ÁREAS (solo nombre, estereotipo <<referencia>>)
+' ============================================================
+package "Área 9 — Seguridad y Auditoría" {
+  class Usuario <<referencia>>
+  class ProxyPermisos <<referencia>> {
+    + autorizar(identidad : String, operacion : String) : boolean
+  }
+}
+
+' ============================================================
+' RELACIONES INTERNAS DEL ÁREA 10
+' ============================================================
+
+' --- Configuración (Facade sobre su subsistema) ---
+ConfiguracionGlobal "1" *-- "1..*" EntradaConfiguracion : contiene >
+EntradaConfiguracion --> TipoDatoConfig : usa >
+ConfiguracionGlobal ..> Usuario : realizadoPor [0..1] >
+
+' --- Planificador y ejecución ---
+Planificador "1" *-- "0..*" TareaProgramada : programa >
+TareaProgramada --> TipoProceso : usa >
+Planificador "1" --> "0..*" EjecucionProceso : crea >
+EjecucionProceso "1" *-- "0..*" DetalleFallo : registra >
+EjecucionProceso "1" --> "0..*" ErrorTecnico : agrega >
+EjecucionProceso --> TipoProceso : usa >
+EjecucionProceso --> EstadoEjecucion : usa >
+ErrorTecnico --> SeveridadError : usa >
+ErrorTecnico ..> Usuario : resueltoPor [0..1] >
+
+' --- Calendario ---
+CalendarioLaboral "1" *-- "0..*" FechaFestiva : contiene >
+FechaFestiva --> AmbitoFestivo : usa >
+
+' --- Uso del Proxy del área 9 (cuestión 8.11) ---
+Planificador ..> ProxyPermisos : usa identidad de sistema >
+
+' ============================================================
+' NOTA DE TRAZABILIDAD (aplicada a las clases auditables)
+' ============================================================
+NFR03 .. ConfiguracionGlobal
+NFR03 .. EntradaConfiguracion
+NFR03 .. Planificador
+NFR03 .. EjecucionProceso
+NFR03 .. ErrorTecnico
+NFR03 .. CalendarioLaboral
+
+' ============================================================
+' NOTAS DE DISEÑO (las notas finales, dentro del diagrama)
+' ============================================================
+note bottom of ConfiguracionGlobal
+  **Facade, no Singleton y no Proxy.**
+  No absorbe datos de otras áreas:
+  solo expone `obtenerValor`/`actualizarEntrada`
+  sobre el subsistema `EntradaConfiguracion`.
+  Las demás áreas **dependen de él**, no al revés.
+  El **Proxy** que lo protege es el del área 9.
+  **Q-07 (abierta):** la vigencia
+  (`fechaVigenciaDesde/Hasta`) permite saber qué valor
+  aplicaba en una fecha; la política la decide el grupo.
+end note
+
+note bottom of Planificador
+  **Facade / componente interno.**
+  **No es Singleton** (el catálogo no lo pide) y **no es un actor**.
+  Siempre pasa por el `ProxyPermisos` (área 9)
+  con una identidad de sistema (cuestión 8.11, opción A).
+  Un rechazo del Proxy se registra como fallo en
+  `EjecucionProceso` (BR-04) y genera alerta (CU-56).
+end note
+
+note bottom of CalendarioLaboral
+  **FR-83:** si un vencimiento o recordatorio cae en
+  fin de semana o festivo, se traslada al siguiente día laborable.
+  **Q-02:** calendario configurable de España en la fase inicial.
+  El Área 10 **no** conoce `Mensaje` ni `Factura`:
+  son ellas las que consultan `siguienteDiaLaborable()`.
+end note
+
+note bottom of ErrorTecnico
+  **FR-62/63:** `codigoIncidencia` permite correlacionar;
+  `mensajeInterno` y `traza` **no** se muestran al usuario final.
+  `mensajeParaUsuario()` es un derivado genérico y sin datos técnicos.
+end note
+
+@enduml

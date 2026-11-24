@@ -1,0 +1,87 @@
+@startuml er_area5
+title E-R físico — Área 5: Envío y comunicaciones
+hide circle
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 60
+
+package "Área 5 — Envío y comunicaciones" #FFF8E5 {
+  entity plantilla_comunicacion {
+    * id : BIGINT <<PK>>
+    --
+    * tipo : VARCHAR(15) {FACTURA, RECORDATORIO}
+    * asunto : VARCHAR(200)
+    * cuerpo : TEXT
+    * activa : BOOLEAN
+  }
+
+  entity variable_plantilla {
+    * id : BIGINT <<PK>>
+    --
+    * plantilla_comunicacion_id : BIGINT <<FK>> (CASCADE)
+    * nombre : VARCHAR(50)
+  }
+
+  entity regla_recordatorio {
+    * id : BIGINT <<PK>>
+    --
+    * plantilla_comunicacion_id : BIGINT <<FK>>
+    * cadencia : INTEGER
+    * dias_tras_vencimiento : INTEGER
+    * activa : BOOLEAN
+  }
+
+  entity mensaje {
+    * id : BIGINT <<PK>>
+    --
+    * canal : VARCHAR(10) {EMAIL, WHATSAPP}
+    * estado_entrega : VARCHAR(10) {PENDIENTE, ENVIADO, ENTREGADO, FALLIDO}
+    * intentos : INTEGER
+    fecha_envio : TIMESTAMP
+    .. asociaciones ..
+    * factura_id : BIGINT <<FK>>
+    * contacto_id : BIGINT <<FK>>
+    * plantilla_comunicacion_id : BIGINT <<FK>>
+  }
+}
+
+package "Otras áreas (referencias)" #EEEEEE {
+  entity factura <<área 3>> {
+    * id : BIGINT <<PK>>
+  }
+  entity contacto <<área 1>> {
+    * id : BIGINT <<PK>>
+  }
+}
+
+plantilla_comunicacion ||--o{ variable_plantilla
+plantilla_comunicacion ||--o{ regla_recordatorio : usa
+plantilla_comunicacion ||--o{ mensaje : genera
+factura ||--o{ mensaje
+contacto ||--o{ mensaje : recibe
+
+note right of variable_plantilla
+  variablesObligatorias (multivaluado) normalizado.
+  **UNIQUE** (plantilla_comunicacion_id, nombre).
+end note
+
+note bottom of regla_recordatorio
+  CHECK: cadencia > 0 (días entre recordatorios).
+end note
+
+note right of mensaje
+  CHECK: ENVIADO o ENTREGADO ⇒ fecha_envio.
+  intentos ≥ 0. Los fallos de envío seguidos
+  los cuenta el área 5 para emitir
+  «fallos de envío» al área 7 (FR-80).
+  El estado de envío de la factura lo guarda
+  el área 3 (registrarEstadoEnvio()).
+end note
+
+note as Traza
+  **Trazabilidad (NFR-03):** todas las tablas llevan
+  creado_por, creado_en, modificado_por, modificado_en
+  (FK a usuario; nulo = Sistema); variable_plantilla
+  solo creado_. No se dibujan. Leyenda: * = NOT NULL.
+end note
+@enduml

@@ -1,0 +1,180 @@
+@startuml cu19_emitir_rectificativa
+title CU-19 Emitir factura rectificativa — corrección con abono (A-27)
+hide footbox
+skinparam maxMessageSize 170
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Administrador__" as A
+participant "__: InterfazWeb__" as UI
+participant "__: ProxyFacturacion__" as PX
+participant "__: ServicioFacturacion__" as SF
+participant "__: GeneradorRectificativa__" as GR
+participant "__: ConfiguracionGlobal__" as CG
+participant "__: SerieFacturacion__" as SE
+participant "__original : Factura__" as O
+participant "__: GestorDocumentos__" as GD
+participant "__: ServicioCobros__" as SC
+participant "__: ServicioRecordatorios__" as SR
+
+A -> UI ++ : rectificarFactura(datos : DatosFactura)
+UI -> PX ++ : emitirRectificativa(datos : DatosFactura)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente)
+note right of PX
+  Solo Administrador o Superadministrador (RB-21).
+  FE-1: un Usuario operativo recibe la denegación y termina.
+  Registra la acción en RegistroAuditoria.
+end note
+PX -> SF ++ : emitirRectificativa(datos : DatosFactura)
+
+SF -> GR ++ : generar(datos : DatosFactura)
+GR -> GR : crearFactura(datos : DatosFactura)
+note right of GR
+  datos.facturaOriginal y datos.motivo.
+  Rechaza la operación si la original
+  no está EMITIDA (PRE-2).
+end note
+create participant "__r : FacturaRectificativa__" as R
+GR --> R : FacturaRectificativa(datos)
+loop para cada línea corregida
+  create participant "__: LineaFactura__" as LF
+  GR --> LF : LineaFactura(concepto, cantidad, precioUnitario, impuesto)
+  GR -> R ++ : agregarLinea(linea : LineaFactura)
+  autonumber stop
+  return
+  autonumber resume
+end
+GR -> R ++ : calcularTotales()
+autonumber stop
+return
+autonumber resume
+GR -> CG ++ : obtenerValor(clave = "umbral", fecha : Date)
+autonumber stop
+return umbral
+autonumber resume
+GR -> R ++ : requiereAprobacion(umbral : Decimal)
+autonumber stop
+return false
+autonumber resume
+note right of GR
+  FA-1 (sobre el umbral): igual que CU-15
+  diagrama 2; la rectificativa queda
+  pendiente de aprobación y se emite
+  al aprobarse (CU-23).
+end note
+autonumber stop
+return r
+autonumber resume
+
+SF ->o] : buscar PeriodoContable abierto en BD
+autonumber stop
+SF <--o] : periodo
+autonumber resume
+SF ->o] : buscar SerieFacturacion RECTIFICATIVA de la entidad en BD
+autonumber stop
+SF <--o] : serie
+autonumber resume
+
+SF -> R ++ : emitir(serie : SerieFacturacion, periodo : PeriodoContable)
+R -> R ++ : super.emitir(serie : SerieFacturacion, periodo : PeriodoContable)
+R -> SE ++ : asignarSiguienteNumeroFactura()
+autonumber stop
+return numeroFactura
+autonumber resume
+create participant "__: HistorialEstadoFactura__" as H1
+R --> H1 : HistorialEstadoFactura(DOCUMENTAL, BORRADOR, EMITIDA)
+deactivate R
+R -> O ++ : marcarRectificada()
+create participant "__: HistorialEstadoFactura__" as H2
+O --> H2 : HistorialEstadoFactura(DOCUMENTAL, EMITIDA, RECTIFICADA)
+autonumber stop
+return
+autonumber resume
+autonumber stop
+return
+autonumber resume
+
+SF -> GD ++ : generarPdf(r : Factura)
+autonumber stop
+return rutaPdf, hashPdf
+autonumber resume
+SF ->o] : guardar rectificativa, líneas, historiales y original en BD
+
+opt r.esAbono() (total negativo)
+  R -[#2E7D32]->> SC ++ : «abono emitido»(abono : FacturaRectificativa)
+  SC -> SC : recalcularEstadoCobro(original : Factura)
+  SC -> SC ++ : calcularSaldoPendiente(original : Factura)
+  SC ->o] : sumar conciliaciones, baja y abonos de la original en BD
+  autonumber stop
+  SC <--o] : importes
+  autonumber resume
+  deactivate SC
+  opt saldo pendiente ≤ 0
+    opt original.estadoCobro ≠ PAGADA
+      SC -> O ++ : registrarEstadoCobro(estado = PAGADA, motivo : String)
+      create participant "__: HistorialEstadoFactura__" as H3
+      O --> H3 : HistorialEstadoFactura(COBRO, estadoAnterior, PAGADA)
+      autonumber stop
+      return
+      autonumber resume
+    end
+    opt saldo pendiente < 0 (el abono supera el saldo)
+      SC -> O ++ : marcarCobroExcesivo(excesivo = true)
+      autonumber stop
+      return
+      autonumber resume
+      note right of O
+        El abono supera lo que quedaba por cobrar:
+        la diferencia queda **a favor del cliente**.
+        Destino del sobrante (devolución o saldo
+        a favor) pendiente de Q-12.
+      end note
+    end
+    SC ->o] : guardar original e historial en BD
+    opt el estado de cobro ha cambiado
+      SC -[#2E7D32]->> SR ++ : «estado de cobro cambiado»(original : Factura)
+      SR -> SR : pausar(factura : Factura)
+      deactivate SR
+    end
+  end
+  deactivate SC
+end
+
+autonumber stop
+return r
+autonumber resume
+autonumber stop
+return r (EMITIDA)
+autonumber resume
+autonumber stop
+return rectificativa emitida
+autonumber resume
+note right of A
+  POST-2 (saldo del cliente): no se guarda
+  ni se recalcula aquí. Se calcula al
+  consultarlo (CU-33) y ya incluye el abono.
+end note
+
+note over R, O
+  La original no se modifica: solo cambia su estado
+  documental a RECTIFICADA (POST-1, RB-11).
+  Un abono no tiene estado de cobro (A-27); una
+  rectificativa positiva tiene el suyo (PENDIENTE)
+  y no lanza el aviso.
+end note
+
+note over SC
+  **Aviso (verde)**: el área 3 no llama al
+  área 6; ServicioCobros lo escucha
+  (Observer en la E3).
+  Se entrega cuando la emisión ya está
+  guardada. Con «estado de cobro cambiado»
+  el área 5 deja de enviar recordatorios
+  de la original (RB-37).
+end note
+
+
+@enduml

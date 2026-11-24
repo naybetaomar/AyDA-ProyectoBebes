@@ -1,0 +1,135 @@
+@startuml area1_1_modelo_clientes
+skinparam classAttributeIconSize 0
+hide empty members
+title Área 1 — Diagrama 1: Modelo de clientes
+
+' ===== Clases del área 1 =====
+class Cliente {
+  - id : Long {readOnly}
+  - razonSocial : String
+  - identificadorFiscal : String
+  - pais : String
+  - moneda : String
+  - direccion : String
+  - /estadoCliente : EstadoCliente
+  - datosPendientes : Boolean
+  --
+  + agregarContacto(contacto : Contacto) : void
+  + quitarContacto(contacto : Contacto) : void
+  + contactoFacturacion() : Contacto
+}
+
+class Contacto {
+  - id : Long {readOnly}
+  - nombre : String
+  - email : String
+  - telefono : String
+  - idioma : String
+  - canalPreferido : Canal
+  - esContactoFacturacion : Boolean
+  - anonimizado : Boolean
+  --
+  + registrarConsentimiento(canal : Canal, otorgado : Boolean) : void
+  + tieneConsentimiento(canal : Canal) : Boolean
+  + anonimizar(camposConservados : String [0..*]) : void
+}
+
+class ConsentimientoCanal {
+  - id : Long {readOnly}
+  - canal : Canal
+  - otorgado : Boolean
+  - fecha : DateTime
+}
+
+class Documento {
+  - id : Long {readOnly}
+  - nombre : String
+  - formato : String
+  - tamano : Long
+  - ruta : String
+}
+
+class Etiqueta {
+  - id : Long {readOnly}
+  - nombre : String
+}
+
+class CategoriaFactura {
+  - id : Long {readOnly}
+  - nombre : String
+}
+
+enum EstadoCliente {
+  PENDIENTE_ACTIVACION
+  ACTIVO
+  PAUSADO
+  BAJA_SOLICITADA
+  BAJA_EFECTIVA
+}
+
+enum Canal {
+  EMAIL
+  WHATSAPP
+}
+
+' ===== Referencias a otras áreas =====
+class Factura <<referencia>>
+class RelacionComercial <<referencia>>
+class AsignacionCliente <<referencia>>
+
+' ===== Núcleo del área 1 =====
+Cliente "1" *-down- "1..*" Contacto : tiene >
+Contacto "1" *-down- "0..*" ConsentimientoCanal : tiene >
+Cliente "0..*" -right- "0..*" Etiqueta : se clasifica con >
+Documento "0..*" -down- "0..1" Cliente : adjunto a >
+Documento "0..*" -left- "0..1" Factura : adjunto a >
+CategoriaFactura "0..1" -down- "0..*" Factura : clasifica >
+
+' ===== Relaciones con otras áreas =====
+Cliente "1" -left- "0..*" Factura : recibe >
+Cliente "1" -down- "0..*" RelacionComercial : tiene >
+AsignacionCliente "0..*" -down- "1" Cliente : sobre >
+
+Cliente .down.> EstadoCliente
+Contacto .down.> Canal
+ConsentimientoCanal .right.> Canal
+
+' ===== Notas =====
+note right of Cliente
+  {único: identificadorFiscal} (CU-01).
+  {exactamente un contacto de facturación}.
+  quitarContacto(): un cliente activo no puede
+  quedarse sin contacto de facturación (RB-27).
+  **/estadoCliente** se calcula a partir de la relación
+  comercial más reciente (área 2): ver las reglas en
+  RelacionComercial.estadoCliente(). Sin ninguna
+  relación → PENDIENTE_ACTIVACION.
+  Campos de trazabilidad (NFR-03) solo en el E-R.
+end note
+
+note bottom of Contacto
+  Los datos personales están en Contacto.
+  anonimizar() borra lo permitido y conserva
+  lo que exige la ley contable (CU-09, RB-17).
+end note
+
+note bottom of Documento
+  {exactamente uno de Cliente o Factura} (CU-04).
+  El fichero lo guarda GestorDocumentos.
+end note
+
+note bottom of ConsentimientoCanal
+  {único: contacto + canal}.
+end note
+
+note bottom of Etiqueta
+  Etiqueta y CategoriaFactura: opcionales
+  (CU-08, FR-81, FR-108). No sustituyen
+  a los estados derivados (RB-34).
+end note
+
+note bottom of Canal
+  Enumerado compartido: lo usan también
+  las áreas 5 y 7 como referencia.
+end note
+@enduml

@@ -1,0 +1,130 @@
+@startuml er_area1
+title E-R físico — Área 1: Clientes y contactos
+hide circle
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 60
+
+package "Área 1 — Clientes y contactos" #FFF8E5 {
+  entity cliente {
+    * id : BIGINT <<PK>>
+    --
+    * razon_social : VARCHAR(255)
+    * identificador_fiscal : VARCHAR(30) <<UNIQUE>>
+    * pais : CHAR(2)
+    * moneda : CHAR(3)
+    * direccion : VARCHAR(500)
+    * datos_pendientes : BOOLEAN
+  }
+
+  entity contacto {
+    * id : BIGINT <<PK>>
+    --
+    * cliente_id : BIGINT <<FK>> (CASCADE)
+    * nombre : VARCHAR(200)
+    * email : VARCHAR(255)
+    * telefono : VARCHAR(30)
+    * idioma : VARCHAR(10)
+    * canal_preferido : VARCHAR(10) {EMAIL, WHATSAPP}
+    * es_contacto_facturacion : BOOLEAN
+    * anonimizado : BOOLEAN
+  }
+
+  entity consentimiento_canal {
+    * id : BIGINT <<PK>>
+    --
+    * contacto_id : BIGINT <<FK>> (CASCADE)
+    * canal : VARCHAR(10) {EMAIL, WHATSAPP}
+    * otorgado : BOOLEAN
+    * fecha : TIMESTAMP
+  }
+
+  entity documento {
+    * id : BIGINT <<PK>>
+    --
+    cliente_id : BIGINT <<FK>>
+    factura_id : BIGINT <<FK>> (CASCADE)
+    * nombre : VARCHAR(255)
+    * formato : VARCHAR(20)
+    * tamano : BIGINT
+    * ruta : VARCHAR(500)
+  }
+
+  entity etiqueta {
+    * id : BIGINT <<PK>>
+    --
+    * nombre : VARCHAR(100) <<UNIQUE>>
+  }
+
+  entity cliente_etiqueta {
+    * cliente_id : BIGINT <<PK, FK>> (CASCADE)
+    * etiqueta_id : BIGINT <<PK, FK>> (CASCADE)
+  }
+
+  entity categoria_factura {
+    * id : BIGINT <<PK>>
+    --
+    * nombre : VARCHAR(100) <<UNIQUE>>
+  }
+
+  entity factura_categoria {
+    * factura_id : BIGINT <<PK, FK>> (CASCADE)
+    --
+    * categoria_factura_id : BIGINT <<FK>>
+  }
+}
+
+package "Otras áreas (referencias)" #EEEEEE {
+  entity factura <<área 3>> {
+    * id : BIGINT <<PK>>
+  }
+}
+
+cliente ||--|{ contacto
+contacto ||--o{ consentimiento_canal
+cliente ||--o{ cliente_etiqueta
+etiqueta ||--o{ cliente_etiqueta
+cliente |o--o{ documento
+factura |o--o{ documento
+factura ||--o| factura_categoria
+categoria_factura ||--o{ factura_categoria
+
+note right of cliente
+  **estado_cliente no es columna**: se calcula
+  desde la relación comercial más reciente (área 2).
+  **UNIQUE** (identificador_fiscal) — CU-01.
+end note
+
+note right of contacto
+  **Índice único parcial** (cliente_id)
+  WHERE es_contacto_facturacion: como mucho
+  un contacto de facturación por cliente.
+  «Al menos uno» (RB-27): lo comprueba
+  ServicioClientes.
+  CU-09: al anonimizar se sobrescriben los
+  datos; la fila se conserva.
+end note
+
+note bottom of consentimiento_canal
+  **UNIQUE** (contacto_id, canal)
+end note
+
+note bottom of documento
+  CHECK num_nonnulls(cliente_id, factura_id) = 1:
+  exactamente un destino (CU-04).
+  El fichero lo guarda GestorDocumentos.
+end note
+
+note bottom of factura_categoria
+  CategoriaFactura 0..1 — * Factura (CU-08).
+  Tabla del área 1: la tabla factura (área 3)
+  no depende del área 1.
+end note
+
+note as Traza
+  **Trazabilidad (NFR-03):** todas las tablas llevan
+  creado_por, creado_en, modificado_por, modificado_en
+  (FK a usuario; nulo = Sistema); cliente_etiqueta solo
+  creado_. No se dibujan. Leyenda: * = NOT NULL.
+end note
+@enduml

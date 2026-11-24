@@ -1,0 +1,94 @@
+@startuml er_area4
+title E-R físico — Área 4: Aprobaciones y periodos contables
+hide circle
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 60
+
+package "Área 4 — Aprobaciones y periodos contables" #FFF8E5 {
+  entity solicitud_excepcion {
+    * id : BIGINT <<PK>>
+    --
+    * tipo : VARCHAR(25) {DESCUENTO, CAMBIO_IMPORTE, CAMBIO_FECHA,
+      FACTURA_SOBRE_UMBRAL, EXCEPCION_PRORRATEO, BAJA_CONTABLE}
+    * importe : DECIMAL(12,2)
+    * estado : VARCHAR(10) {PENDIENTE, APROBADA, RECHAZADA}
+    comentario_aprobador : VARCHAR(1000)
+    * fecha : TIMESTAMP
+    .. asociaciones ..
+    * factura_id : BIGINT <<FK>> (CASCADE)
+    * solicitante_id : BIGINT <<FK>>
+    aprobador_id : BIGINT <<FK>>
+  }
+
+  entity periodo_contable {
+    * id : BIGINT <<PK>>
+    --
+    * tipo : VARCHAR(10) {MES, TRIMESTRE}
+    * inicio : DATE
+    * fin : DATE
+    * estado : VARCHAR(10) {ABIERTO, CERRADO}
+  }
+
+  entity reapertura_periodo {
+    * id : BIGINT <<PK>>
+    --
+    * periodo_contable_id : BIGINT <<FK>>
+    * usuario_id : BIGINT <<FK>>
+    * motivo : VARCHAR(500)
+    * fecha : TIMESTAMP
+  }
+}
+
+package "Otras áreas (referencias)" #EEEEEE {
+  entity factura <<área 3>> {
+    * id : BIGINT <<PK>>
+    --
+    periodo_contable_id : BIGINT <<FK>>
+  }
+  entity usuario <<área 9>> {
+    * id : BIGINT <<PK>>
+  }
+  entity paquete_contable <<área 8>> {
+    * id : BIGINT <<PK>>
+    --
+    * periodo_contable_id : BIGINT <<FK>>
+  }
+}
+
+factura ||--o{ solicitud_excepcion : sobre
+usuario ||--o{ solicitud_excepcion : solicita
+usuario |o--o{ solicitud_excepcion : resuelve
+periodo_contable |o--o{ factura : pertenece a
+periodo_contable ||--o{ reapertura_periodo
+usuario ||--o{ reapertura_periodo : realizada por
+periodo_contable ||--o{ paquete_contable
+
+note right of solicitud_excepcion
+  CHECK: PENDIENTE ⇔ aprobador_id nulo.
+  CHECK: RECHAZADA ⇒ comentario_aprobador (CU-23).
+  CHECK: aprobador_id ≠ solicitante_id (FR-74).
+  Se borra con su factura si esta es un borrador
+  (ON DELETE CASCADE); una emitida no se borra.
+  Al resolverse emite «solicitud resuelta»
+  (lo escuchan las áreas 3, 6 y 7).
+end note
+
+note right of periodo_contable
+  CHECK: fin ≥ inicio.
+  **EXCLUDE** (gist): dos periodos del mismo
+  tipo no se solapan.
+end note
+
+note bottom of reapertura_periodo
+  Solo Superadministrador (CU-26);
+  se conserva cada reapertura.
+end note
+
+note as Traza
+  **Trazabilidad (NFR-03):** todas las tablas llevan
+  creado_por, creado_en, modificado_por, modificado_en
+  (FK a usuario; nulo = Sistema); reapertura_periodo
+  solo creado_. No se dibujan. Leyenda: * = NOT NULL.
+end note
+@enduml

@@ -1,0 +1,123 @@
+@startuml er_area2
+title E-R físico — Área 2: Relación comercial, tarifas y revisión anual
+hide circle
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 60
+
+package "Área 2 — Relación comercial" #FFF8E5 {
+  entity relacion_comercial {
+    * id : BIGINT <<PK>>
+    --
+    * cliente_id : BIGINT <<FK>>
+    * rango_tarifa_id : BIGINT <<FK>>
+    * fecha_inicio : DATE
+    * condiciones_pago : VARCHAR(500)
+    fecha_baja : DATE
+    motivo_baja : VARCHAR(500)
+  }
+
+  entity pausa {
+    * id : BIGINT <<PK>>
+    --
+    * relacion_comercial_id : BIGINT <<FK>> (CASCADE)
+    * motivo : VARCHAR(500)
+    * fecha_inicio : DATE
+    * fecha_prevista_reactivacion : DATE
+    fecha_reactivacion : DATE
+  }
+
+  entity rango_tarifa {
+    * id : BIGINT <<PK>>
+    --
+    * facturacion_desde : DECIMAL(14,2)
+    facturacion_hasta : DECIMAL(14,2)
+    * precio_mensual : DECIMAL(12,2)
+  }
+
+  entity revision_anual_plan {
+    * id : BIGINT <<PK>>
+    --
+    * relacion_comercial_id : BIGINT <<FK>>
+    * anio : INTEGER
+    facturacion_anual : DECIMAL(14,2)
+    fuente_facturacion : VARCHAR(200)
+    fecha_dato_facturacion : DATE
+    * rango_anterior_id : BIGINT <<FK>>
+    rango_propuesto_id : BIGINT <<FK>>
+    fecha_efecto : DATE
+    * estado : VARCHAR(15) {PENDIENTE, APLICADA, PLAN_MANTENIDO}
+    fecha_resolucion : TIMESTAMP
+    corregido_por_id : BIGINT <<FK>>
+    aprobado_por_id : BIGINT <<FK>>
+  }
+}
+
+package "Otras áreas (referencias)" #EEEEEE {
+  entity cliente <<área 1>> {
+    * id : BIGINT <<PK>>
+  }
+  entity usuario <<área 9>> {
+    * id : BIGINT <<PK>>
+  }
+  entity configuracion_recurrente <<área 3>> {
+    * id : BIGINT <<PK>>
+    --
+    * relacion_comercial_id : BIGINT <<FK>> <<UNIQUE>>
+  }
+}
+
+cliente ||--o{ relacion_comercial
+rango_tarifa ||--o{ relacion_comercial : contratado
+relacion_comercial ||--o{ pausa
+relacion_comercial ||--o{ revision_anual_plan
+rango_tarifa ||--o{ revision_anual_plan : anterior
+rango_tarifa |o--o{ revision_anual_plan : propuesto
+usuario |o--o{ revision_anual_plan : corregida / aprobada por
+relacion_comercial ||--o| configuracion_recurrente
+
+note right of relacion_comercial
+  **EXCLUDE** (gist): las relaciones de un cliente no se
+  solapan en [fecha_inicio, fecha_baja): una nueva empieza
+  el día de la baja de la anterior o después (RB-12, A-25).
+  **Índice único parcial** (cliente_id) WHERE fecha_baja
+  IS NULL: a lo sumo una relación sin baja.
+  CHECK: fecha_baja y motivo_baja van juntos;
+  fecha_baja ≥ fecha_inicio.
+  El estado del cliente y el rango vigente no
+  se guardan: se calculan (RB-36).
+end note
+
+note bottom of pausa
+  Intervalo [fecha_inicio, fecha_reactivacion).
+  **EXCLUDE** (gist): sin solapes en la misma relación.
+  **Índice único parcial** (relacion_comercial_id)
+  WHERE fecha_reactivacion IS NULL: una pausa en curso.
+  CHECK: fecha_reactivacion > fecha_inicio.
+  Sigue en curso aunque pase la fecha prevista (RB-29).
+end note
+
+note right of rango_tarifa
+  facturacion_hasta nulo = último rango.
+  CHECK: facturacion_hasta > facturacion_desde.
+  **EXCLUDE** (gist) sobre numrange [desde, hasta):
+  contiguos no se solapan; sin solapes
+  (CU-14 FE-1). Los huecos los comprueba el servicio.
+end note
+
+note bottom of revision_anual_plan
+  **UNIQUE** (relacion_comercial_id, anio).
+  CHECK: facturación, fuente, fecha del dato y rango
+  propuesto van juntos (nulos = dato no disponible, FA-2).
+  CHECK: PENDIENTE ⇔ sin resolución ni aprobador;
+  APLICADA ⇒ fecha de efecto.
+  CHECK: aprobado_por ≠ corregido_por (FR-74).
+end note
+
+note as Traza
+  **Trazabilidad (NFR-03):** todas las tablas llevan
+  creado_por, creado_en, modificado_por, modificado_en
+  (FK a usuario; nulo = Sistema). No se dibujan.
+  Leyenda: * = NOT NULL.
+end note
+@enduml

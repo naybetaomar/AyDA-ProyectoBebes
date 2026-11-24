@@ -1,0 +1,53 @@
+@startuml arquitectura_2_servicios
+title Arquitectura de Turbine — 2. Detalle de servicios: lógica y eventos entre áreas — BORRADOR
+skinparam componentStyle uml2
+skinparam nodesep 60
+skinparam ranksep 70
+
+[ServicioClientes\n(área 1)] as S1
+[ServicioRelacionComercial\n(área 2)] as S2
+[ServicioFacturacion\n(área 3)] as S3
+[ServicioAprobaciones\n(área 4)] as S4
+[ServicioEnvio /\nServicioRecordatorios\n(área 5)] as S5
+[ServicioCobros\n(área 6)] as S6
+[ServicioNotificaciones\n(área 7)] as S7
+[ServicioInformes\n(área 8)] as S8
+
+' --- Lógica entre servicios (un solo sentido) ---
+S1 --> S2 : estado del cliente
+S1 --> S3 : facturas de la ficha,\nhistórico importado
+S1 --> S7 : tarea de la acción masiva
+S2 --> S3 : importe, pausa y baja de la\nfacturación recurrente; facturación anual
+S2 --> S7 : aviso de reactivación
+S3 --> S4 : solicita aprobación
+S6 --> S4 : solicita aprobación
+S6 --> S3 : actualiza estado de cobro
+S5 --> S3 : factura y PDF a enviar
+S5 --> S1 : contactos y preferencias
+S5 --> S6 : ¿vencida? (estaVencida)
+S8 --> S3 : cifras (lectura)
+S8 --> S6 : cifras (lectura)
+
+' --- Avisos entre servicios (eventos; Observer en la E3) ---
+S3 -[#2E7D32,dashed]-> S6 : abono emitido
+S4 -[#2E7D32,dashed]-> S3 : solicitud resuelta
+S4 -[#2E7D32,dashed]-> S6 : solicitud resuelta
+S4 -[#2E7D32,dashed]-> S7 : solicitud resuelta
+S6 -[#2E7D32,dashed]-> S5 : estado de cobro cambiado
+S6 -[#2E7D32,dashed]-> S7 : impago sobre el límite
+S5 -[#2E7D32,dashed]-> S7 : fallos de envío
+
+note left of S8
+  Nunca lee de la BD
+  datos de otras áreas.
+end note
+
+legend right
+  **Flechas continuas** = lógica: quien llama depende del llamado.
+  Ninguna forma un ciclo.
+  <color:#2E7D32>**Flechas verdes discontinuas**</color> = eventos: aviso del emisor
+  al que escucha; en código depende el que escucha (Observer en la E3).
+  Todas las entradas al sistema pasan por el proxy de permisos (vista 1);
+  las llamadas entre servicios son internas.
+endlegend
+@enduml

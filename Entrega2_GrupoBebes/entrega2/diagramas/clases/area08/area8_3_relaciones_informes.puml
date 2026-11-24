@@ -1,0 +1,49 @@
+@startuml area8_3_relaciones_informes
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+' Aumentamos el espaciado horizontal y vertical entre nodos
+skinparam nodesep 90
+skinparam ranksep 100
+hide empty members
+
+title Área 8 — Diagrama 3: Relaciones con otras áreas
+
+' Clases del Área 8 (definidas en el diagrama 1)
+class ObjetivoFacturacion
+class PaqueteContable
+class TipoCambio
+class ExportacionMasiva
+class InformeProgramado
+
+' Clases de otras áreas (referencias)
+class PeriodoContable <<referencia>> {
+    - id : Long
+    - inicio : Date
+    - fin : Date
+    - estado : EstadoPeriodo
+}
+
+class Usuario <<referencia>> {
+    - id : Long
+    - nombre : String
+    - rol : Rol
+}
+
+' Asociaciones separadas visualmente (flechas más largas)
+PaqueteContable "0..*" ---> "1" PeriodoContable : corresponde a >
+PaqueteContable "0..*" ---> "1" Usuario : generado por >
+
+ExportacionMasiva "0..*" ---> "1" Usuario : realizada por >
+InformeProgramado "0..*" ---> "1" Usuario : creado por >
+InformeProgramado "0..*" ---> "1..*" Usuario : destinado a >
+
+note right of PaqueteContable
+    Un paquete contable pertenece a un PeriodoContable cerrado (Área 4).
+end note
+
+note right of InformeProgramado
+    Relación explícita con Usuario para controlar permisos de envío (CU-44).
+end note
+
+@enduml

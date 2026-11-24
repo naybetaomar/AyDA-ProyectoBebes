@@ -1,0 +1,154 @@
+@startuml area11_api_externa
+skinparam classAttributeIconSize 0
+hide empty members
+title Área 11 — API externa (CU-57, CU-58)
+
+' ---------- Patrón Facade ----------
+class FachadaAPI <<Facade>> {
+  + consultarDatos(credencial : String, clienteId : Long) : DatosConsultaCliente
+  + enviarSolicitud(credencial : String, tipo : TipoSolicitudExterna, clienteId : Long) : ResultadoLlamada
+}
+
+' ---------- Modelo propio del área 11 ----------
+class ConsumidorAPI {
+  - id : Long {readOnly}
+  - credencialHash : String
+  - limiteSolicitudes : Integer
+  - periodoLimite : PeriodoLimite
+  - activo : Boolean
+  --
+  + autenticar(credencial : String) : Boolean
+  + haAlcanzadoLimite() : Boolean
+}
+
+class LlamadaAPI {
+  - id : Long {readOnly}
+  - fecha : DateTime {readOnly}
+  - operacion : OperacionAPI {readOnly}
+  - resultado : ResultadoLlamada
+  - codigoIncidencia : String [0..1]
+}
+
+class SolicitudExterna {
+  - id : Long {readOnly}
+  - tipo : TipoSolicitudExterna {readOnly}
+  - estadoValidacion : EstadoValidacion
+  - motivoRechazo : String [0..1]
+  --
+  + validar(tarea : Tarea) : void
+  + rechazar(motivo : String) : void
+}
+
+class DatosConsultaCliente <<DTO>> {
+  - clienteId : Long
+  - razonSocial : String
+  - facturas : ResumenFactura [0..*]
+  - saldo : ResumenSaldo
+}
+
+' ---------- Enumerados propios del área ----------
+enum OperacionAPI {
+  CONSULTAR_DATOS
+  ENVIAR_SOLICITUD
+}
+enum ResultadoLlamada {
+  CORRECTA
+  NO_AUTORIZADA
+  LIMITE_EXCEDIDO
+  RECHAZADA
+  ERROR
+}
+enum PeriodoLimite {
+  MINUTO
+  HORA
+  DIA
+}
+enum TipoSolicitudExterna {
+  BAJA
+}
+enum EstadoValidacion {
+  VALIDADA
+  RECHAZADA
+}
+
+' ---------- Referencias de otras áreas ----------
+class ProxyPermisos <<referencia>> <<Proxy>>
+class ServicioClientes <<referencia>>
+class ServicioFacturacion <<referencia>> {
+  + consultarFacturas(cliente : Cliente) : ResumenFactura [0..*]
+}
+class ServicioCobros <<referencia>> {
+  + consultarSaldo(cliente : Cliente) : ResumenSaldo
+}
+class ServicioRelacionComercial <<referencia>> {
+  + comprobarBaja(cliente : Cliente, fecha : Date) : String [0..1]
+}
+class ServicioNotificaciones <<referencia>> {
+  + crearTarea(tipo : TipoTarea, descripcion : String, cliente : Cliente [0..1], origen : String) : Tarea
+}
+class ResumenFactura <<referencia>>
+class ResumenSaldo <<referencia>>
+class Cliente <<referencia>>
+class Tarea <<referencia>>
+
+' ---------- Facade ----------
+FachadaAPI .left.> ConsumidorAPI : autentica >
+FachadaAPI .down.> LlamadaAPI : registra >
+FachadaAPI .down.> SolicitudExterna : crea >
+FachadaAPI .down.> DatosConsultaCliente : devuelve >
+FachadaAPI .up.> ProxyPermisos : pide a través de >
+
+' ---------- Asociaciones ----------
+ConsumidorAPI "0..1" -down- "0..*" LlamadaAPI : realiza >
+ConsumidorAPI "1" -down- "0..*" SolicitudExterna : envía >
+SolicitudExterna "0..*" -down-> "1" Cliente : se refiere a >
+SolicitudExterna "0..1" -down-> "0..1" Tarea : genera >
+DatosConsultaCliente .down.> ResumenFactura
+DatosConsultaCliente .down.> ResumenSaldo
+
+' ---------- Uso de enumerados ----------
+ConsumidorAPI .left.> PeriodoLimite
+LlamadaAPI .down.> OperacionAPI
+LlamadaAPI .down.> ResultadoLlamada
+SolicitudExterna .down.> TipoSolicitudExterna
+SolicitudExterna .down.> EstadoValidacion
+
+' ---------- Proxy y servicios de cada área ----------
+ProxyPermisos .up.> ServicioClientes : delega en >
+ProxyPermisos .up.> ServicioFacturacion : delega en >
+ProxyPermisos .up.> ServicioCobros : delega en >
+ProxyPermisos .left.> ServicioRelacionComercial : delega en >
+ProxyPermisos .right.> ServicioNotificaciones : delega en >
+
+note left of FachadaAPI
+  **Punto de entrada del área 11.** Todo pasa por el
+  ProxyPermisos (permisos y auditoría); la fachada nunca
+  llama directamente a los servicios. Recibe la credencial
+  (no el consumidor) porque una credencial mala no tiene
+  ConsumidorAPI. Cada invocación crea una LlamadaAPI.
+  **consultarDatos()** (CU-57): ficha mínima del cliente con
+  sus facturas (ServicioFacturacion) y su saldo (ServicioCobros).
+  **enviarSolicitud()** (CU-58, RB-31):
+  1. ServicioRelacionComercial.comprobarBaja(): mismas
+     reglas de negocio que la interfaz.
+  2. Con motivo → solicitud.rechazar(motivo) (FE-1).
+  3. Sin motivo → ServicioNotificaciones.crearTarea()
+     con origen «API» y solicitud.validar(tarea).
+  La solicitud no modifica datos: la baja la hace después
+  una persona al resolver la tarea (CU-12 FA-1).
+  Dependencias en un solo sentido: el área 11 llama a
+  las áreas 1, 2, 3, 6 y 7, y ellas no la llaman.
+end note
+
+note right of SolicitudExterna
+  Nace VALIDADA o RECHAZADA en la misma llamada.
+  rechazar() exige motivo; validar() enlaza la Tarea.
+  Su creación queda a nombre del Sistema (usuario nulo).
+end note
+
+note right of DatosConsultaCliente
+  Solo los datos autorizados (CU-57),
+  nunca las entidades del dominio.
+  ResumenFactura es el DTO del área 3.
+end note
+@enduml

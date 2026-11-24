@@ -1,0 +1,75 @@
+@startuml cu15_2_emitir_requiere_aprobacion
+title CU-15 Emitir factura puntual — 2. Supera el umbral: pasa a aprobación (FA-3)
+hide footbox
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Usuario operativo__" as L
+participant "__: InterfazWeb__" as UI
+participant "__: ProxyFacturacion__" as PX
+participant "__: ServicioFacturacion__" as SF
+participant "__: GeneradorPuntual__" as GP
+participant "__: ConfiguracionGlobal__" as CG
+participant "__: ServicioAprobaciones__" as SA
+
+L -> UI ++ : emitirFacturaPuntual(datos : DatosFactura)
+UI -> PX ++ : emitirPuntual(datos : DatosFactura)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente)
+PX -> SF ++ : emitirPuntual(datos : DatosFactura)
+
+SF -> GP ++ : generar(datos : DatosFactura)
+GP -> GP : crearFactura(datos : DatosFactura)
+create participant "__f : FacturaPuntual__" as F
+GP --> F : FacturaPuntual(datos)
+GP -> F ++ : calcularTotales()
+autonumber stop
+return
+autonumber resume
+GP -> CG ++ : obtenerValor(clave = "umbral", fecha : Date)
+autonumber stop
+return umbral
+autonumber resume
+GP -> F ++ : requiereAprobacion(umbral : Decimal)
+autonumber stop
+return true
+autonumber resume
+autonumber stop
+return f
+autonumber resume
+
+SF -> F ++ : marcarPendienteAprobacion()
+create participant "__: HistorialEstadoFactura__" as H
+F --> H : HistorialEstadoFactura(DOCUMENTAL, BORRADOR, PENDIENTE_APROBACION)
+autonumber stop
+return
+autonumber resume
+SF -> SA ++ : solicitar(factura : Factura, solicitante : Usuario, tipo = FACTURA_SOBRE_UMBRAL, importe : Decimal)
+create participant "__: SolicitudExcepcion__" as S
+SA --> S : SolicitudExcepcion(tipo, importe, PENDIENTE)
+SA ->o] : guardar solicitud en BD
+autonumber stop
+return solicitud
+autonumber resume
+SF ->o] : guardar factura e historial en BD
+
+autonumber stop
+return f
+autonumber resume
+autonumber stop
+return f (PENDIENTE_APROBACION)
+autonumber resume
+autonumber stop
+return factura pendiente de aprobación (no se emite todavía)
+autonumber resume
+
+note over SA, S
+  Se notifica al aprobador (CU-22 paso 4).
+  Al resolverse, el área 4 emite «solicitud resuelta»:
+  ServicioFacturacion.alResolverSolicitud() emite la
+  factura (diagrama 1, desde el paso de emitir) o la
+  devuelve a borrador conservando lo propuesto (CU-23).
+end note
+@enduml

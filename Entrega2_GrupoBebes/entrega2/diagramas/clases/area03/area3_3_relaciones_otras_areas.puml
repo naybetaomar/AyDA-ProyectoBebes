@@ -1,0 +1,66 @@
+@startuml area3_3_relaciones_otras_areas
+skinparam classAttributeIconSize 0
+hide empty members
+title Área 3 — Diagrama 3: Relaciones con otras áreas
+
+' Clases del área 3 (definidas en el diagrama 1)
+abstract class Factura
+class FacturaRecurrente
+class ConfiguracionRecurrente
+class HistorialEstadoFactura
+
+Factura <|-down- FacturaRecurrente
+FacturaRecurrente "0..*" -down-> "1" ConfiguracionRecurrente : generada desde >
+Factura "1" *-right- "0..*" HistorialEstadoFactura : registra >
+
+' Clases de otras áreas
+class Cliente <<referencia>> {
+  - id : Long
+  - razonSocial : String
+  - identificadorFiscal : String
+}
+class RelacionComercial <<referencia>> {
+  - id : Long
+  - fechaInicio : Date
+}
+class PeriodoContable <<referencia>> {
+  - id : Long
+  - inicio : Date
+  - fin : Date
+  - estado : EstadoPeriodo
+}
+class SolicitudExcepcion <<referencia>> {
+  - id : Long
+  - tipo : TipoSolicitud
+  - estado : EstadoSolicitud
+}
+class Conciliacion <<referencia>> {
+  - importeAplicado : Decimal
+  - fecha : Date
+  - /deshecha : Boolean
+}
+class Usuario <<referencia>> {
+  - id : Long
+  - nombre : String
+  - rol : Rol
+}
+
+Cliente "1" -down- "0..*" Factura : recibe >
+SolicitudExcepcion "0..*" -down-> "1" Factura : sobre >
+Factura "0..*" -left-> "0..1" PeriodoContable : pertenece a >
+Factura "1" -left- "0..*" Conciliacion : se concilia en >
+RelacionComercial "1" -right-> "0..1" ConfiguracionRecurrente : se factura con >
+HistorialEstadoFactura "0..*" -down-> "0..1" Usuario : realizado por >
+
+note right of ConfiguracionRecurrente
+  La navega el área 2: fija el importe con
+  ServicioFacturacion.actualizarImporteRecurrente().
+  El área 3 no depende del área 2.
+end note
+
+note right of HistorialEstadoFactura
+  Usuario nulo = transición del
+  sistema (vencimiento, tarea
+  programada).
+end note
+@enduml

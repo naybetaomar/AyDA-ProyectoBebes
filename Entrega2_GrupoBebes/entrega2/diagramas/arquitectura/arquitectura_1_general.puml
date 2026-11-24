@@ -1,0 +1,141 @@
+@startuml arquitectura_1_general
+title Arquitectura de Turbine — 1. Vista general (componentes en capas) — BORRADOR
+skinparam componentStyle uml2
+skinparam packageStyle rectangle
+skinparam nodesep 35
+skinparam ranksep 55
+
+actor "Usuario interno\n(Operativo / Admin / Superadmin)" as Usuario
+actor "Sistema externo\n(p. ej. Brain)" as SistExt
+
+package "1. Presentación" #E3F2FD {
+  [Interfaz web] as UI
+  [FachadaAPI\n(área 11)] as API
+  [Receptor de webhooks\n(pasarela)] as WH
+}
+
+package "2. Seguridad (área 9)" #FCE4EC {
+  [ProxyPermisos] as Proxy
+  [Auditoría\n(RegistroAuditoria)] as Audit
+}
+
+package "3. Servicios de aplicación (uno por área; detalle en la vista 2)" as Servicios #FFF8E5 {
+  together {
+    [ServicioClientes (1)] as S1
+    [ServicioRelacionComercial (2)] as S2
+    [ServicioFacturacion (3)] as S3
+    [ServicioAprobaciones (4)] as S4
+  }
+  together {
+    [ServicioEnvio / Recordatorios (5)] as S5
+    [ServicioCobros (6)] as S6
+    [ServicioNotificaciones (7)] as S7
+    [ServicioInformes (8)] as S8
+  }
+}
+
+package "4. Persistencia" #EDE7F6 {
+  [Acceso a datos] as Repo
+  database "PostgreSQL\n(esquema del E-R)" as BD
+}
+
+package "Dominio (compartido)" #E8F5E9 {
+  [Entidades del modelo\n(diagramas de clases)] as Dominio
+}
+
+package "Transversal (área 10)" #EEEEEE {
+  [Planificador] as Plan
+  [ConfiguracionGlobal /\nCalendarioLaboral] as Conf
+}
+
+package "Infraestructura" #F5F5F5 {
+  [GestorDocumentos] as GD
+  [Almacén de ficheros] as Ficheros
+}
+
+package "Integraciones (Adapter, NFR-27)" #FFF3E0 {
+  [AdaptadorStripe] as AStripe
+  [AdaptadorBanco] as ABanco
+  [AdaptadorCorreo] as ACorreo
+  [AdaptadorWhatsApp] as AWA
+}
+
+cloud "Servicios externos (simulados, A-03)" {
+  [Stripe] as Stripe
+  [Banco / Revolut] as Banco
+  [Correo] as Correo
+  [WhatsApp] as WA
+}
+
+' --- Disposición: servicios en dos filas, capas de arriba abajo ---
+S1 -[hidden]right- S2
+S2 -[hidden]right- S3
+S3 -[hidden]right- S4
+S1 -[hidden]down- S5
+S5 -[hidden]right- S6
+S6 -[hidden]right- S7
+S7 -[hidden]right- S8
+Plan -[hidden]down- Conf
+GD -[hidden]right- AStripe
+
+' --- Entradas: todas pasan por el proxy ---
+Usuario -down-> UI : HTTPS
+SistExt -down-> API : REST (credencial de API, NFR-50)
+Stripe --> WH : webhook (pago)
+UI -down-> Proxy
+API -down-> Proxy
+WH -down-> Proxy : identidad de sistema
+Plan -right-> Proxy : identidad de sistema
+Proxy --> Audit : registra
+Proxy -down-> Servicios : delega en el servicio real
+
+' --- Servicios → persistencia; el dominio lo usan ambos ---
+Servicios -down-> Repo
+Repo --> BD
+Servicios ..> Dominio
+Repo ..> Dominio
+Servicios ..> Conf : umbral, calendario
+
+' --- Integraciones ---
+S6 --> AStripe : traduce la notificación
+S6 --> ABanco : extractos
+S5 --> ACorreo
+S5 --> AWA
+AStripe ..> Stripe : solo recibe\nnotificaciones
+ABanco --> Banco
+ACorreo --> Correo
+AWA --> WA
+
+' --- Documentos ---
+S1 --> GD : documentos de clientes
+S3 --> GD : PDF de facturas
+S5 --> GD : adjuntos
+S8 --> GD : exportaciones
+GD --> Ficheros
+
+note right of Proxy
+  **Restricciones arquitectónicas**
+  • Toda entrada (interfaz, API, webhooks y planificador)
+    pasa por el proxy: permisos + auditoría (RB-15, RB-31).
+  • Nada de la presentación accede a la BD ni al dominio.
+  • Entre servicios, la lógica va en un solo sentido;
+    los avisos de vuelta son eventos (vista 2).
+  • Los proveedores externos solo se usan a través
+    de adaptadores: cambiar de proveedor = otro adaptador.
+  • Importes en decimal exacto, instantes en UTC (NFR-31, NFR-42).
+end note
+
+legend right
+  **Patrón:** arquitectura en capas (n-tier), como en la sesión 1.7.
+  Capas = estructura lógica (esta vista); en lo físico,
+  cliente-servidor con la aplicación en un único contenedor
+  (vista 3, despliegue).
+  Cada servicio lee sus propios datos por el repositorio;
+  los de otra área, a través de su servicio (vista 2).
+  **Atributos de calidad:**
+  Seguridad — proxy único, credenciales separadas (NFR-50).
+  Mantenibilidad — capas, adaptadores, dependencias en un sentido.
+  Disponibilidad — recuperación tras caída sin duplicar (FR-100).
+  Rendimiento — tareas largas en segundo plano (FR-86, NFR-40).
+endlegend
+@enduml
