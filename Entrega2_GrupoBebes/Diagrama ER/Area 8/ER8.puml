@@ -1,0 +1,133 @@
+@startuml er_area8
+title E-R físico — Área 8: Informes y contabilidad
+hide circle
+skinparam linetype ortho
+skinparam nodesep 110
+skinparam ranksep 140
+skinparam padding 4
+
+package "Área 8 — Informes y contabilidad" #FFF8E5 {
+  entity objetivo_facturacion {
+    * id : BIGINT <<PK>>
+    --
+    * tipo_periodo : VARCHAR(10) {MENSUAL, TRIMESTRAL, ANUAL}
+    * anio : INTEGER
+    mes : INTEGER
+    * importe_objetivo_facturado : DECIMAL(12,2)
+    * importe_objetivo_cobrado : DECIMAL(12,2)
+  }
+
+  entity paquete_contable {
+    * id : BIGINT <<PK>>
+    --
+    * version : INTEGER
+    * fecha_generacion : TIMESTAMP
+    * ruta_zip : VARCHAR(500)
+    * hash_fichero : CHAR(64)
+    .. asociaciones ..
+    * periodo_contable_id : BIGINT <<FK>>
+    * generado_por_id : BIGINT <<FK>>
+  }
+
+  entity tipo_cambio {
+    * id : BIGINT <<PK>>
+    --
+    * moneda : CHAR(3)
+    * fecha : DATE
+    * valor : DECIMAL(12,6)
+  }
+
+  entity exportacion_masiva {
+    * id : BIGINT <<PK>>
+    --
+    * criterios : TEXT
+    * fecha_exportacion : TIMESTAMP
+    * ruta_fichero : VARCHAR(500)
+    * fecha_caducidad : TIMESTAMP
+    .. asociaciones ..
+    * usuario_id : BIGINT <<FK>>
+  }
+
+  entity informe_programado {
+    * id : BIGINT <<PK>>
+    --
+    * tipo_informe : VARCHAR(25) {DASHBOARD_FINANCIERO, RESUMEN_VENTAS,
+      INCIDENCIAS_ENVIO, EFICIENCIA_OPERATIVA}
+    * periodicidad : VARCHAR(10) {SEMANAL, MENSUAL, TRIMESTRAL}
+    * activo : BOOLEAN
+    .. asociaciones ..
+    * creador_id : BIGINT <<FK>>
+  }
+
+  entity destinatario_informe {
+    * id : BIGINT <<PK>>
+    --
+    * informe_programado_id : BIGINT <<FK>> (CASCADE)
+    * usuario_id : BIGINT <<FK>>
+  }
+}
+
+package "Otras áreas (referencias)" #EEEEEE {
+  entity periodo_contable <<área 4>> {
+    * id : BIGINT <<PK>>
+  }
+  entity usuario <<área 9>> {
+    * id : BIGINT <<PK>>
+  }
+}
+
+periodo_contable ||---o{ paquete_contable : corresponde a
+usuario ||---o{ paquete_contable : generado por
+usuario ||---o{ exportacion_masiva : realizada por
+usuario ||---o{ informe_programado : creado por
+informe_programado ||---|{ destinatario_informe : destinado a
+usuario ||---o{ destinatario_informe : recibe
+
+' Las tablas sin relaciones (objetivo_facturacion y tipo_cambio) se anclan
+' con enlaces invisibles para que no queden sueltas en el extremo derecho.
+objetivo_facturacion -[hidden]down- tipo_cambio
+periodo_contable -[hidden]right- objetivo_facturacion
+
+note right of objetivo_facturacion
+  Objetivos: hay un solo objetivo por periodo
+  (UNIQUE con NULLS NOT DISTINCT). Al cambiarlo se
+  actualiza la fila, y el histórico que pide FR-82
+  queda en registro_auditoria. La clase no tiene
+  atributo «trimestre», así que un objetivo TRIMESTRAL
+  se identifica por el primer mes del trimestre
+  (1, 4, 7 o 10). Un CHECK lo obliga.
+end note
+
+note right of paquete_contable
+  Paquete contable: cada regeneración es una fila nueva con la versión
+  siguiente, con UNIQUE (periodo, version). es_regeneracion no se
+  guarda porque equivale a version > 1. Sin ON DELETE CASCADE: el
+  paquete se conserva (RB-19).
+end note
+
+note bottom of tipo_cambio
+  Tipo de cambio: hay uno por moneda y día.
+  valor es DECIMAL(12,6) mayor que 0 y no tiene FK;
+  no toca el total legal de ninguna factura (FR-85).
+end note
+
+note bottom of exportacion_masiva
+  Exportación: cuando caduca se borra el fichero pero no la fila, que es el registro
+  auditado (FR-79 y FR-95). Hay un índice por caducidad para la tarea de limpieza.
+end note
+
+note bottom of destinatario_informe
+  Tabla intermedia de InformeProgramado * — 1..* Usuario.
+  **UNIQUE** (informe_programado_id, usuario_id). Se borra con su informe (ON DELETE CASCADE).
+  El mínimo de 1 destinatario y el permiso RB-33 los garantiza ServicioInformes.
+end note
+
+note as Auditoria
+  Trazabilidad (NFR-03): todas las tablas llevan creado_por, creado_en,
+  modificado_por, modificado_en (FK a usuario; nulo = Sistema).
+  generado_por_id, usuario_id y creador_id son NOT NULL aparte de las
+  columnas de auditoría, porque son datos de negocio que se consultan (FR-77).
+  ServicioInformes, GeneradorPaqueteContable y ResumenFinancieroDTO
+  son clases de diseño: no tienen tabla.
+end note
+@enduml
