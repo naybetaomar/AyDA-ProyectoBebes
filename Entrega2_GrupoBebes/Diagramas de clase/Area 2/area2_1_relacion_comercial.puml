@@ -4,28 +4,28 @@ skinparam linetype ortho
 hide empty members
 title Área 2 — Diagrama 1: Relación comercial, tarifas y revisión anual
 
-class RelacionComercial <<Borrador>> {
+abstract class RelacionComercial{
   - id : Long {readOnly}
   - fechaInicio : LocalDate
   - condicionesPago : String
   - fechaBaja : LocalDate [0..1]
 }
 
-class RangoTarifa <<Borrador>> {
+class RangoTarifa{
   - id : Long {readOnly}
   - facturacionDesde : BigDecimal
   - facturacionHasta : BigDecimal
   - precioMensual : BigDecimal
 }
 
-class Pausa <<Borrador>> {
+class Pausa{
   - motivo : String
   - fechaInicio : LocalDate
   - fechaPrevistaReactivacion : LocalDate
   - reactivacionConfirmada : Boolean
 }
 
-class RevisionAnualPlan <<Borrador>> {
+class RevisionAnualPlan{
   - anio : Integer
   - facturacionAnual : BigDecimal
   - fechaEfecto : LocalDate
@@ -33,17 +33,18 @@ class RevisionAnualPlan <<Borrador>> {
 }
 
 ' Clases de otras áreas (solo referencia)
-class Cliente <<área 1>>
-class ConfiguracionRecurrente <<área 3>> {
+class Cliente <<referencia>>
+class ConfiguracionRecurrente <<referencia>> {
   - importeMensual : BigDecimal [0..1]
 }
-class ServicioFacturacion <<área 3>>
+class ServicioFacturacion <<referencia>>
 
 ' Relaciones del área 2
 Cliente "1" -- "0..*" RelacionComercial : tiene >
 RelacionComercial "*" -- "1" RangoTarifa : usa >
 RelacionComercial "1" *-- "0..*" Pausa : tiene >
 RelacionComercial "1" -- "0..1" ConfiguracionRecurrente : se factura con >
+RelacionComercial "1" -- "0..*" RevisionAnualPlan : se revisa con >
 Cliente "1" -- "0..*" RevisionAnualPlan : tiene >
 RevisionAnualPlan "*" -- "1" RangoTarifa : rangoPropuesto >
 
@@ -61,9 +62,12 @@ end note
 
 note bottom of RevisionAnualPlan
   Campaña anual (CU-13, RB-26, RB-36).
+  Una revisión por relación y año.
   Si necesita la facturación anual del cliente,
   la pide a un servicio del área 3; sus clases
   no recorren las facturas (cuestión 8.12).
+  Invariante: el cliente de la revisión es el
+  cliente de su relación comercial.
 end note
 
 note bottom of ConfiguracionRecurrente
