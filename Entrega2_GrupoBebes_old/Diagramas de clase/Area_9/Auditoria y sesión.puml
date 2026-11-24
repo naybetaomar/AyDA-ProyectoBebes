@@ -1,0 +1,155 @@
+@startuml area9_1_modelo_usuarios_y_auditoria
+title Área 9 — Usuarios, seguridad y auditoría 
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam nodesep 60
+skinparam ranksep 70
+hide empty members
+
+enum Rol {
+  LECTOR
+  ADMINISTRADOR
+  SUPERADMINISTRADOR
+}
+
+enum EstadoCopia{
+  EN_CURSO
+  CORRECTA
+  FALLIDA
+}
+
+enum ResultadoRestauracion {
+  CORRECTA
+  FALLIDA
+}
+class Usuario {
+  -id : Long {readOnly}
+  -nombre : String
+  -email : String
+  -rol : Rol
+  -activo : boolean
+  -credencial : String {hash}
+  -intentosFallidos : int
+  -bloqueadoHasta : Date [0..1]
+  --
+  +tienePermisoDe(requerido : Rol) : boolean
+  +cambiarRol(nuevoRol : Rol, realizadoPor : Usuario)
+  +desactivar(realizadoPor : Usuario)
+  +registrarIntentoFallido()
+  +estaBloqueado(ahora : Date) : boolean
+}
+
+class Sesion {
+  -id : Long {readOnly}
+  -inicio : Date {readOnly}
+  -ultimaActividad : Date
+  -cerradaEn : Date [0..1]
+  --
+  +registrarActividad()
+  +cerrar()
+  +estaCaducada(ahora : Date) : boolean
+}
+
+class TokenRecuperacion {
+  -id : Long {readOnly}
+  -tokenHash : String {readOnly}
+  -emitidoEn : Date {readOnly}
+  -caducaEn : Date {readOnly}
+  -usadoEn : Date [0..1]
+  --
+  +estaVigente(ahora : Date) : boolean
+  +marcarUsado()
+}
+
+class AsignacionCliente {
+  -desde : Date
+  -hasta : Date [0..1]
+  --
+  +estaVigente(fecha : Date) : boolean
+}
+
+class Delegacion {
+  -id : Long {readOnly}
+  -desde : Date
+  -caducidad : Date
+  --
+  +estaVigente(fecha : Date) : boolean
+}
+
+class Cliente <<referencia>> {
+  -id : Long {readOnly}
+}
+class RegistroAuditoria {
+  -id : Long {readOnly}
+  -fecha : Date {readOnly}
+  -entidadAfectada : String {readOnly}
+  -accion : String {readOnly}
+  -valorAnterior : String [0..1] {readOnly}
+  -valorNuevo : String [0..1] {readOnly}
+}
+
+class DescargaFichero {
+  -id : Long {readOnly}
+  -fecha : Date {readOnly}
+}
+
+class CopiaSeguridad {
+  -id : Long {readOnly}
+  -fecha : Date {readOnly}
+  -estado : EstadoCopia
+}
+
+class RestauracionCopia {
+  -id : Long {readOnly}
+  -fecha : Date {readOnly}
+  -resultado : ResultadoRestauracion
+  --
+  +ejecutar() : ResultadoRestauracion
+}
+
+Usuario "1" -- "0..*" Sesion : abre >
+Usuario "1" -- "0..*" TokenRecuperacion : solicita >
+Usuario "1" -- "0..*" AsignacionCliente : tiene asignados >
+AsignacionCliente "0..*" -- "1" Cliente : sobre >
+Usuario "1" -- "0..*" Delegacion : delega como origen >
+Usuario "1" -- "0..*" Delegacion : recibe como suplente >
+Usuario "0..1" -- "0..*" RegistroAuditoria : genera >
+Usuario "1" -- "0..*" DescargaFichero : realiza >
+Usuario "1" -- "0..*" RestauracionCopia : ejecuta >
+CopiaSeguridad "1" -- "0..*" RestauracionCopia : se restaura en >
+
+Usuario ..> Rol
+CopiaSeguridad ..> EstadoCopia
+RestauracionCopia ..> ResultadoRestauracion
+
+note bottom of Usuario
+  Bloqueo: 5 fallos seguidos = 15 min (A-07).
+end note
+
+note bottom of Sesion
+  Se cierra tras 30 min de inactividad (A-06).
+end note
+
+note bottom of TokenRecuperacion
+  Solo se guarda el hash del enlace.
+  {caducaEn = emitidoEn + 24 h}
+end note
+
+note bottom of Delegacion
+  {desde ≤ caducidad}. La asignación principal no cambia;
+  el acceso del suplente se revoca al caducar.
+end note
+
+note bottom of RegistroAuditoria
+  **Inalterable**: solo se crea y se consulta.
+  usuario nulo = acción automática
+end note
+
+note bottom of DescargaFichero
+  Qué se descargó (ExportacionMasiva o Documento)
+  se dibuja en area9_3 (frontera con el área 8, decisión 6).
+end note
+
+
+@enduml

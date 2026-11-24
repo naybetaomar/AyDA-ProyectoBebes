@@ -1,0 +1,45 @@
+@startuml area8_2_patrones_informes
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+title Área 8 — Diagrama 2: Patrones de diseño y servicios
+
+class ServicioInformes {
+    + generarDashboardFinanciero(periodoId : Long) : ResumenFinancieroDTO
+    + exportarInformeCSV(tipo : TipoInforme, criterios : String) : ExportacionMasiva
+    + compilarPaqueteContable(periodoId : Long) : PaqueteContable
+    + ejecutarInformeProgramado(informeId : Long) : void
+}
+
+class ResumenFinancieroDTO <<DTO>> {
+    - totalFacturado : Decimal
+    - totalCobrado : Decimal
+    - totalPendiente : Decimal
+    - totalVencido : Decimal
+    - porcentajeObjetivoCumplido : Decimal
+    --
+    + getTotalFacturado() : Decimal
+    + getTotalCobrado() : Decimal
+}
+
+class GeneradorPaqueteContable {
+    + compilarZIP(facturas : List, cobros : List) : String
+    + calcularHash(ruta : String) : String
+}
+
+ServicioInformes .right.> ResumenFinancieroDTO : genera >
+ServicioInformes "1" *-- "1" GeneradorPaqueteContable : utiliza >
+
+note left of ServicioInformes
+    **Servicio**
+    Punto de entrada único al Área 8 (CU-42, CU-43, CU-46). Solicita datos a ServicioFacturacion (Área 3)
+    y ServicioCobros (Área 6). Valida que PeriodoContable esté CERRADO antes de compilar el ZIP.
+end note
+
+note right of GeneradorPaqueteContable
+    **Compilador (CU-46).**
+    Ensambla el archivo ZIP y calcula el hash de inalterabilidad.
+end note
+
+@enduml

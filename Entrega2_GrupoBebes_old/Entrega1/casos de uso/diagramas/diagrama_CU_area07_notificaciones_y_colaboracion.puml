@@ -1,0 +1,27 @@
+@startuml
+' Diagrama  - Notificaciones y colaboración (CU-XX = especificación en el .md)
+title Notificaciones y colaboración 
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Lector" as Lector
+actor "Administrador" as Admin
+actor "Superadministrador" as Super
+Admin --|> Lector
+Super --|> Admin
+
+rectangle "Aplicación de facturación y cobros" {
+  usecase "CU-37\nConsultar pantalla de trabajo, notificaciones y alertas" as CU37
+  usecase "CU-38\nConfigurar notificaciones y alertas" as CU38
+  usecase "CU-39\nBuscar clientes y facturas" as CU39
+  usecase "CU-40\nGestionar incidencias de facturación y de cobro" as CU40
+  usecase "CU-41\nComentar internamente" as CU41
+}
+Lector -- CU37
+Super -- CU38
+Lector -- CU39
+Lector -- CU40
+Admin -- CU40
+Lector -- CU41
+note right of CU37 : Las alertas las genera el sistema (tarea programada) según la configuración de CU-38
+@enduml

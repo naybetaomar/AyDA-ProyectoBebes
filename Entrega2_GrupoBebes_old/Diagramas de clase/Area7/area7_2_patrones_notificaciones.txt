@@ -1,0 +1,86 @@
+@startuml area7_2
+skinparam classAttributeIconSize 0
+hide empty members
+title Área 7 — Diagrama 2 (propuesta): servicio y manejadores de eventos
+
+class ServicioNotificaciones {
+  .. Notificaciones (CU-37, CU-38) ..
+  + registrarNotificacion(notificacion : Notificacion) : void
+  + obtenerPantallaTrabajo(usuario : Usuario) : ResumenNotificaciones
+  + cambiarEstadoNotificacion(notificacion : Notificacion, estado : EstadoNotificacion) : void
+  + configurarPreferencias(usuario : Usuario, preferencia : PreferenciaNotificacion) : void
+  .. Tareas (las piden las áreas 2 y 11) ..
+  + crearTarea(tipo : TipoTarea, descripcion : String, cliente : Cliente, origen : String) : Tarea
+  + asignarTarea(tarea : Tarea, responsable : Usuario) : void
+  .. Incidencias y comentarios (CU-40, CU-41) ..
+  + abrirIncidencia(tipo : TipoIncidencia, descripcion : String, cliente : Cliente, factura : Factura [0..1]) : Incidencia
+  + cerrarIncidencia(incidencia : Incidencia, motivo : String) : void
+  + comentar(texto : String, restringido : Boolean, autor : Usuario, cliente : Cliente [0..1], factura : Factura [0..1], incidencia : Incidencia [0..1]) : Comentario
+}
+
+class ResumenNotificaciones <<DTO>> {
+  - totalPendientes : Integer
+  - notificacionesNuevas : Notificacion [0..*]
+  - tareasPendientes : Tarea [0..*]
+  - incidenciasActivas : Incidencia [0..*]
+}
+
+interface EscuchadorEventosDominio {
+  + alOcurrirEvento(evento : String, datos : Object) : void
+}
+
+class ManejadorAlertasCobro {
+  + alOcurrirEvento(evento : String, datos : Object) : void
+}
+class ManejadorAlertasEnvio {
+  + alOcurrirEvento(evento : String, datos : Object) : void
+}
+class ManejadorSolicitudesResueltas {
+  + alOcurrirEvento(evento : String, datos : Object) : void
+}
+
+EscuchadorEventosDominio <|.. ManejadorAlertasCobro
+EscuchadorEventosDominio <|.. ManejadorAlertasEnvio
+EscuchadorEventosDominio <|.. ManejadorSolicitudesResueltas
+ManejadorAlertasCobro ..> ServicioNotificaciones : registra la alerta >
+ManejadorAlertasEnvio ..> ServicioNotificaciones : registra la alerta >
+ManejadorSolicitudesResueltas ..> ServicioNotificaciones : avisa al solicitante >
+ServicioNotificaciones ..> ResumenNotificaciones : <<create>>
+
+note top of ServicioNotificaciones
+  **Punto de entrada del área 7.** La interfaz, la API (área 11)
+  y el área 2 lo llaman a través del proxy de permisos (área 9).
+  Las clases del área (Notificacion, Tarea, Incidencia,
+  Comentario, PreferenciaNotificacion) están en el diagrama 1.
+end note
+
+note bottom of ManejadorAlertasCobro
+  Escucha «impago sobre el límite» (área 6):
+  crea FACTURA_VENCIDA o ALERTA_DEUDA.
+  **No repite:** si ya hay una alerta sin resolver
+  del mismo tipo para la misma factura o cliente,
+  no crea otra.
+end note
+
+note bottom of ManejadorAlertasEnvio
+  Escucha «fallos de envío» (área 5):
+  crea ALERTA_INCIDENCIA_ENVIO (FR-80).
+end note
+
+note bottom of ManejadorSolicitudesResueltas
+  Escucha «solicitud resuelta» (área 4):
+  avisa al solicitante de la decisión
+  y, si se rechaza, del motivo (CU-23, CU-37).
+end note
+
+note right of EscuchadorEventosDominio
+  Las otras áreas emiten el evento sin conocer
+  al área 7: la lógica va en un solo sentido.
+  El mecanismo (Observer) se formaliza en la E3.
+end note
+
+note bottom of ServicioNotificaciones
+  **comentar()**: exactamente uno de cliente,
+  factura o incidencia (diagrama 3).
+end note
+@enduml

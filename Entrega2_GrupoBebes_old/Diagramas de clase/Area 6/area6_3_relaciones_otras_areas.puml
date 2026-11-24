@@ -1,0 +1,70 @@
+@startuml area6_3_relaciones_otras_areas
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+title Área 6 — Diagrama 3: Relaciones con otras áreas
+
+' Clases del área 6 (definidas en el diagrama 1)
+class MovimientoCobro
+class Conciliacion
+class BajaContable
+
+' Clases de otras áreas
+abstract class Factura <<referencia>> {
+  - id : Long
+  - estadoCobro : EstadoCobro [0..1]
+}
+class FacturaRectificativa <<referencia>> {
+  - motivo : String
+  --
+  + esAbono() : Boolean
+}
+class Cliente <<referencia>> {
+  - id : Long
+  - razonSocial : String
+}
+class Usuario <<referencia>> {
+  - id : Long
+  - rol : Rol
+}
+class SolicitudExcepcion <<referencia>> {
+  - id : Long
+  - estado : EstadoSolicitud
+}
+class HistorialEstadoFactura <<referencia>>
+
+MovimientoCobro "1" -- "0..*" Conciliacion : se aplica en >
+Factura "1" -- "0..*" Conciliacion : se concilia en >
+Factura "1" -- "0..1" BajaContable : puede tener >
+BajaContable "0..1" --> "1" SolicitudExcepcion : aprobada mediante >
+SolicitudExcepcion "0..*" --> "1" Factura : sobre >
+Conciliacion "0..*" --> "0..1" Usuario : realizada por >
+Conciliacion "0..*" --> "0..1" Usuario : deshecha por >
+Cliente "1" -- "0..*" Factura : recibe >
+Factura <|-- FacturaRectificativa
+FacturaRectificativa "0..*" --> "1" Factura : rectifica >
+Factura "1" *-- "0..*" HistorialEstadoFactura : registra >
+
+note right of Conciliacion
+  **realizada por** nulo = conciliación automática
+  (acción del sistema).
+  **deshecha por** solo existe si deshecha = true.
+end note
+
+note right of FacturaRectificativa
+  **Abono** (esAbono(): total negativo): compensa el saldo
+  de la original y no tiene estado de cobro (A-27).
+  Si deja la original a 0 → PAGADA, con el motivo en
+  HistorialEstadoFactura. La validación manual de RB-14
+  es la propia emisión: la hace un Administrador (RB-21)
+  y se aprueba sobre el umbral (RB-24).
+  **Rectificativa positiva:** tiene su propio cobro.
+end note
+
+note bottom of BajaContable
+  Se reutiliza la aprobación del área 4 (CU-36
+  pasos 2-3) en lugar de guardar solicitante y
+  aprobador aquí.
+  {baja.factura = baja.solicitud.factura}
+end note
+@enduml

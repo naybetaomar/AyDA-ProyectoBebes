@@ -1,0 +1,15 @@
+@startuml
+' Diagrama  - API externa (CU-XX = especificación en el .md)
+title API externa
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Sistema externo" as Ext
+
+rectangle "Aplicación de facturación y cobros" {
+  usecase "CU-57\nConsultar datos mediante la API" as CU57
+  usecase "CU-58\nEnviar solicitud mediante la API" as CU58
+}
+Ext -- CU57
+Ext -- CU58
+@enduml
