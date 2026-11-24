@@ -1,0 +1,69 @@
+@startuml
+' ER Área 5 - Comunicaciones y recordatorios (notación pata de gallo)
+hide circle
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 60
+skinparam ranksep 70
+skinparam class {
+  BackgroundColor #F7F9FC
+  BorderColor #3B5B92
+}
+
+entity "Factura" as Factura <<externa>> {
+  * id : BIGINT <<PK>>
+}
+
+entity "Contacto" as Contacto <<externa>> {
+  * id : BIGINT <<PK>>
+}
+
+entity "PlantillaComunicacion" as PlantillaComunicacion {
+  * id : BIGINT <<PK>>
+  --
+  * tipo : TipoPlantilla
+  * asunto : VARCHAR
+  * cuerpo : TEXT
+  variablesObligatorias : LIST<VARCHAR>
+  * activa : BOOLEAN
+}
+
+entity "ReglaRecordatorio" as ReglaRecordatorio {
+  * id : BIGINT <<PK>>
+  --
+  * cadencia : INT
+  * diasTrasVencimiento : INT
+  * activa : BOOLEAN
+  --
+  * plantilla_id : BIGINT <<FK>>
+}
+
+entity "Mensaje" as Mensaje {
+  * id : BIGINT <<PK>>
+  --
+  * canal : Canal
+  * estadoEntrega : EstadoEntrega
+  * intentos : INT
+  fechaEnvio : DATETIME
+  --
+  * factura_id : BIGINT <<FK>>
+  * contacto_id : BIGINT <<FK>>
+  * plantilla_id : BIGINT <<FK>>
+}
+
+PlantillaComunicacion ||--o{ ReglaRecordatorio : usa
+PlantillaComunicacion ||--o{ Mensaje : genera
+Factura ||--o{ Mensaje : genera
+Contacto ||--o{ Mensaje : recibe
+
+note bottom of Mensaje
+  Canal: EMAIL, WHATSAPP
+  EstadoEntrega: PENDIENTE, ENVIADO, ENTREGADO, FALLIDO
+end note
+
+note bottom of PlantillaComunicacion
+  TipoPlantilla: FACTURA, RECORDATORIO
+  variablesObligatorias es multivaluado: si se normaliza,
+  pasa a una tabla VariablePlantilla (plantilla_id, nombre).
+end note
+@enduml
