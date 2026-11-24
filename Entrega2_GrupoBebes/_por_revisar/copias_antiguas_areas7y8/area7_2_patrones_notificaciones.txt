@@ -1,0 +1,52 @@
+@startuml area7_2_patrones_notificaciones
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+title Área 7 — Diagrama 2: Patrones de diseño y servicios (Notificaciones)
+
+class ServicioNotificaciones {
+    + registrarNotificacion(notificacion : Notificacion) : void
+    + evaluarAlertasAutomaticas() : void
+    + obtenerPantallaTrabajo(usuarioId : Long) : ResumenNotificacionesDTO
+    + cambiarEstadoNotificacion(notificacionId : Long, estado : EstadoNotificacion) : void
+}
+
+class ResumenNotificacionesDTO <<DTO>> {
+    - totalPendientes : Integer
+    - notificacionesNuevas : List<Notificacion>
+    - tareasPendientes : List<Tarea>
+    - incidenciasActivas : List<Incidencia>
+    --
+    + getTotalPendientes() : Integer
+}
+
+interface EscuchadorEventosDominio {
+    + alOcurrirEvento(evento : String, datos : Object) : void
+}
+
+class ManejadorAlertasCobro {
+    + alOcurrirEvento(evento : String, datos : Object) : void
+}
+
+class ManejadorAlertasEnvio {
+    + alOcurrirEvento(evento : String, datos : Object) : void
+}
+
+ServicioNotificaciones .right.> ResumenNotificacionesDTO : crea >
+EscuchadorEventosDominio <|.. ManejadorAlertasCobro
+EscuchadorEventosDominio <|.. ManejadorAlertasEnvio
+ServicioNotificaciones "1" o-- "0..*" EscuchadorEventosDominio : notifica a >
+
+note left of ServicioNotificaciones
+    **Servicio**
+    Orquesta la recepción de eventos transversales del sistema (pagos fallidos, 
+    facturas vencidas) y evalúa los umbrales configurados para emitir alertas (CU-38).
+end note
+
+note right of EscuchadorEventosDominio
+    Escuchadores que capturan eventos de otras áreas sin
+    crear acoplamiento ni dependencias circulares de lógica (Sección 8.12).
+end note
+
+@enduml

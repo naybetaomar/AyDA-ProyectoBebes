@@ -1,0 +1,65 @@
+@startuml area7_3_relaciones_notificaciones
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+' Aumentamos la separación entre los elementos
+skinparam nodesep 80
+skinparam ranksep 100
+hide empty members
+
+title Área 7 — Diagrama 3: Relaciones con otras áreas
+
+' Clases del Área 7 (definidas en el diagrama 1)
+class Notificacion
+class PreferenciaNotificacion
+class Incidencia
+class Comentario
+class Tarea
+
+' Clases de otras áreas (referencias)
+class Cliente <<referencia>> {
+    - id : Long
+    - razonSocial : String
+    - identificadorFiscal : String
+}
+
+class Factura <<referencia>> {
+    - id : Long
+    - numeroFactura : String
+    - total : Decimal
+}
+
+class Usuario <<referencia>> {
+    - id : Long
+    - nombre : String
+    - rol : Rol
+}
+
+' Asociaciones entre el Área 7 y otras áreas
+' Usamos "---" o alargamos flechas para forzar más distancia visual
+Usuario "1" --- "0..*" Notificacion : recibe >
+Cliente "1" --- "0..*" Notificacion : sobre >
+
+Usuario "1" --- "0..*" PreferenciaNotificacion : configura >
+
+Cliente "1" --- "0..*" Incidencia : afecta a >
+Factura "0..1" --- "0..*" Incidencia : asociada a >
+
+Usuario "0..1" --- "0..*" Comentario : redactado por >
+Cliente "0..1" --- "0..*" Comentario : registrado en >
+Factura "0..1" --- "0..*" Comentario : registrado en >
+Incidencia "0..1" --- "0..*" Comentario : registrado en >
+
+Usuario "1" --- "0..*" Tarea : asignada a >
+Cliente "1" --- "0..*" Tarea : relativa a >
+
+note right of Comentario
+    Un comentario pertenece exactamente a un destino
+    (Cliente, Factura o Incidencia).
+end note
+
+note right of Notificacion
+    Si 'usuario' es nulo, es una notificación general de sistema.
+end note
+
+@enduml
