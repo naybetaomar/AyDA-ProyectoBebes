@@ -1,0 +1,170 @@
+@startuml area9_2_patron_proxy_permisos
+title Área 9 — Diagrama 2: Patrón Proxy de permisos
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+class Planificador <<referencia>>
+class EjecucionProceso <<referencia>>
+
+interface Solicitante {
+  + esSistema() : Boolean
+}
+
+class Usuario
+class IdentidadSistema {
+  - nombre : String
+  - operacionesPermitidas : OperacionProtegida [1..*]
+  --
+  + puede(operacion : OperacionProtegida) : Boolean
+}
+
+class ContextoSeguridad {
+  + establecer(solicitante : Solicitante) : void
+  + solicitanteActual() : Solicitante
+}
+
+interface IServicioFacturacion {
+  + emitirPuntual(datos : DatosFactura) : Factura
+  + generarRecurrentes(fecha : Date) : FacturaRecurrente [0..*]
+  + emitirRectificativa(datos : DatosFactura) : FacturaRectificativa
+  + consultarFacturas(cliente : Cliente) : ResumenFactura [0..*]
+  + marcarEnDisputa(factura : Factura, motivo : String) : void
+}
+
+class ServicioFacturacion <<referencia>>
+
+abstract class ProxyPermisos {
+  # autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente [0..1], usuarioAfectado : Usuario [0..1]) : void
+}
+
+class ProxyFacturacion
+
+interface IServicioUsuarios {
+  + invitarUsuario(email : String, rol : Rol) : Usuario
+  + cambiarRol(usuario : Usuario, nuevoRol : Rol) : void
+  + desactivar(usuario : Usuario) : void
+  + asignarCliente(usuario : Usuario, cliente : Cliente) : AsignacionCliente
+  + reasignarCliente(cliente : Cliente, nuevoResponsable : Usuario) : void
+  + delegarClientes(origen : Usuario, suplente : Usuario, desde : Date, caducidad : Date) : Delegacion
+  + caducarDelegaciones(fecha : Date) : void
+  + registrarDescarga(usuario : Usuario, documento : Documento [0..1], exportacion : ExportacionMasiva [0..1]) : DescargaFichero
+}
+
+class ServicioUsuarios
+class ProxyUsuarios
+
+
+class ControlAcceso {
+  + autorizar(solicitante : Solicitante, operacion : OperacionProtegida, cliente : Cliente [0..1], usuarioAfectado : Usuario [0..1]) : void
+}
+
+enum OperacionProtegida {
+  EMITIR_PUNTUAL
+  GENERAR_RECURRENTES
+  EMITIR_RECTIFICATIVA
+  CONSULTAR_FACTURAS
+  MARCAR_EN_DISPUTA
+  CAMBIAR_ROL
+  DESACTIVAR_USUARIO
+  INVITAR_USUARIO
+  ASIGNAR_CLIENTE
+  REASIGNAR_CLIENTE
+  DELEGAR_CLIENTES
+  CADUCAR_DELEGACIONES
+  REGISTRAR_DESCARGA
+  LANZAR_COPIA
+  RESTAURAR_COPIA
+  ...
+}
+
+class AccesoDenegado <<exception>> {
+  - motivo : String
+}
+
+enum Rol <<referencia>>
+class AsignacionCliente <<referencia>>
+class Delegacion <<referencia>>
+class RegistroAuditoria <<referencia>>
+
+Planificador ..> ContextoSeguridad : establece la\nidentidad del sistema >
+Planificador ..> IServicioFacturacion : llama a través del proxy >
+Planificador ..> IServicioUsuarios : caducar delegaciones,\na través del proxy >
+Planificador "1" --> "1" IdentidadSistema : actúa como >
+Planificador ..> AccesoDenegado : captura >
+Planificador ..> EjecucionProceso : registra el rechazo >
+
+IServicioFacturacion <|.. ProxyFacturacion
+IServicioFacturacion <|.. ServicioFacturacion
+ProxyPermisos <|-- ProxyFacturacion
+ProxyFacturacion "1" --> "1" IServicioFacturacion : real (delega en) >
+
+IServicioUsuarios <|.. ProxyUsuarios
+IServicioUsuarios <|.. ServicioUsuarios
+ProxyPermisos <|-- ProxyUsuarios
+ProxyUsuarios "1" --> "1" IServicioUsuarios : real (delega en) >
+ServicioUsuarios ..> Usuario : gestiona >
+ServicioUsuarios ..> AsignacionCliente : gestiona >
+ServicioUsuarios ..> Delegacion : gestiona >
+
+ProxyPermisos ..> ContextoSeguridad : solicitanteActual() >
+ProxyPermisos "1" --> "1" ControlAcceso : control >
+ProxyPermisos ..> RegistroAuditoria : <<create>>
+
+Solicitante <|.. Usuario
+Solicitante <|.. IdentidadSistema
+
+ControlAcceso ..> Solicitante
+ControlAcceso ..> OperacionProtegida
+ControlAcceso ..> Rol : consulta >
+ControlAcceso ..> AsignacionCliente : consulta >
+ControlAcceso ..> Delegacion : consulta >
+ControlAcceso ..> AccesoDenegado : lanza >
+IdentidadSistema ..> OperacionProtegida
+
+note top of ProxyPermisos
+  **Proxy de permisos.** Hay un proxy por cada servicio
+  (ServicioClientes, ServicioRelacionComercial,
+  ServicioFacturacion, ServicioCobros, ServicioNotificaciones…);
+  aquí se dibujan dos como ejemplo. Cada uno implementa la
+  misma interfaz que su servicio, así que las demás áreas no
+  cambian sus firmas. Antes de delegar, autorizarYRegistrar()
+  pide el solicitante al ContextoSeguridad, llama a
+  ControlAcceso y crea el RegistroAuditoria.
+end note
+
+note right of ContextoSeguridad
+  Quién hace la petición. Lo rellena
+  ServicioAcceso.validarSesion() (diagrama 4) en cada
+  petición de la interfaz web con el Usuario de la
+  sesión, o el
+  planificador (área 10) con la IdentidadSistema.
+  Así ninguna operación lleva el solicitante
+  como parámetro. Si está vacío, el proxy
+  lanza AccesoDenegado.
+end note
+
+note bottom of ServicioUsuarios
+  cambiarRol() y desactivar() comprueban RB-39:
+  no se puede quitar el rol ni desactivar al último
+  Superadministrador activo. Lo hace el servicio
+  porque hay que contar usuarios; ControlAcceso
+  solo mira al solicitante y al usuario afectado.
+end note
+
+note left of IServicioFacturacion
+  Lista abreviada: la interfaz tiene todas
+  las operaciones públicas de ServicioFacturacion
+  (área 3, diagrama 2), con la misma firma.
+end note
+
+note bottom of IServicioUsuarios
+  Lista abreviada: tiene todas las
+  operaciones públicas de ServicioUsuarios.
+end note
+
+note bottom of OperacionProtegida
+  Lista abreviada: la completa sale de
+  Matriz_permisos.md (una por operación protegida).
+end note
+@enduml

@@ -1,0 +1,177 @@
+@startuml area9_1_modelo_usuarios_y_auditoria
+title Área 9 — Diagrama 1: Usuarios, seguridad y auditoría
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+enum Rol {
+  OPERATIVO
+  ADMINISTRADOR
+  SUPERADMINISTRADOR
+}
+
+enum EstadoCopia {
+  EN_CURSO
+  CORRECTA
+  FALLIDA
+}
+
+enum ResultadoRestauracion {
+  CORRECTA
+  FALLIDA
+}
+
+class Usuario {
+  - id : Long {readOnly}
+  - nombre : String
+  - email : String
+  - rol : Rol
+  - activo : Boolean
+  - credencial : String {hash}
+  - intentosFallidos : Integer
+  - bloqueadoHasta : DateTime [0..1]
+  --
+  + tienePermisoDe(requerido : Rol) : Boolean
+  + cambiarRol(nuevoRol : Rol) : void
+  + desactivar() : void
+  + registrarIntentoFallido() : void
+  + estaBloqueado(ahora : DateTime) : Boolean
+}
+
+class Sesion {
+  - id : Long {readOnly}
+  - inicio : DateTime {readOnly}
+  - ultimaActividad : DateTime
+  - cerradaEn : DateTime [0..1]
+  --
+  + registrarActividad() : void
+  + cerrar() : void
+  + estaCaducada(ahora : DateTime) : Boolean
+}
+
+class TokenRecuperacion {
+  - id : Long {readOnly}
+  - tokenHash : String {readOnly}
+  - emitidoEn : DateTime {readOnly}
+  - caducaEn : DateTime {readOnly}
+  - usadoEn : DateTime [0..1]
+  --
+  + estaVigente(ahora : DateTime) : Boolean
+  + marcarUsado() : void
+}
+
+class AsignacionCliente {
+  - id : Long {readOnly}
+  - desde : Date
+  - hasta : Date [0..1]
+  --
+  + estaVigente(fecha : Date) : Boolean
+}
+
+class Delegacion {
+  - id : Long {readOnly}
+  - desde : Date
+  - caducidad : Date
+  --
+  + estaVigente(fecha : Date) : Boolean
+}
+
+class Cliente <<referencia>>
+
+class RegistroAuditoria {
+  - id : Long {readOnly}
+  - fecha : DateTime {readOnly}
+  - entidadAfectada : String {readOnly}
+  - accion : String {readOnly}
+  - valorAnterior : String [0..1] {readOnly}
+  - valorNuevo : String [0..1] {readOnly}
+}
+
+class DescargaFichero {
+  - id : Long {readOnly}
+  - fecha : DateTime {readOnly}
+}
+
+class CopiaSeguridad {
+  - id : Long {readOnly}
+  - fecha : DateTime {readOnly}
+  - estado : EstadoCopia
+}
+
+class RestauracionCopia {
+  - id : Long {readOnly}
+  - fecha : DateTime {readOnly}
+  - resultado : ResultadoRestauracion
+}
+
+Usuario "1" -- "0..*" Sesion : abre >
+Usuario "1" -- "0..*" TokenRecuperacion : solicita >
+Usuario "1" -- "0..*" AsignacionCliente : tiene asignados >
+AsignacionCliente "0..*" -- "1" Cliente : sobre >
+Usuario "1" -- "0..*" Delegacion : delega como origen >
+Usuario "1" -- "0..*" Delegacion : recibe como suplente >
+Usuario "0..1" -- "0..*" RegistroAuditoria : genera >
+Usuario "1" -- "0..*" DescargaFichero : realiza >
+Usuario "1" -- "0..*" RestauracionCopia : ejecuta >
+CopiaSeguridad "1" -- "0..*" RestauracionCopia : se restaura en >
+
+Usuario ..> Rol
+CopiaSeguridad ..> EstadoCopia
+RestauracionCopia ..> ResultadoRestauracion
+
+note bottom of Usuario
+  {único: email}.
+  Bloqueo: 5 fallos seguidos = 15 min (A-07).
+  cambiarRol() y desactivar() solo cambian el valor;
+  las reglas las comprueba ServicioUsuarios (diagrama 2),
+  entre ellas RB-39: siempre queda al menos un
+  Superadministrador activo.
+end note
+
+note bottom of Sesion
+  Se cierra tras 30 min de inactividad (A-06):
+  en cada petición, la interfaz web llama a
+  ServicioAcceso.validarSesion(), que comprueba
+  estaCaducada(ahora); si ha caducado la cierra
+  y pide volver a iniciar sesión, y si no llama a
+  registrarActividad(). No hace falta tarea programada.
+end note
+
+note bottom of TokenRecuperacion
+  Solo se guarda el hash del enlace.
+  {caducaEn = emitidoEn + 24 h}
+end note
+
+note bottom of AsignacionCliente
+  {un solo responsable vigente por cliente}:
+  las asignaciones de un cliente no se solapan.
+  Reasignar cierra la vigente y abre otra.
+end note
+
+note bottom of Delegacion
+  {desde ≤ caducidad}, {origen ≠ suplente}.
+  El suplente recibe toda la cartera del origen
+  durante el periodo (UR-44, FR-41): no hay
+  vínculo con clientes concretos.
+  La asignación principal no cambia; el acceso
+  del suplente termina al caducar (CU-50).
+end note
+
+note bottom of RegistroAuditoria
+  **Inalterable**: solo se crea y se consulta.
+  Lo crean el proxy de permisos (cada operación
+  protegida) y ServicioAcceso (accesos y fallos
+  de login, que no pasan por el proxy).
+  Usuario nulo = acción automática (Sistema).
+  Guarda cualquier cambio como texto (entidad,
+  acción, valor anterior y nuevo); así se consulta,
+  por ejemplo, el cambio de un objetivo de
+  facturación (FR-82). No es una tabla de
+  histórico de otra área.
+end note
+
+note bottom of DescargaFichero
+  Qué se descargó (ExportacionMasiva o Documento)
+  se dibuja en el diagrama 3 (frontera con las áreas 1 y 8).
+end note
+@enduml
