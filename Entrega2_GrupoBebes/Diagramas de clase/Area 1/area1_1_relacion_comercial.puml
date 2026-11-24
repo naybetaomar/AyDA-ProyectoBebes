@@ -1,10 +1,11 @@
-@startuml area1_1_modelo_clientes
+@startuml area1_clientes_clases
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide empty members
-title Área 1 — Diagrama 1: Modelo de clientes
+title Área 1 — Modelo de clientes (diagrama de clases)
 
-class Cliente <<Borrador>> {
+' ===== Clases del área 1 =====
+abstract class Cliente {
   - id : Long {readOnly}
   - razonSocial : String
   - identificadorFiscal : String
@@ -14,10 +15,12 @@ class Cliente <<Borrador>> {
   - estadoCliente : EstadoCliente
   - datosPendientes : Boolean
   - anonimizado : Boolean
+  + solicitarAlta() : void
+  + solicitarBaja() : void
   + anonimizar() : void
 }
 
-class Contacto <<Borrador>> {
+abstract class Contacto{
   - id : Long {readOnly}
   - nombre : String
   - email : String
@@ -28,13 +31,13 @@ class Contacto <<Borrador>> {
   - anonimizado : Boolean
 }
 
-class ConsentimientoCanal <<Borrador>> {
+class ConsentimientoCanal {
   - canal : Canal
   - otorgado : Boolean
   - fecha : LocalDate
 }
 
-class Documento <<Borrador>> {
+class Documento {
   - id : Long {readOnly}
   - nombre : String
   - formato : String
@@ -42,27 +45,13 @@ class Documento <<Borrador>> {
   - ruta : String
 }
 
-class Etiqueta <<opcional>> {
+class Etiqueta {
   - nombre : String
 }
 
-class CategoriaFactura <<opcional>> {
+class CategoriaFactura  {
   - nombre : String
 }
-
-' Clases de otras áreas (solo referencia)
-class Factura <<área 3>>
-class RelacionComercial <<área 2>>
-class RevisionAnualPlan <<área 2>>
-class Presupuesto <<área 3, opcional>>
-class Usuario <<área 9>>
-class AsignacionCliente <<área 9>> {
-  - desde : LocalDate
-  - hasta : LocalDate [0..1]
-}
-class Incidencia <<área 7>>
-class Tarea <<área 7>>
-class Comentario <<área 7>>
 
 enum EstadoCliente {
   PENDIENTE_ACTIVACION
@@ -74,49 +63,69 @@ enum EstadoCliente {
 
 enum Canal {
   EMAIL
-  WHATSAPP
 }
 
-' Núcleo del área 1
-Cliente "1" -- "1..*" Contacto : tiene >
-Contacto "1" -- "0..*" ConsentimientoCanal : tiene >
-Cliente "*" -- "*" Etiqueta
-CategoriaFactura "0..1" -- "*" Factura
-Documento "*" -- "0..1" Cliente
-Documento "*" -- "0..1" Factura
+' ===== Referencias a otras áreas (solo nombre) =====
+class Factura <<referencia>>
+class RelacionComercial <<referencia>>
+class AsignacionCliente <<referencia>> {
+  - desde : LocalDate
+  - hasta : LocalDate [0..1]
+}
+class Usuario <<referencia>>
 
-' Relaciones con otras áreas
+' ===== Núcleo del área 1 =====
+Cliente "1" *-- "1..*" Contacto : tiene >
+Contacto "1" *-- "0..*" ConsentimientoCanal : tiene >
+Cliente "0..*" -- "0..*" Etiqueta : se clasifica con >
+CategoriaFactura "0..1" -- "0..*" Factura : clasifica >
+Documento "0..*" -- "0..1" Cliente : adjunto a >
+Documento "0..*" -- "0..1" Factura : adjunto a >
+
+' ===== Relaciones del cliente con otras áreas =====
 Cliente "1" -- "0..*" Factura : recibe >
 Cliente "1" -- "0..*" RelacionComercial : tiene >
-Cliente "1" -- "0..*" RevisionAnualPlan : tiene >
-Cliente "1" -- "0..*" Presupuesto : tiene >
-Cliente "1" -- "0..*" Incidencia : tiene >
-Cliente "1" -- "0..*" Tarea : tiene >
-Cliente "1" -- "0..*" Comentario : admite >
 Usuario "1" -- "0..*" AsignacionCliente
-AsignacionCliente "0..*" -- "1" Cliente
+AsignacionCliente "0..*" -- "1" Cliente : sobre >
 
+' ===== Dependencias con enumerados =====
 Cliente ..> EstadoCliente
 Contacto ..> Canal
 ConsentimientoCanal ..> Canal
 
+' ===== Notas =====
 note right of Cliente
-  RB-27: al menos un Contacto.
+  RB-27: al menos un Contacto (1..*).
+  solicitarAlta(): el cliente queda en
+  PENDIENTE_ACTIVACION hasta su activación.
+  solicitarBaja(): pasa a BAJA_SOLICITADA;
+  la baja se hace efectiva después
+  (BAJA_EFECTIVA).
   Dec. 5 pendiente: ¿estadoCliente
-  almacenado o derivado de la
-  relación activa?
+  almacenado o derivado de la relación
+  activa? Si se almacena, justificar frente
+  a RelacionComercial.fechaBaja.
+  Campos de trazabilidad (NFR-03) solo en el E-R.
 end note
 
 note bottom of Documento
-  Dec. 4/6 pendiente: destino
-  (Cliente o Factura). Si se decide
-  FK, quizá desaparezca uno de los
-  dos extremos. formato sin enumerar.
+  Dec. 4/6 pendiente: destino (Cliente o Factura).
+  Hoy son dos asociaciones 0..1; si se decide
+  que sea uno u otro, añadir invariante
+  {exactamente uno de los dos}.
+  formato y destino pendientes de enumerar.
+end note
+
+note bottom of ConsentimientoCanal
+  Un consentimiento por canal y contacto.
+  Existencia ligada al Contacto (composición).
 end note
 
 note bottom of Etiqueta
   Etiqueta y CategoriaFactura: opcionales
   (CU-08, FR-81, FR-108). No sustituyen
   a los estados derivados (RB-34).
+  La propuesta (§4) sugiere no dibujarlas
+  salvo que haya tiempo.
 end note
 @enduml
