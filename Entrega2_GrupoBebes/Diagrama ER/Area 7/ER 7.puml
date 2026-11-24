@@ -1,0 +1,162 @@
+@startuml er_area7
+title E-R físico — Área 7: Notificaciones y colaboración
+hide circle
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 120
+skinparam padding 4
+
+package "Área 7 — Notificaciones y colaboración" #FFF8E5 {
+  entity notificacion {
+    * id : BIGINT <<PK>>
+    --
+    * tipo : VARCHAR(25) {ALERTA_DEUDA, ALERTA_INCIDENCIA_ENVIO,
+      REVISION_PENDIENTE, TAREA_ASIGNADA, FACTURA_VENCIDA, SOLICITUD_RESUELTA}
+    * prioridad : VARCHAR(10) {ALTA, MEDIA, BAJA}
+    * estado : VARCHAR(10) {NUEVA, LEIDA, RESUELTA}
+    * titulo : VARCHAR(200)
+    * mensaje : TEXT
+    * fecha_creacion : TIMESTAMP
+    fecha_lectura : TIMESTAMP
+    fecha_resolucion : TIMESTAMP
+    .. asociaciones ..
+    usuario_destino_id : BIGINT <<FK>>
+    cliente_id : BIGINT <<FK>>
+    factura_id : BIGINT <<FK>> (SET NULL)
+  }
+
+  entity preferencia_notificacion {
+    * id : BIGINT <<PK>>
+    --
+    * usuario_id : BIGINT <<FK>>
+    * canal : VARCHAR(10) {EMAIL, WHATSAPP}
+    * in_app_activa : BOOLEAN
+    * email_activo : BOOLEAN
+    * resumen_diario_activo : BOOLEAN
+  }
+
+  entity incidencia {
+    * id : BIGINT <<PK>>
+    --
+    * tipo : VARCHAR(15) {FACTURACION, COBRO, ENVIO, REVISION}
+    * estado : VARCHAR(15) {ABIERTA, EN_PROCESO, RESUELTA, CANCELADA}
+    * prioridad : VARCHAR(10) {ALTA, MEDIA, BAJA}
+    * descripcion : TEXT
+    * fecha_apertura : TIMESTAMP
+    fecha_cierre : TIMESTAMP
+    * pausa_recordatorios : BOOLEAN
+    .. asociaciones ..
+    * cliente_id : BIGINT <<FK>>
+    factura_id : BIGINT <<FK>> (SET NULL)
+    responsable_id : BIGINT <<FK>>
+  }
+
+  entity comentario {
+    * id : BIGINT <<PK>>
+    --
+    * texto : TEXT
+    * restringido : BOOLEAN
+    * fecha : TIMESTAMP
+    .. asociaciones ..
+    autor_id : BIGINT <<FK>>
+    .. destino: exactamente uno ..
+    cliente_id : BIGINT <<FK>>
+    factura_id : BIGINT <<FK>> (CASCADE)
+    incidencia_id : BIGINT <<FK>>
+  }
+
+  entity tarea {
+    * id : BIGINT <<PK>>
+    --
+    * tipo : VARCHAR(25) {ACCION_MASIVA, REVISION_PLAN, REVISION_BAJA,
+      INCIDENCIA_COBRO, CONCILIACION_MANUAL}
+    * estado : VARCHAR(15) {PENDIENTE, EN_PROCESO, COMPLETADA, CANCELADA}
+    * prioridad : VARCHAR(10) {ALTA, MEDIA, BAJA}
+    * descripcion : TEXT
+    * origen : VARCHAR(100)
+    * fecha_creacion : TIMESTAMP
+    fecha_vencimiento : DATE
+    fecha_completada : TIMESTAMP
+    .. asociaciones ..
+    * cliente_id : BIGINT <<FK>>
+    responsable_id : BIGINT <<FK>>
+  }
+}
+
+package "Otras áreas (referencias)" #EEEEEE {
+  entity cliente <<área 1>> {
+    * id : BIGINT <<PK>>
+  }
+  entity factura <<área 3>> {
+    * id : BIGINT <<PK>>
+  }
+  entity usuario <<área 9>> {
+    * id : BIGINT <<PK>>
+  }
+}
+
+usuario |o---o{ notificacion : dirigida a
+cliente |o---o{ notificacion : sobre
+factura |o---o{ notificacion : sobre
+usuario ||---o{ preferencia_notificacion : configura
+cliente ||---o{ incidencia : afecta a
+factura |o---o{ incidencia : asociada a
+usuario |o---o{ incidencia : responsable
+usuario |o---o{ comentario : redactado por
+cliente |o---o{ comentario : registrado en
+factura |o---o{ comentario : registrado en
+incidencia |o---o{ comentario : registrado en
+cliente ||---o{ tarea : relativa a
+usuario |o---o{ tarea : asignada a
+
+note right of notificacion
+  usuario_destino_id nulo = notificación general. La FK admite 
+ nulos y hay que decir qué significa ese nulo.
+  Las fechas van con el estado. Una NUEVA no tiene fecha de 
+  lectura ni de resolución, una LEIDA tiene fecha de lectura y 
+  una RESUELTA tiene fecha de resolución.
+  Las alertas llevan siempre cliente. Una alerta de deuda, de 
+  vencimiento o de envío tiene que decir de quién es para abrirla 
+  desde la pantalla de trabajo.
+  Índice único parcial (tipo, usuario_destino_id, cliente_id,
+  factura_id) NULLS NOT DISTINCT WHERE estado <> 'RESUELTA'
+  AND tipo es alerta — no repetir una alerta sin resolver.
+  es_leida y es_resuelta no se guardan: se derivan de estado.
+end note
+
+note right of comentario
+  CHECK: exactamente uno de cliente_id, factura_id,
+  incidencia_id no nulo (num_nonnulls = 1) — destino único.
+  Si la factura es un borrador y se borra, sus comentarios
+  se borran con ella (ON DELETE CASCADE).
+  autor_id nulo = Sistema. restringido: solo lo ven
+  Administradores y Superadministradores (RB-32).
+end note
+
+note bottom of incidencia
+  Cerrada si y solo si tiene fecha de cierre. Si está RESUELTA 
+  o CANCELADA tiene fecha de cierre, y si no, no la tiene. Además, 
+  el cierre no puede ser anterior a la apertura.
+  fecha_cierre ≥ fecha_apertura.
+  es_activa no se guarda: se deriva de estado.
+end note
+
+note bottom of tarea
+  Completada si y solo si tiene fecha de completado.
+  responsable_id nulo = tarea sin asignar.
+  esta_vencida no se guarda: se deriva de fecha_vencimiento.
+end note
+
+note bottom of preferencia_notificacion
+  **UNIQUE** (usuario_id, canal): una preferencia
+  por usuario y canal.
+  Si no, un usuario podría tener dos preferencias de EMAIL contradictorias.
+end note
+
+note as Auditoria
+  Trazabilidad (NFR-03): todas las tablas llevan creado_por, creado_en,
+  modificado_por, modificado_en (FK a usuario; nulo = Sistema).
+  Las FK a factura que no son composición se ponen a nulo si se borra un borrador. 
+  Así una notificación o una incidencia no impiden borrarlo.
+end note
+@enduml
