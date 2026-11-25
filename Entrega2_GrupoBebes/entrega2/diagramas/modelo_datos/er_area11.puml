@@ -1,0 +1,77 @@
+@startuml er_area11
+title E-R físico — Área 11: API externa — PROPUESTA
+hide circle
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 60
+
+package "Área 11 — API externa" #E8EEF8 {
+  entity consumidor_api {
+    * id : BIGINT <<PK>>
+    --
+    * credencial_hash : VARCHAR(255)
+    * limite_solicitudes : INTEGER
+    * periodo_limite : VARCHAR(10) {MINUTO, HORA, DIA}
+    * activo : BOOLEAN
+  }
+
+  entity llamada_api {
+    * id : BIGINT <<PK>>
+    --
+    consumidor_api_id : BIGINT <<FK>>
+    * fecha : TIMESTAMP
+    * operacion : VARCHAR(20) {CONSULTAR_DATOS, ENVIAR_SOLICITUD}
+    * resultado : VARCHAR(20) {CORRECTA, NO_AUTORIZADA, LIMITE_EXCEDIDO, ERROR}
+    codigo_incidencia : VARCHAR(50)
+  }
+
+  entity solicitud_externa {
+    * id : BIGINT <<PK>>
+    --
+    * consumidor_api_id : BIGINT <<FK>>
+    * cliente_id : BIGINT <<FK>>
+    tarea_id : BIGINT <<FK>> <<UNIQUE>>
+    * tipo : VARCHAR(10) {BAJA}
+    * estado_validacion : VARCHAR(10) {PENDIENTE, VALIDADA, RECHAZADA}
+    motivo_rechazo : VARCHAR(500)
+  }
+}
+
+package "Otras áreas (referencias)" #EEEEEE {
+  entity cliente <<área 1>> {
+    * id : BIGINT <<PK>>
+  }
+  entity tarea <<área 7>> {
+    * id : BIGINT <<PK>>
+  }
+}
+
+consumidor_api |o--o{ llamada_api : realiza
+consumidor_api ||--o{ solicitud_externa : envía
+cliente ||--o{ solicitud_externa : se refiere a
+tarea |o--o| solicitud_externa : genera
+
+note right of llamada_api
+  **consumidor_api_id** admite nulo: una credencial
+  incorrecta no tiene consumidor, pero el intento
+  se registra igualmente.
+  CHECK: consumidor_api_id nulo ⇒ resultado = 'NO_AUTORIZADA'.
+  CHECK: resultado = 'ERROR' ⇒ codigo_incidencia obligatorio.
+  Índice (consumidor_api_id, fecha) para contar las
+  llamadas del periodo (límite de solicitudes, NFR-50).
+end note
+
+note right of solicitud_externa
+  CHECK: motivo_rechazo obligatorio si
+  estado_validacion = 'RECHAZADA' y nulo en otro caso.
+  tarea_id nulo hasta que el área 7 crea la Tarea.
+  Las reglas de la baja las valida el área 2.
+end note
+
+note as Auditoria
+  **Trazabilidad (NFR-03):** todas las tablas llevan creado_por, creado_en,
+  modificado_por, modificado_en (FK a usuario; nulo = Sistema).
+  No se dibujan. Las clases de diseño (FachadaAPI, DTO, proxy,
+  servicios) no tienen tabla. Leyenda: * = NOT NULL.
+end note
+@enduml
