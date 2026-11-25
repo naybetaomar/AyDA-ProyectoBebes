@@ -9,7 +9,7 @@ package "Área 11 — API externa" #E8EEF8 {
   entity consumidor_api {
     * id : BIGINT <<PK>>
     --
-    * credencial_hash : VARCHAR(255)
+    * credencial_hash : VARCHAR(100)
     * limite_solicitudes : INTEGER
     * periodo_limite : VARCHAR(10) {MINUTO, HORA, DIA}
     * activo : BOOLEAN
