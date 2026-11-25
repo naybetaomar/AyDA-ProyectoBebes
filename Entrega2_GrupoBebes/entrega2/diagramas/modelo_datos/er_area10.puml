@@ -21,7 +21,7 @@ entity "ENTRADA_CONFIGURACION" as EntradaConfig {
   * descripcion : VARCHAR(255)
   * validada : BOOLEAN
   * fecha_vigencia_desde : DATE
-  * fecha_vigencia_hasta : DATE [NULL]
+  fecha_vigencia_hasta : DATE [NULL]
 }
 
 entity "TAREA_PROGRAMADA" as TareaProg {
@@ -37,10 +37,10 @@ entity "EJECUCION_PROCESO" as Ejecucion {
   --
   * tipo : VARCHAR(50)
   * fecha_inicio : TIMESTAMP
-  * fecha_fin : TIMESTAMP [NULL]
+  fecha_fin : TIMESTAMP [NULL]
   * procesados : INTEGER
   * fallos : INTEGER
-  * causa : TEXT [NULL]
+  causa : TEXT [NULL]
   * estado : VARCHAR(30)
 }
 
@@ -50,22 +50,22 @@ entity "DETALLE_FALLO" as DetalleFallo {
   * ejecucion_proceso_id : BIGINT <<FK>>
   * entidad_afectada : VARCHAR(150)
   * motivo : TEXT
-  * codigo_incidencia : VARCHAR(50) [NULL]
+  codigo_incidencia : VARCHAR(50) [NULL]
 }
 
 entity "ERROR_TECNICO" as ErrorTec {
   * id : BIGINT <<PK>>
   --
-  * ejecucion_proceso_id : BIGINT <<FK>> [NULL]
-  * resuelto_por : BIGINT <<FK>> [NULL]
+  ejecucion_proceso_id : BIGINT <<FK>> [NULL]
+  resuelto_por : BIGINT <<FK>> [NULL]
   * codigo_incidencia : VARCHAR(50)
   * mensaje_interno : TEXT
   * fecha : TIMESTAMP
   * severidad : VARCHAR(20)
   * origen : VARCHAR(100)
-  * traza : TEXT [NULL]
+  traza : TEXT [NULL]
   * resuelto : BOOLEAN
-  * fecha_resolucion : TIMESTAMP [NULL]
+  fecha_resolucion : TIMESTAMP [NULL]
 }
 
 entity "CALENDARIO_LABORAL" as Calendario {
@@ -74,7 +74,13 @@ entity "CALENDARIO_LABORAL" as Calendario {
   * nombre : VARCHAR(100)
   * pais : VARCHAR(50)
   * anio : INTEGER
-  * dias_laborables : VARCHAR(100)
+}
+
+entity "DIA_LABORABLE_CALENDARIO" as DiaLab {
+  * id : BIGINT <<PK>>
+  --
+  * calendario_laboral_id : BIGINT <<FK>>
+  * dia_semana : VARCHAR(15)
 }
 
 entity "FECHA_FESTIVA" as Festivo {
@@ -90,25 +96,43 @@ entity "FECHA_FESTIVA" as Festivo {
 ConfigGlobal ||--|{ EntradaConfig : contiene
 Ejecucion ||--o{ DetalleFallo : registra
 Ejecucion |o--o{ ErrorTec : agrega
+Calendario ||--|{ DiaLab : define_dias
 Calendario ||--o{ Festivo : contiene
 
 note bottom of EntradaConfig
-  **Restricciones (Catálogo §7):**
+  **Restricciones:**
   - UNIQUE (configuracion_global_id, clave, fecha_vigencia_desde)
   - CHECK (tipo_dato IN ('ENTERO','DECIMAL','BOOLEANO','TEXTO','JSON','MONEDA','FECHA'))
   - CHECK (fecha_vigencia_hasta IS NULL OR fecha_vigencia_hasta >= fecha_vigencia_desde)
 end note
 
+note bottom of Ejecucion
+  **Restricciones:**
+  - CHECK (tipo IN ('FACTURACION_RECURRENTE','RECORDATORIOS','CAMPANIA_ANUAL',
+    'AVISO_REACTIVACION_PAUSAS','CADUCIDAD_DELEGACIONES','COPIA_SEGURIDAD',
+    'CONCILIACION','INFORMES_PROGRAMADOS','ACTUALIZACION_VENCIMIENTOS',
+    'BORRADO_EXPORTACIONES_CADUCADAS','CARGA_DATOS_DEMO'))
+  - CHECK (estado IN ('EN_CURSO','COMPLETADA','COMPLETADA_CON_FALLOS','FALLIDA','CANCELADA'))
+  - CHECK (procesados >= 0 AND fallos >= 0)
+  - CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio)
+end note
+
 note bottom of ErrorTec
-  **Restricciones (Catálogo §7):**
+  **Restricciones:**
   - UNIQUE (codigo_incidencia)
   - CHECK (severidad IN ('INFO','WARNING','ERROR','CRITICO'))
   - CHECK ((resuelto = FALSE AND fecha_resolucion IS NULL AND resuelto_por IS NULL)
            OR (resuelto = TRUE AND fecha_resolucion IS NOT NULL))
 end note
 
+note bottom of DiaLab
+  **Restricciones:**
+  - UNIQUE (calendario_laboral_id, dia_semana)
+  - CHECK (dia_semana IN ('LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO','DOMINGO'))
+end note
+
 note bottom of Festivo
-  **Restricciones (Catálogo §7):**
+  **Restricciones:**
   - UNIQUE (calendario_laboral_id, fecha)
   - CHECK (ambito IN ('NACIONAL','REGIONAL','LOCAL'))
   - En CALENDARIO_LABORAL: UNIQUE (pais, anio)

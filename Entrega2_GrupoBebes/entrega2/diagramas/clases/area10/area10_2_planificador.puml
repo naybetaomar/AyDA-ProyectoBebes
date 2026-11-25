@@ -6,8 +6,6 @@ skinparam linetype ortho
 skinparam packageStyle rectangle
 hide empty members
 
-note "Trazabilidad (NFR-03):\ncreadoPor, creadoEn, modificadoPor, modificadoEn\nen todas las clases auditables.\ncreadoPor y modificadoPor admiten nulo = Sistema.\nNo se dibujan en cada clase." as NFR03
-
 package "Área 10 — Planificador y ejecución" #LightYellow {
 
   interface TareaAutomatica {
@@ -17,7 +15,6 @@ package "Área 10 — Planificador y ejecución" #LightYellow {
   class Planificador <<componente interno>> {
     - id : Long {readOnly}
     - nombre : String
-    - identidadSistema : String {readOnly}
     + ejecutar(tipo : TipoProceso) : EjecucionProceso
     + programar(tipo : TipoProceso, cron : String) : void
     + registrarEjecucion(ejecucion : EjecucionProceso) : void
@@ -26,7 +23,7 @@ package "Área 10 — Planificador y ejecución" #LightYellow {
   class TareaProgramada {
     - tipo : TipoProceso
     - cron : String
-    - activa : boolean
+    - activa : Boolean
   }
 
   class EjecucionProceso {
@@ -35,15 +32,15 @@ package "Área 10 — Planificador y ejecución" #LightYellow {
     - fechaInicio : Timestamp
     - fechaFin : Timestamp [0..1]
     - /duracion : Duration
-    - procesados : int
-    - fallos : int
+    - procesados : Integer
+    - fallos : Integer
     - causa : String [0..1]
     - estado : EstadoEjecucion
     + iniciar(tipo : TipoProceso) : void
-    + registrarProcesado(cantidad : int) : void
+    + registrarProcesado(cantidad : Integer) : void
     + registrarFallo(motivo : String, entidad : String) : void
     + finalizar() : void
-    + esExitosa() : boolean
+    + esExitosa() : Boolean
   }
 
   class DetalleFallo {
@@ -60,7 +57,7 @@ package "Área 10 — Planificador y ejecución" #LightYellow {
     - severidad : SeveridadError
     - origen : String
     - traza : String [0..1]
-    - resuelto : boolean
+    - resuelto : Boolean
     - fechaResolucion : Timestamp [0..1]
     + registrar(codigo : String, mensaje : String, severidad : SeveridadError, origen : String) : ErrorTecnico
     + marcarResuelto(realizadoPor : Usuario) : void
@@ -72,6 +69,7 @@ enum TipoProceso {
   FACTURACION_RECURRENTE
   RECORDATORIOS
   CAMPANIA_ANUAL
+  AVISO_REACTIVACION_PAUSAS
   CADUCIDAD_DELEGACIONES
   COPIA_SEGURIDAD
   CONCILIACION
@@ -98,11 +96,15 @@ enum SeveridadError {
 
 package "Área 9 — Seguridad y Auditoría" {
   class Usuario <<referencia>>
+  class IdentidadSistema <<referencia>>
+  class ContextoSeguridad <<referencia>>
 }
 
 Planificador "1" *-- "0..*" TareaProgramada : programa >
 Planificador "1" --> "0..*" TareaAutomatica : ejecuta >
 Planificador "1" --> "0..*" EjecucionProceso : crea >
+Planificador "1" --> "1" IdentidadSistema : usa >
+Planificador ..> ContextoSeguridad : establece identidad >
 EjecucionProceso "1" *-- "0..*" DetalleFallo : registra >
 EjecucionProceso "1" --> "0..*" ErrorTecnico : agrega >
 TareaProgramada --> TipoProceso : usa >
@@ -111,17 +113,14 @@ EjecucionProceso --> EstadoEjecucion : usa >
 ErrorTecnico --> SeveridadError : usa >
 ErrorTecnico "0..*" --> "0..1" Usuario : resueltoPor >
 
-NFR03 .. Planificador
-NFR03 .. EjecucionProceso
-NFR03 .. ErrorTecnico
-
 note bottom of Planificador
-  **Cuestión 8.11 y desacoplamiento:** el Planificador no conoce
-  servicios de otras áreas; invoca `TareaAutomatica.ejecutar()`
-  pasando por el `Proxy` (área 9) con identidad de sistema.
-  Cada área implementa `TareaAutomatica` para sus procesos.
-  Un rechazo del Proxy se registra como fallo en `EjecucionProceso`
-  (BR-04) y genera alerta (CU-56).
+  **Desacoplamiento y seguridad (Área 9):**
+  El Planificador establece su `IdentidadSistema` en
+  `ContextoSeguridad` antes de ejecutar la `TareaAutomatica`.
+  Cada tarea invoca al servicio de su área a través de su
+  Proxy correspondiente. Un rechazo del Proxy se registra
+  como fallo en `EjecucionProceso` (BR-04) y alerta (CU-56).
+  Nota: `ACTUALIZACION_VENCIMIENTOS` incluye `comprobarImpagos()` (Área 6).
 end note
 
 @enduml

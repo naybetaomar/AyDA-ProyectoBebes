@@ -6,20 +6,18 @@ skinparam linetype ortho
 skinparam packageStyle rectangle
 hide empty members
 
-note "Trazabilidad (NFR-03):\ncreadoPor, creadoEn, modificadoPor, modificadoEn\nen todas las clases auditables.\ncreadoPor y modificadoPor admiten nulo = Sistema.\nNo se dibujan en cada clase." as NFR03
-
 package "Área 10 — Configuración" #LightYellow {
 
   class ConfiguracionGlobal {
     - id : Long {readOnly}
     - nombre : String
     - descripcion : String
-    - /numeroEntradas : int
+    - /numeroEntradas : Integer
     + obtenerEntrada(clave : String) : EntradaConfiguracion
     + obtenerValor(clave : String, fecha : Date) : Object
     + validarEntrada(clave : String, valor : String) : ResultadoValidacion
     + actualizarEntrada(clave : String, valor : String, realizadoPor : Usuario) : ResultadoActualizacion
-    + listarVigentes(fecha : Date) : List<EntradaConfiguracion>
+    + listarVigentes(fecha : Date) : EntradaConfiguracion [0..*]
   }
 
   class EntradaConfiguracion {
@@ -27,11 +25,22 @@ package "Área 10 — Configuración" #LightYellow {
     - valor : String
     - tipoDato : TipoDatoConfig
     - descripcion : String
-    - validada : boolean
+    - validada : Boolean
     - fechaVigenciaDesde : Date
     - fechaVigenciaHasta : Date [0..1]
-    + esVigente(fecha : Date) : boolean
+    + esVigente(fecha : Date) : Boolean
     + validar() : ResultadoValidacion
+  }
+
+  class ResultadoValidacion <<DTO>> {
+    - valido : Boolean
+    - errores : String [0..*]
+  }
+
+  class ResultadoActualizacion <<DTO>> {
+    - exito : Boolean
+    - mensaje : String
+    - entradaActualizada : EntradaConfiguracion [0..1]
   }
 }
 
@@ -52,14 +61,10 @@ package "Área 9 — Seguridad y Auditoría" {
 ConfiguracionGlobal "1" *-- "1..*" EntradaConfiguracion : contiene >
 EntradaConfiguracion --> TipoDatoConfig : usa >
 ConfiguracionGlobal ..> Usuario : realizadoPor (auditoría) >
+ConfiguracionGlobal ..> ResultadoValidacion : devuelve >
+ConfiguracionGlobal ..> ResultadoActualizacion : devuelve >
+EntradaConfiguracion ..> ResultadoValidacion : devuelve >
 
-NFR03 .. ConfiguracionGlobal
 
-note bottom of ConfiguracionGlobal
-  **Q-07 (abierta):** ¿un cambio de configuración
-  afecta a facturas nuevas, a condiciones nuevas
-  o a ambas? El modelo lo soporta con
-  `fechaVigenciaDesde/Hasta`; la política la decide el grupo.
-end note
 
 @enduml
