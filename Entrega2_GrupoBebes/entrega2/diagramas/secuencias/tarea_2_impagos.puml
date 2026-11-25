@@ -1,0 +1,90 @@
+@startuml tarea_2_impagos
+title Tarea diaria del planificador (2) — Alertas de impago (UR-92, UR-93)
+hide footbox
+skinparam maxMessageSize 120
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+participant "__: Planificador__" as P
+participant "__e : EjecucionProceso__" as E
+participant "__: ProxyCobros__" as PX
+participant "__: ServicioCobros__" as SC
+participant "__: ConfiguracionGlobal__" as CG
+participant "__: ManejadorAlertasCobro__" as MA
+participant "__: ServicioNotificaciones__" as SN
+
+activate P
+P -> PX ++ : comprobarImpagos(fecha : Date)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
+PX -> SC ++ : comprobarImpagos(fecha : Date)
+SC -> CG ++ : obtenerValor(clave = "diasMaximosVencida", fecha : Date)
+autonumber stop
+return limiteDias
+autonumber resume
+SC -> CG ++ : obtenerValor(clave = "deudaMaximaCliente", fecha : Date)
+autonumber stop
+return limiteDeuda
+autonumber resume
+SC ->o] : buscar facturas emitidas con saldo y vencimiento pasado en BD
+autonumber stop
+SC <--o] : facturas
+autonumber resume
+note right of SC
+  **Todas** las vencidas, no solo las
+  de hoy: siguen envejeciendo.
+end note
+
+loop para cada factura f
+  SC -> SC : estaVencida(f : Factura)
+  opt días desde el vencimiento > limiteDias (UR-92)
+    SC -[#2E7D32]->> MA ++ : «impago sobre el límite»(FACTURA_VENCIDA, f)
+    MA ->o] : ¿hay ya una alerta sin resolver de ese tipo para f? (BD)
+    autonumber stop
+    MA <--o] : existe
+    autonumber resume
+    opt no existe
+      create participant "__n : Notificacion__" as N
+      MA --> N : Notificacion(FACTURA_VENCIDA, ALTA, f)
+      MA -> SN ++ : registrarNotificacion(notificacion : Notificacion)
+      autonumber stop
+      return
+      autonumber resume
+    end
+    deactivate MA
+  end
+end
+
+loop para cada cliente con facturas vencidas
+  SC -> SC : consultarSaldo(cliente : Cliente)
+  opt saldoPendiente > limiteDeuda (UR-93)
+    SC -[#2E7D32]->> MA ++ : «impago sobre el límite»(ALERTA_DEUDA, cliente)
+    MA -> MA : igual que arriba, con el cliente
+    deactivate MA
+  end
+end
+autonumber stop
+return
+return
+autonumber resume
+
+P -> E ++ : finalizar()
+autonumber stop
+return
+autonumber resume
+deactivate P
+
+note over MA, SN
+  **No se repite la alerta:** el área 6 avisa cada día
+  mientras siga sobre el límite; el área 7 no crea otra
+  si ya hay una sin resolver del mismo tipo y elemento.
+end note
+note over SC, CG
+  UR-93 puede llegar con un día de retraso:
+  la deuda también crece al emitir una factura
+  y solo se comprueba aquí. Aceptado para
+  la primera versión.
+end note
+@enduml

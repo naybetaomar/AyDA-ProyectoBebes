@@ -17,8 +17,8 @@ Cada clase se define completa en un solo diagrama. En los demás aparece solo co
 | 1. Clientes y contactos | Ana | `area1_1_modelo_clientes`, `area1_2_servicio_clientes` |
 | 2. Relación comercial y suscripciones | Ana | `area2_1_relacion_comercial`, `area2_2_servicio_relacion_comercial` |
 | 3. Emisión de facturas | Abdelnaybet | `area3_1_modelo_facturacion`, `area3_2_factory_method`, `area3_3_relaciones_otras_areas` |
-| 4. Aprobaciones y cierre contable | Loraine | `area4` |
-| 5. Envío y comunicaciones | Loraine | `area5` |
+| 4. Aprobaciones y cierre contable | Loraine | `area4_1_modelo_aprobaciones`, `area4_2_servicio_aprobaciones` |
+| 5. Envío y comunicaciones | Loraine | `area5_1_modelo_comunicaciones`, `area5_2_servicios_adapter` |
 | 6. Cobros, conciliación y saldo | Abdelnaybet | `area6_1_modelo_cobros`, `area6_2_adapter_servicio`, `area6_3_relaciones_otras_areas` |
 | 7. Notificaciones y colaboración | Luca | `area7_1_modelo_notificaciones`, `area7_2_patrones_notificaciones`, `area7_3_relaciones_notificaciones` |
 | 8. Informes y contabilidad | Luca | `area8_1_modelo_informes`, `area8_2_patrones_informes`, `area8_3_relaciones_informes` |
@@ -35,7 +35,8 @@ Todas las áreas siguen las mismas reglas de notación:
 - Atributos **privados** (`-`) y operaciones públicas (`+`). Derivados con `/` (`/total`, `/importeSinAplicar`), inmutables con `{readOnly}` y opcionales con `[0..1]`.
 - Toda asociación lleva **multiplicidad en los dos extremos** y un verbo o nombre de rol.
 - Los estados y tipos cerrados son **enumerados**, nunca `String`. Los compartidos (`EstadoCobro`, `Rol`, `Canal`…) tienen un único conjunto de valores para todas las áreas.
-- Una clase de otra área se dibuja con el estereotipo **`<<referencia>>`**: solo su nombre o sus atributos clave. Se define completa en su área.
+- Una clase de otra área se dibuja con el estereotipo **`<<referencia>>`**: solo su nombre o sus atributos clave. Se define completa en su área. El enumerado compartido `Canal` es del área 1 (nace en `Contacto.canalPreferido`); las áreas 5 y 7 lo usan como referencia.
+- **`<<infraestructura>>`** marca los componentes técnicos que no son de ningún área funcional, como `GestorDocumentos` (guarda los ficheros: PDF, adjuntos y exportaciones). Se describen en `arquitectura.md`.
 - Las restricciones que no se ven en las flechas van en notas: `{único: …}`, invariantes y precondiciones.
 - Los campos de trazabilidad (`creadoPor`, `creadoEn`, `modificadoPor`, `modificadoEn`, NFR-03) no se dibujan en cada clase. Se indican una vez en una nota del diagrama.
 - **Usuario nulo = Sistema.** Cuando una acción la hace el sistema (una tarea programada o una llamada de la API externa), el usuario que la realiza queda nulo. Los usuarios no se borran, solo se desactivan (FR-37), así que un nulo nunca es un usuario borrado.
@@ -51,6 +52,7 @@ Todas las áreas siguen las mismas reglas de notación:
 | Evento | Lo emite | Lo escucha | Para qué |
 |---|---|---|---|
 | «abono emitido» | Área 3 (`FacturaRectificativa`) | Área 6 | Recalcular el estado de cobro de la factura original (A-27) |
+| «solicitud creada» | Área 4 (`ServicioAprobaciones`) | Área 7 | Avisar a los aprobadores de que hay una solicitud pendiente (CU-22 paso 4) |
 | «solicitud resuelta» | Área 4 (`ServicioAprobaciones`) | Áreas 3, 6 y 7 | Emitir o devolver a borrador la factura, registrar la baja contable y notificar al solicitante (CU-23, CU-36, CU-37) |
 | «estado de cobro cambiado» | Área 6 (`ServicioCobros`) | Área 5 | Cancelar o reanudar recordatorios (RB-37) |
 | «impago sobre el límite» | Área 6 | Área 7 | Avisar al responsable |

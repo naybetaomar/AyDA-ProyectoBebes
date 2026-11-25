@@ -1,0 +1,107 @@
+@startuml area5_2_servicios_adapter
+skinparam classAttributeIconSize 0
+hide empty members
+title Área 5 — Diagrama 2: Servicios de envío y recordatorios, patrón Adapter
+
+class ServicioEnvio {
+  + enviarFactura(factura : Factura) : Mensaje
+  + reintentarEnvio(mensaje : Mensaje) : void
+  + consultarMensajes(factura : Factura) : Mensaje [0..*]
+  + marcarEnDisputa(factura : Factura, motivo : String, fechaRevision : Date) : void
+  + quitarDisputa(factura : Factura) : void
+  + guardarPlantilla(plantilla : PlantillaComunicacion) : void
+  + previsualizar(plantilla : PlantillaComunicacion, factura : Factura) : String
+  + activarPlantilla(plantilla : PlantillaComunicacion) : void
+}
+
+class ServicioRecordatorios {
+  + procesarVencimientos(fecha : Date) : void
+  + configurarRegla(regla : ReglaRecordatorio) : void
+  + alCambiarEstadoCobro(factura : Factura, estado : EstadoCobro) : void
+}
+
+interface CanalEnvio {
+  + enviar(mensaje : Mensaje) : Boolean
+}
+class AdaptadorCorreo {
+  + enviar(mensaje : Mensaje) : Boolean
+}
+class AdaptadorWhatsApp {
+  + enviar(mensaje : Mensaje) : Boolean
+}
+class ServicioCorreoSimulado <<externo>> {
+  + enviarCorreo(destino : String, asunto : String, cuerpo : String) : Boolean
+}
+class ServicioWhatsAppSimulado <<externo>> {
+  + enviarWhatsApp(telefono : String, texto : String) : Boolean
+}
+
+class Mensaje <<referencia>>
+class PlantillaComunicacion <<referencia>>
+class ReglaRecordatorio <<referencia>>
+class Contacto <<referencia>>
+class ServicioFacturacion <<referencia>> {
+  + registrarEstadoEnvio(factura : Factura, estado : EstadoEnvio) : void
+  + marcarEnDisputa(factura : Factura, motivo : String, fechaRevision : Date) : void
+  + quitarDisputa(factura : Factura) : void
+}
+class ServicioCobros <<referencia>> {
+  + estaVencida(factura : Factura) : Boolean
+}
+class GestorDocumentos <<infraestructura>>
+class CalendarioLaboral <<referencia>> {
+  + siguienteDiaLaborable(fecha : Date) : Date
+}
+
+ServicioRecordatorios -right-> ServicioEnvio : envía el\nrecordatorio >
+ServicioRecordatorios ..> ReglaRecordatorio : aplica >
+ServicioRecordatorios ..> ServicioCobros : vencida >
+ServicioRecordatorios ..> CalendarioLaboral : día hábil (FR-83) >
+ServicioEnvio ..> Mensaje : <<create>>
+ServicioEnvio ..> PlantillaComunicacion : usa >
+ServicioEnvio ..> Contacto : canal preferido\ny consentimiento >
+ServicioEnvio ..> ServicioFacturacion : estado de envío\ny disputa >
+ServicioEnvio ..> GestorDocumentos : PDF de la factura >
+ServicioEnvio -down-> CanalEnvio : envía por >
+
+CanalEnvio <|.. AdaptadorCorreo
+CanalEnvio <|.. AdaptadorWhatsApp
+AdaptadorCorreo -down-> ServicioCorreoSimulado : adapta >
+AdaptadorWhatsApp -down-> ServicioWhatsAppSimulado : adapta >
+
+note right of ServicioEnvio
+  **Punto de entrada del área 5**, a través del
+  proxy de permisos (área 9).
+  **enviarFactura()**: elige el canal preferido
+  del contacto de facturación; WhatsApp solo con
+  número válido y consentimiento (RB-28). Crea el
+  Mensaje con la plantilla y pide al área 3
+  registrarEstadoEnvio(ENVIADA).
+  Si el envío falla: marcarFallido(),
+  registrarEstadoEnvio(FALLO_ENVIO) y emite
+  «fallos de envío»; el área 7 crea la incidencia
+  y avisa tras tres fallos seguidos (CU-28 FE-1, FR-80).
+  **reintentarEnvio()** (CU-28): mismo mensaje y misma
+  factura, tras corregir el contacto (área 1).
+  **guardarPlantilla()** rechaza una plantilla sin las
+  variables obligatorias (CU-30 FE-1).
+end note
+
+note bottom of ServicioRecordatorios
+  **procesarVencimientos()**: la lanza el planificador
+  (área 10) a diario, con la identidad de sistema. Para cada
+  factura vencida (ServicioCobros) excluye las pagadas, las
+  que están en disputa y las de relaciones no iniciadas
+  (RB-37, RB-30) y envía el recordatorio en el idioma del
+  contacto si la regla dice que toca.
+  **alCambiarEstadoCobro()**: escucha «estado de cobro
+  cambiado» (área 6); si la factura queda pagada o anulada,
+  cancela los recordatorios pendientes de envío (RB-37).
+end note
+
+note bottom of CanalEnvio
+  **Adapter** (NFR-27): cambiar de proveedor
+  es escribir otro adaptador.
+  Correo y WhatsApp están simulados (A-03).
+end note
+@enduml

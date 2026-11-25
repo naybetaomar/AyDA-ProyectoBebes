@@ -158,5 +158,6 @@ note as Traza
   restauracion_copia llevan creado_ y modificado_.
   sesion, token_recuperacion, registro_auditoria y
   descarga_fichero no: son en sí un registro.
+  No se dibujan. Leyenda: * = NOT NULL.
 end note
 @enduml

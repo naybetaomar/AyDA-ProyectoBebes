@@ -1,5 +1,5 @@
 @startuml er_area6
-title E-R físico — Área 6: Cobros, conciliación y saldo — PROPUESTA
+title E-R físico — Área 6: Cobros, conciliación y saldo
 hide circle
 skinparam linetype ortho
 skinparam nodesep 50

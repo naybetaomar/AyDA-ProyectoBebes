@@ -1,5 +1,5 @@
 @startuml er_area3
-title E-R físico — Área 3: Emisión de facturas — PROPUESTA
+title E-R físico — Área 3: Emisión de facturas
 hide circle
 skinparam linetype ortho
 skinparam nodesep 50
@@ -15,6 +15,8 @@ package "Área 3 — Emisión de facturas" #FFF8E5 {
     estado_cobro : VARCHAR(25)
     estado_envio : VARCHAR(15)
     * en_disputa : BOOLEAN
+    motivo_disputa : VARCHAR(500)
+    fecha_revision_disputa : DATE
     * cobro_excesivo : BOOLEAN
     * modificacion_manual : BOOLEAN
     * moneda : CHAR(3)
@@ -180,6 +182,8 @@ note right of factura
   sin estado de cobro en un abono (A-27).
   CHECK: emitida ⇒ número, serie, periodo y fecha de emisión.
   CHECK: total = base_imponible + impuestos.
+  CHECK: en_disputa ⇔ motivo_disputa y
+  fecha_revision_disputa informados (CU-31).
   **Trigger BEFORE DELETE**: solo se borran borradores (RB-11).
   **Trigger BEFORE UPDATE**: una emitida solo cambia estado de
   cobro y de envío, disputa, cobro excesivo y EMITIDA → RECTIFICADA

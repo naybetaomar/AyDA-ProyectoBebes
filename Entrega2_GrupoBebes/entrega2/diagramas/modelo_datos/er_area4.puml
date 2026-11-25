@@ -12,11 +12,14 @@ package "Área 4 — Aprobaciones y periodos contables" #FFF8E5 {
     * tipo : VARCHAR(25) {DESCUENTO, CAMBIO_IMPORTE, CAMBIO_FECHA,
       FACTURA_SOBRE_UMBRAL, EXCEPCION_PRORRATEO, BAJA_CONTABLE}
     * importe : DECIMAL(12,2)
+    motivo : VARCHAR(1000)
     * estado : VARCHAR(10) {PENDIENTE, APROBADA, RECHAZADA}
     comentario_aprobador : VARCHAR(1000)
     * fecha : TIMESTAMP
+    fecha_resolucion : TIMESTAMP
     .. asociaciones ..
-    * factura_id : BIGINT <<FK>> (CASCADE)
+    factura_id : BIGINT <<FK>> (CASCADE)
+    configuracion_recurrente_id : BIGINT <<FK>>
     * solicitante_id : BIGINT <<FK>>
     aprobador_id : BIGINT <<FK>>
   }
@@ -41,6 +44,9 @@ package "Área 4 — Aprobaciones y periodos contables" #FFF8E5 {
 }
 
 package "Otras áreas (referencias)" #EEEEEE {
+  entity configuracion_recurrente <<área 3>> {
+    * id : BIGINT <<PK>>
+  }
   entity factura <<área 3>> {
     * id : BIGINT <<PK>>
     --
@@ -56,7 +62,8 @@ package "Otras áreas (referencias)" #EEEEEE {
   }
 }
 
-factura ||--o{ solicitud_excepcion : sobre
+factura |o--o{ solicitud_excepcion : sobre
+configuracion_recurrente |o--o{ solicitud_excepcion : prorrateo
 usuario ||--o{ solicitud_excepcion : solicita
 usuario |o--o{ solicitud_excepcion : resuelve
 periodo_contable |o--o{ factura : pertenece a
@@ -65,12 +72,18 @@ usuario ||--o{ reapertura_periodo : realizada por
 periodo_contable ||--o{ paquete_contable
 
 note right of solicitud_excepcion
-  CHECK: PENDIENTE ⇔ aprobador_id nulo.
+  CHECK: PENDIENTE ⇔ sin aprobador_id ni fecha_resolucion.
+  CHECK: motivo obligatorio salvo en FACTURA_SOBRE_UMBRAL
+  (la crea el área 3 al emitir, CU-15 FA-3).
   CHECK: RECHAZADA ⇒ comentario_aprobador (CU-23).
   CHECK: aprobador_id ≠ solicitante_id (FR-74).
+  CHECK: exactamente una de factura_id y
+  configuracion_recurrente_id; la de prorrateo
+  va sobre la configuración (CU-22).
   Se borra con su factura si esta es un borrador
   (ON DELETE CASCADE); una emitida no se borra.
-  Al resolverse emite «solicitud resuelta»
+  Al crearse emite «solicitud creada» (área 7)
+  y al resolverse «solicitud resuelta»
   (lo escuchan las áreas 3, 6 y 7).
 end note
 

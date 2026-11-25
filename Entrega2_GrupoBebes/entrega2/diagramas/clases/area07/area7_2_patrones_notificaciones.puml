@@ -68,6 +68,8 @@ note bottom of ManejadorAlertasEnvio
 end note
 
 note bottom of ManejadorSolicitudesResueltas
+  Escucha «solicitud creada» (área 4): avisa a
+  los aprobadores de la nueva solicitud (CU-22).
   Escucha «solicitud resuelta» (área 4):
   avisa al solicitante de la decisión
   y, si se rechaza, del motivo (CU-23, CU-37).

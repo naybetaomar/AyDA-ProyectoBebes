@@ -76,7 +76,7 @@ package "DTO del área 1" <<Rectangle>> {
 class ServicioFacturacion <<referencia>>
 class ServicioRelacionComercial <<referencia>>
 class ServicioNotificaciones <<referencia>>
-class GestorDocumentos <<referencia>>
+class GestorDocumentos <<infraestructura>>
 class ServicioUsuarios <<referencia>> {
   + reasignarCliente(cliente : Cliente, nuevoResponsable : Usuario) : void
 }

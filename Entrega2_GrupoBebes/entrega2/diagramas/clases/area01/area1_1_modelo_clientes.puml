@@ -99,7 +99,8 @@ note right of Cliente
   {único: identificadorFiscal} (CU-01).
   {exactamente un contacto de facturación}.
   quitarContacto(): un cliente activo no puede
-  quedarse sin contacto de facturación (RB-27).
+  quedarse sin contacto de facturación (RB-27): no se
+  puede quitar el contacto de facturación sin designar otro.
   **/estadoCliente** se calcula a partir de la relación
   comercial más reciente (área 2): ver las reglas en
   RelacionComercial.estadoCliente(). Sin ninguna

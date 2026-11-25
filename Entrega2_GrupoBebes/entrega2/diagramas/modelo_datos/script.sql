@@ -2,7 +2,8 @@
 -- E-R físico — Turbine · Grupo Bebes · Entrega 2 · PostgreSQL 16
 -- Áreas 1 (clientes), 2 (relación comercial), 3 (facturas), 4 (aprobaciones
 -- y periodos), 5 (envío y comunicaciones), 6 (cobros), 7 (notificaciones),
--- 8 (informes y contabilidad) y 9 (usuarios, seguridad y auditoría).
+-- 8 (informes y contabilidad), 9 (usuarios, seguridad y auditoría)
+-- y 11 (API externa).
 -- Las tablas van en orden de dependencia: por eso las de un área que apuntan
 -- a factura (áreas 1 y 4) están después del área 3, y la descarga de
 -- ficheros (área 9) va al final.
@@ -16,8 +17,12 @@
 -- v4 (24/11): añade las tablas de las áreas 1, 2, 4 y 5.
 -- v5 (24/11): añade las tablas de las áreas 7 y 8.
 -- v6 (24/11): añade las tablas del área 9; usuario deja de ser un marcador.
--- Estado: PROPUESTA. Las clases de las áreas 3 y 6 están en «Propuesta»,
--- no en «Aprobada»: este script se cierra cuando el grupo las apruebe.
+-- v7 (25/11): añade las tablas del área 11.
+-- v8 (25/11): área 4 con motivo y fecha de resolución; área 5 con idioma de la
+-- plantilla y motivo del fallo del mensaje.
+-- v9 (25/11): motivo y fecha de revisión de la disputa de una factura (CU-31).
+-- v10 (25/11): solicitud de excepción sobre una factura o una configuración
+-- recurrente (prorrateo, CU-22); formato de la exportación masiva.
 -- =====================================================================
 
 -- =====================================================================
@@ -471,6 +476,8 @@ CREATE TABLE factura (
     estado_envio                 VARCHAR(15)
         CHECK (estado_envio IN ('SIN_ENVIAR', 'ENVIADA', 'FALLO_ENVIO')),
     en_disputa                   BOOLEAN       NOT NULL DEFAULT FALSE,
+    motivo_disputa               VARCHAR(500),   -- CU-31
+    fecha_revision_disputa       DATE,           -- CU-31: fecha en que se revisa la disconformidad
     cobro_excesivo               BOOLEAN       NOT NULL DEFAULT FALSE,
     modificacion_manual          BOOLEAN       NOT NULL DEFAULT FALSE,
     moneda                       CHAR(3)       NOT NULL,
@@ -546,6 +553,7 @@ CREATE TABLE factura (
             AND estado_envio IS NOT NULL)),
 
     -- El total cuadra con la base y los impuestos.
+    CONSTRAINT ck_factura_disputa CHECK (en_disputa = (motivo_disputa IS NOT NULL AND fecha_revision_disputa IS NOT NULL)),
     CONSTRAINT ck_factura_total CHECK (total = base_imponible + impuestos)
 );
 
@@ -609,7 +617,7 @@ ALTER TABLE factura
 
 -- 2) Inalterabilidad de la factura emitida (RB-07, RB-11).
 --    En una factura EMITIDA o RECTIFICADA solo pueden cambiar:
---    estado_cobro, estado_envio, en_disputa, cobro_excesivo,
+--    estado_cobro, estado_envio, en_disputa (con su motivo y fecha), cobro_excesivo,
 --    modificado_por, modificado_en y el paso EMITIDA -> RECTIFICADA.
 --    Cualquier otra columna, presente o futura, queda bloqueada.
 CREATE FUNCTION fn_factura_emitida_inalterable() RETURNS trigger AS $$
@@ -634,6 +642,8 @@ BEGIN
     permitido.estado_cobro      := OLD.estado_cobro;
     permitido.estado_envio      := OLD.estado_envio;
     permitido.en_disputa        := OLD.en_disputa;
+    permitido.motivo_disputa    := OLD.motivo_disputa;
+    permitido.fecha_revision_disputa := OLD.fecha_revision_disputa;
     permitido.cobro_excesivo    := OLD.cobro_excesivo;
     permitido.modificado_por    := OLD.modificado_por;
     permitido.modificado_en     := OLD.modificado_en;
@@ -678,17 +688,25 @@ CREATE TABLE solicitud_excepcion (
     tipo                  VARCHAR(25)    NOT NULL CHECK (tipo IN ('DESCUENTO', 'CAMBIO_IMPORTE', 'CAMBIO_FECHA',
                                                     'FACTURA_SOBRE_UMBRAL', 'EXCEPCION_PRORRATEO', 'BAJA_CONTABLE')),
     importe               DECIMAL(12,2)  NOT NULL,
+    motivo                VARCHAR(1000),  -- nulo solo en FACTURA_SOBRE_UMBRAL, que crea el área 3 (CU-15 FA-3)
     estado                VARCHAR(10)    NOT NULL DEFAULT 'PENDIENTE' CHECK (estado IN ('PENDIENTE', 'APROBADA', 'RECHAZADA')),
     comentario_aprobador  VARCHAR(1000),
     fecha                 TIMESTAMP      NOT NULL,
-    factura_id            BIGINT         NOT NULL REFERENCES factura(id) ON DELETE CASCADE,  -- se borra con su borrador
+    fecha_resolucion      TIMESTAMP,      -- CU-23 paso 4
+    factura_id            BIGINT         REFERENCES factura(id) ON DELETE CASCADE,  -- se borra con su borrador
+    configuracion_recurrente_id BIGINT   REFERENCES configuracion_recurrente(id),  -- excepción de prorrateo (CU-22)
     solicitante_id        BIGINT         NOT NULL REFERENCES usuario(id),
     aprobador_id          BIGINT         REFERENCES usuario(id),
     creado_por          BIGINT        REFERENCES usuario(id),
     creado_en           TIMESTAMP     NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
     modificado_por      BIGINT        REFERENCES usuario(id),
     modificado_en       TIMESTAMP,
-    CONSTRAINT ck_solicitud_resuelta CHECK ((estado = 'PENDIENTE') = (aprobador_id IS NULL)),
+    CONSTRAINT ck_solicitud_resuelta CHECK ((estado = 'PENDIENTE') = (aprobador_id IS NULL)
+                                       AND (estado = 'PENDIENTE') = (fecha_resolucion IS NULL)),
+    CONSTRAINT ck_solicitud_motivo CHECK (tipo = 'FACTURA_SOBRE_UMBRAL' OR motivo IS NOT NULL),  -- CU-22 paso 2
+    -- Sobre una factura o sobre una configuración recurrente; la de prorrateo, sobre la configuración.
+    CONSTRAINT ck_solicitud_objeto CHECK (num_nonnulls(factura_id, configuracion_recurrente_id) = 1),
+    CONSTRAINT ck_solicitud_prorrateo CHECK ((tipo = 'EXCEPCION_PRORRATEO') = (configuracion_recurrente_id IS NOT NULL)),
     CONSTRAINT ck_solicitud_comentario CHECK (estado <> 'RECHAZADA' OR comentario_aprobador IS NOT NULL),  -- CU-23
     CONSTRAINT ck_solicitud_cuatro_ojos CHECK (aprobador_id IS NULL OR aprobador_id <> solicitante_id)    -- FR-74
 );
@@ -730,6 +748,7 @@ CREATE TABLE factura_categoria (
 CREATE TABLE plantilla_comunicacion (
     id      BIGSERIAL     PRIMARY KEY,
     tipo    VARCHAR(15)   NOT NULL CHECK (tipo IN ('FACTURA', 'RECORDATORIO')),
+    idioma  VARCHAR(10)   NOT NULL,       -- el del contacto (CU-29 paso 3)
     asunto  VARCHAR(200)  NOT NULL,
     cuerpo  TEXT          NOT NULL,
     activa  BOOLEAN       NOT NULL DEFAULT TRUE,
@@ -738,6 +757,9 @@ CREATE TABLE plantilla_comunicacion (
     modificado_por      BIGINT        REFERENCES usuario(id),
     modificado_en       TIMESTAMP
 );
+
+-- Una plantilla activa por tipo e idioma.
+CREATE UNIQUE INDEX uq_plantilla_activa ON plantilla_comunicacion (tipo, idioma) WHERE activa;
 
 -- variablesObligatorias (multivaluado) normalizado.
 CREATE TABLE variable_plantilla (
@@ -771,11 +793,13 @@ CREATE TABLE mensaje (
                                             CHECK (estado_entrega IN ('PENDIENTE', 'ENVIADO', 'ENTREGADO', 'FALLIDO')),
     intentos                   INTEGER      NOT NULL DEFAULT 0 CHECK (intentos >= 0),
     fecha_envio                TIMESTAMP,
+    motivo_fallo               VARCHAR(500),   -- se muestra en la incidencia (CU-28 paso 2)
     creado_por          BIGINT        REFERENCES usuario(id),
     creado_en           TIMESTAMP     NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
     modificado_por      BIGINT        REFERENCES usuario(id),
     modificado_en       TIMESTAMP,
-    CONSTRAINT ck_mensaje_enviado CHECK (estado_entrega NOT IN ('ENVIADO', 'ENTREGADO') OR fecha_envio IS NOT NULL)
+    CONSTRAINT ck_mensaje_enviado CHECK (estado_entrega NOT IN ('ENVIADO', 'ENTREGADO') OR fecha_envio IS NOT NULL),
+    CONSTRAINT ck_mensaje_fallo CHECK (estado_entrega <> 'FALLIDO' OR motivo_fallo IS NOT NULL)
 );
 
 -- =====================================================================
@@ -1010,6 +1034,7 @@ CREATE TABLE tipo_cambio (
 CREATE TABLE exportacion_masiva (
     id                 BIGSERIAL     PRIMARY KEY,
     criterios          TEXT          NOT NULL,
+    formato            VARCHAR(5)    NOT NULL CHECK (formato IN ('CSV', 'PDF')),
     fecha_exportacion  TIMESTAMP     NOT NULL,
     ruta_fichero       VARCHAR(500)  NOT NULL,
     fecha_caducidad    TIMESTAMP     NOT NULL,
@@ -1047,6 +1072,54 @@ CREATE TABLE destinatario_informe (
     modificado_por      BIGINT        REFERENCES usuario(id),
     modificado_en       TIMESTAMP,
     CONSTRAINT uq_destinatario UNIQUE (informe_programado_id, usuario_id)
+);
+
+-- =====================================================================
+-- ÁREA 11 — API EXTERNA (apunta a cliente y a tarea)
+-- =====================================================================
+
+CREATE TABLE consumidor_api (
+    id                  BIGSERIAL     PRIMARY KEY,
+    credencial_hash     VARCHAR(100)  NOT NULL UNIQUE,   -- nunca la credencial en claro
+    limite_solicitudes  INTEGER       NOT NULL CHECK (limite_solicitudes > 0),
+    periodo_limite      VARCHAR(10)   NOT NULL CHECK (periodo_limite IN ('MINUTO', 'HORA', 'DIA')),
+    activo              BOOLEAN       NOT NULL DEFAULT TRUE,
+    creado_por          BIGINT        REFERENCES usuario(id),
+    creado_en           TIMESTAMP     NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    modificado_por      BIGINT        REFERENCES usuario(id),
+    modificado_en       TIMESTAMP
+);
+
+-- Una fila por invocación; es en sí un registro. consumidor nulo = credencial inválida.
+CREATE TABLE llamada_api (
+    id                 BIGSERIAL    PRIMARY KEY,
+    consumidor_api_id  BIGINT       REFERENCES consumidor_api(id),
+    fecha              TIMESTAMP    NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    operacion          VARCHAR(20)  NOT NULL CHECK (operacion IN ('CONSULTAR_DATOS', 'ENVIAR_SOLICITUD')),
+    resultado          VARCHAR(20)  NOT NULL CHECK (resultado IN ('CORRECTA', 'NO_AUTORIZADA', 'LIMITE_EXCEDIDO', 'RECHAZADA', 'ERROR')),
+    codigo_incidencia  VARCHAR(50),
+    CONSTRAINT ck_llamada_consumidor CHECK (consumidor_api_id IS NOT NULL OR resultado = 'NO_AUTORIZADA'),
+    CONSTRAINT ck_llamada_error CHECK (resultado <> 'ERROR' OR codigo_incidencia IS NOT NULL)
+);
+-- Para contar las llamadas del periodo al comprobar el límite.
+CREATE INDEX ix_llamada_consumidor_fecha ON llamada_api (consumidor_api_id, fecha);
+
+-- Nace VALIDADA (con su tarea) o RECHAZADA (con motivo) en la misma llamada (RB-31).
+CREATE TABLE solicitud_externa (
+    id                 BIGSERIAL     PRIMARY KEY,
+    consumidor_api_id  BIGINT        NOT NULL REFERENCES consumidor_api(id),
+    cliente_id         BIGINT        NOT NULL REFERENCES cliente(id),
+    tarea_id           BIGINT        UNIQUE REFERENCES tarea(id),
+    tipo               VARCHAR(10)   NOT NULL CHECK (tipo IN ('BAJA')),
+    estado_validacion  VARCHAR(10)   NOT NULL CHECK (estado_validacion IN ('VALIDADA', 'RECHAZADA')),
+    motivo_rechazo     VARCHAR(500),
+    creado_por          BIGINT        REFERENCES usuario(id),
+    creado_en           TIMESTAMP     NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    modificado_por      BIGINT        REFERENCES usuario(id),
+    modificado_en       TIMESTAMP,
+    CONSTRAINT ck_solicitud_externa_resultado CHECK (
+        (estado_validacion = 'VALIDADA'  AND tarea_id IS NOT NULL AND motivo_rechazo IS NULL) OR
+        (estado_validacion = 'RECHAZADA' AND tarea_id IS NULL AND motivo_rechazo IS NOT NULL))
 );
 
 -- =====================================================================

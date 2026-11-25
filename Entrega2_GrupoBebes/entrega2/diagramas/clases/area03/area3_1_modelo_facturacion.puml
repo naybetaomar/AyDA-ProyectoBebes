@@ -10,6 +10,8 @@ abstract class Factura {
   - estadoCobro : EstadoCobro [0..1]
   - estadoEnvio : EstadoEnvio [0..1]
   - enDisputa : Boolean
+  - motivoDisputa : String [0..1]
+  - fechaRevisionDisputa : Date [0..1]
   - cobroExcesivo : Boolean
   - modificacionManual : Boolean
   - moneda : String
@@ -37,7 +39,7 @@ abstract class Factura {
   + registrarEstadoCobro(estado : EstadoCobro, motivo : String [0..1]) : void
   + marcarCobroExcesivo(excesivo : Boolean) : void
   + registrarEstadoEnvio(estado : EstadoEnvio) : void
-  + marcarEnDisputa(motivo : String) : void
+  + marcarEnDisputa(motivo : String, fechaRevision : Date) : void
   + quitarDisputa() : void
 }
 
@@ -110,6 +112,7 @@ class ConfiguracionRecurrente {
   + reanudar(desde : Date) : void
   + finalizar(fecha : Date) : void
   + calcularPrimeraCuota(fechaInicio : Date) : Decimal
+  + aplicarExcepcionSinProrrateo() : void
 }
 
 class TramoImporte {
@@ -206,6 +209,8 @@ note top of Factura
   (guardan el cambio en el historial).
   La lógica va solo del área 6 a la 3.
   Serie y periodo: 0..1 en borrador; 1 una vez emitida.
+  **Disputa** (CU-31): {enDisputa ⇔ motivoDisputa y
+  fechaRevisionDisputa informados}; no cambia el estado de cobro.
   **emitir()**: la serie debe pertenecer a la EntidadEmisora
   de la factura {serie.entidadEmisora = entidadEmisora}
   y, en puntuales y recurrentes, de tipo ORDINARIA

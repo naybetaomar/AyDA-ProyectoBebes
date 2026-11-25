@@ -1,0 +1,104 @@
+@startuml area4_1_modelo_aprobaciones
+skinparam classAttributeIconSize 0
+hide empty members
+title Área 4 — Diagrama 1: Solicitudes de excepción y periodos contables
+
+class SolicitudExcepcion {
+  - id : Long {readOnly}
+  - tipo : TipoSolicitud {readOnly}
+  - importe : Decimal
+  - motivo : String [0..1]
+  - estado : EstadoSolicitud
+  - comentarioAprobador : String [0..1]
+  - fecha : DateTime {readOnly}
+  - fechaResolucion : DateTime [0..1]
+  --
+  + aprobar(aprobador : Usuario, comentario : String [0..1]) : void
+  + rechazar(aprobador : Usuario, comentario : String) : void
+  + estaPendiente() : Boolean
+}
+
+class PeriodoContable {
+  - id : Long {readOnly}
+  - tipo : TipoPeriodo
+  - inicio : Date
+  - fin : Date
+  - estado : EstadoPeriodo
+  --
+  + contiene(fecha : Date) : Boolean
+  + cerrar() : void
+  + reabrir(motivo : String, usuario : Usuario) : ReaperturaPeriodo
+}
+
+class ReaperturaPeriodo {
+  - id : Long {readOnly}
+  - motivo : String
+  - fecha : DateTime {readOnly}
+}
+
+enum TipoSolicitud {
+  DESCUENTO
+  CAMBIO_IMPORTE
+  CAMBIO_FECHA
+  FACTURA_SOBRE_UMBRAL
+  EXCEPCION_PRORRATEO
+  BAJA_CONTABLE
+}
+enum EstadoSolicitud {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
+enum TipoPeriodo {
+  MES
+  TRIMESTRE
+}
+enum EstadoPeriodo {
+  ABIERTO
+  CERRADO
+}
+
+' Clases de otras áreas
+class Usuario <<referencia>>
+class Factura <<referencia>>
+class ConfiguracionRecurrente <<referencia>>
+class PaqueteContable <<referencia>>
+
+Usuario "1" -down- "0..*" SolicitudExcepcion : solicita >
+Usuario "0..1" -down- "0..*" SolicitudExcepcion : resuelve >
+SolicitudExcepcion "0..*" -right-> "0..1" Factura : sobre >
+SolicitudExcepcion "0..*" -down-> "0..1" ConfiguracionRecurrente : prorrateo de >
+Factura "0..*" -down-> "0..1" PeriodoContable : pertenece a >
+PeriodoContable "1" *-down- "0..*" ReaperturaPeriodo : tiene >
+ReaperturaPeriodo "0..*" -left-> "1" Usuario : realizada por >
+PeriodoContable "1" -right- "0..*" PaqueteContable : tiene >
+
+SolicitudExcepcion ..> TipoSolicitud
+SolicitudExcepcion ..> EstadoSolicitud
+PeriodoContable ..> TipoPeriodo
+PeriodoContable ..> EstadoPeriodo
+
+note left of SolicitudExcepcion
+  Solicitud genérica: no conoce lo que se aprueba.
+  {exactamente una de Factura o ConfiguracionRecurrente}:
+  la excepción de prorrateo se propone antes de que
+  exista la factura y va sobre la configuración (CU-22).
+  Quien la pide actúa al recibir «solicitud resuelta».
+  **motivo**: obligatorio cuando la propone una
+  persona (CU-22); nulo en FACTURA_SOBRE_UMBRAL,
+  que la crea el área 3 al emitir (CU-15 FA-3).
+  **aprobar() / rechazar()**: solo si está PENDIENTE;
+  guardan aprobador, comentario y fechaResolucion
+  (CU-23 paso 4). rechazar() exige comentario.
+  {aprobador ≠ solicitante} (FR-74).
+end note
+
+note bottom of PeriodoContable
+  {sin solapes entre periodos del mismo tipo}.
+  cerrar(): las facturas y cobros del periodo
+  quedan bloqueados (CU-25); las áreas 3 y 6
+  comprueban el estado antes de modificarlos.
+  reabrir(): solo Superadministrador, con
+  motivo obligatorio (CU-26).
+end note
+@enduml

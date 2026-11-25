@@ -1,6 +1,5 @@
 @startuml area6_3_relaciones_otras_areas
 skinparam classAttributeIconSize 0
-skinparam linetype ortho
 hide empty members
 title Área 6 — Diagrama 3: Relaciones con otras áreas
 

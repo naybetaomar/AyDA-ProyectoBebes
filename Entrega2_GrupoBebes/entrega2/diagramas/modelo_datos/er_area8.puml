@@ -41,6 +41,7 @@ package "Área 8 — Informes y contabilidad" #FFF8E5 {
     * id : BIGINT <<PK>>
     --
     * criterios : TEXT
+    * formato : VARCHAR(5) {CSV, PDF}
     * fecha_exportacion : TIMESTAMP
     * ruta_fichero : VARCHAR(500)
     * fecha_caducidad : TIMESTAMP

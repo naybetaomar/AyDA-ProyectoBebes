@@ -1,0 +1,60 @@
+@startuml tarea_1_vencimientos
+title Tarea diaria del planificador (1) — Facturas que pasan a vencidas
+hide footbox
+skinparam maxMessageSize 120
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+participant "__: Planificador__" as P
+participant "__: ProxyCobros__" as PX
+participant "__: ServicioCobros__" as SC
+participant "__f : Factura__" as F
+
+P -> P ++ : ejecutarVencimientos()
+create participant "__e : EjecucionProceso__" as E
+P --> E : EjecucionProceso(VENCIMIENTOS)
+
+P -> PX ++ : actualizarVencimientos(fecha : Date)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
+note right of PX
+  Solicitante: la IdentidadSistema
+  que el planificador deja en
+  ContextoSeguridad. Auditoría con
+  usuario nulo (= Sistema).
+  Si rechaza, el planificador lo
+  registra como fallo y salta una
+  alerta (CU-56).
+end note
+PX -> SC ++ : actualizarVencimientos(fecha : Date)
+SC ->o] : buscar facturas PENDIENTE con el vencimiento pasado en BD
+autonumber stop
+SC <--o] : facturas
+autonumber resume
+loop para cada factura f
+  SC -> F ++ : registrarEstadoCobro(estado = VENCIDA, motivo : String)
+  autonumber stop
+  return
+  autonumber resume
+end
+SC ->o] : guardar facturas e historial en BD
+autonumber stop
+return
+return
+autonumber resume
+P -> E ++ : registrarProcesado(cantidad : Integer)
+autonumber stop
+return
+autonumber resume
+deactivate P
+
+note over SC, F
+  Transición PENDIENTE → VENCIDA de la tabla de estados
+  de la Entrega 1 (actor: Sistema). Cada cambio deja su
+  HistorialEstadoFactura (COBRO, PENDIENTE, VENCIDA).
+  Después, la misma tarea comprueba los límites de
+  impago: diagrama (2).
+end note
+@enduml

@@ -10,6 +10,7 @@ package "Área 5 — Envío y comunicaciones" #FFF8E5 {
     * id : BIGINT <<PK>>
     --
     * tipo : VARCHAR(15) {FACTURA, RECORDATORIO}
+    * idioma : VARCHAR(10)
     * asunto : VARCHAR(200)
     * cuerpo : TEXT
     * activa : BOOLEAN
@@ -38,6 +39,7 @@ package "Área 5 — Envío y comunicaciones" #FFF8E5 {
     * estado_entrega : VARCHAR(10) {PENDIENTE, ENVIADO, ENTREGADO, FALLIDO}
     * intentos : INTEGER
     fecha_envio : TIMESTAMP
+    motivo_fallo : VARCHAR(500)
     .. asociaciones ..
     * factura_id : BIGINT <<FK>>
     * contacto_id : BIGINT <<FK>>
@@ -54,7 +56,7 @@ package "Otras áreas (referencias)" #EEEEEE {
   }
 }
 
-plantilla_comunicacion ||--o{ variable_plantilla
+plantilla_comunicacion ||--|{ variable_plantilla
 plantilla_comunicacion ||--o{ regla_recordatorio : usa
 plantilla_comunicacion ||--o{ mensaje : genera
 factura ||--o{ mensaje
@@ -62,6 +64,8 @@ contacto ||--o{ mensaje : recibe
 
 note right of variable_plantilla
   variablesObligatorias (multivaluado) normalizado.
+  Índice único parcial en plantilla_comunicacion
+  (tipo, idioma) WHERE activa: una activa por tipo e idioma.
   **UNIQUE** (plantilla_comunicacion_id, nombre).
 end note
 
@@ -70,7 +74,8 @@ note bottom of regla_recordatorio
 end note
 
 note right of mensaje
-  CHECK: ENVIADO o ENTREGADO ⇒ fecha_envio.
+  CHECK: ENVIADO o ENTREGADO ⇒ fecha_envio;
+  FALLIDO ⇒ motivo_fallo (CU-28 paso 2).
   intentos ≥ 0. Los fallos de envío seguidos
   los cuenta el área 5 para emitir
   «fallos de envío» al área 7 (FR-80).

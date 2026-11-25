@@ -126,10 +126,7 @@ enum TipoTarea {
     CONCILIACION_MANUAL
 }
 
-enum Canal {
-    EMAIL
-    WHATSAPP
-}
+enum Canal <<referencia>>
 
 enum Rol <<referencia>>
 

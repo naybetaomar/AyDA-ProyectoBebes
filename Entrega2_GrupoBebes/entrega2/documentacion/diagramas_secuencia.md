@@ -16,14 +16,16 @@ Entre todos, cada uno de los cinco eventos entre áreas aparece al menos en una 
 |---|---|---|
 | `cu15_1_emitir_factura.puml` | CU-15, flujo principal: emisión directa | Abdelnaybet |
 | `cu15_2_emitir_requiere_aprobacion.puml` | CU-15, FA-3: supera el umbral y pasa a aprobación | Abdelnaybet |
-| `cu19_emitir_rectificativa.puml` | CU-19, flujo principal: rectificativa con abono | Abdelnaybet |
-| `tarea_vencimientos_impagos.puml` | Tarea diaria del planificador: vencimientos y alertas de impago (UR-92, UR-93; la alerta se ve en CU-37) | Abdelnaybet |
-| *pendiente* | CU-17: facturación recurrente lanzada por el planificador | Cristóbal |
-| *pendiente* | CU-27 / CU-28: envío de una factura y fallo de envío | Cristóbal |
-| *pendiente* | CU-22 / CU-23: proponer una excepción y resolverla | Imad |
-| *pendiente* | CU-48: acceder al sistema | Imad |
-| *pendiente* | CU-34 / CU-35: cobro por la pasarela y conciliación | Guille |
-| *pendiente* | CU-57 / CU-58: consulta y solicitud por la API externa | Guille |
+| `cu19_1_emitir_rectificativa.puml` | CU-19 (1), flujo principal: emisión de la rectificativa | Abdelnaybet |
+| `cu19_2_abono_recalculo_cobro.puml` | CU-19 (2): el área 6 recibe el abono y recalcula el cobro de la original (A-27) | Abdelnaybet |
+| `tarea_1_vencimientos.puml` | Tarea diaria del planificador (1): facturas que pasan a vencidas | Abdelnaybet |
+| `tarea_2_impagos.puml` | Tarea diaria del planificador (2): alertas de impago (UR-92, UR-93; la alerta se ve en CU-37) | Abdelnaybet |
+| *pendiente* | CU-17: facturación recurrente lanzada por el planificador | Luca |
+| *pendiente* | CU-27 / CU-28: envío de una factura y fallo de envío | Ana |
+| *pendiente* | CU-22 / CU-23: proponer una excepción y resolverla | Cristóbal |
+| *pendiente* | CU-48: acceder al sistema | Guille |
+| *pendiente* | CU-34 / CU-35: cobro por la pasarela y conciliación | Loraine |
+| *pendiente* | CU-57 / CU-58: consulta y solicitud por la API externa | Imad |
 
 ## Notación
 
@@ -49,16 +51,20 @@ Todos los diagramas siguen las mismas reglas:
 
 ## CU-19: Emitir factura rectificativa
 
-**Diagrama único con la variante del abono.** El Administrador pide rectificar una factura emitida. El proxy solo deja pasar a Administrador y Superadministrador (RB-21); un Usuario operativo recibe la denegación (FE-1). El `GeneradorRectificativa` comprueba que la original esté emitida (PRE-2), crea la rectificativa con las líneas corregidas y comprueba el umbral. `ServicioFacturacion` busca la serie de tipo rectificativa y llama a `emitir()`. La rectificativa numera y deja su historial, y después marca la original como rectificada sin modificarla (POST-1, RB-11).
+El caso se divide en dos diagramas para que se lean bien. El corte está en el evento «abono emitido»: el primero acaba cuando el área 3 lo emite y el segundo empieza cuando el área 6 lo recibe.
 
-Si la rectificativa es un **abono** (total negativo, `esAbono()`), emite el evento «abono emitido». `ServicioCobros` (área 6) lo escucha y recalcula el saldo de la original:
+**Diagrama 1. Emisión de la rectificativa.** El Administrador pide rectificar una factura emitida. El proxy solo deja pasar a Administrador y Superadministrador (RB-21); un Usuario operativo recibe la denegación (FE-1). El `GeneradorRectificativa` comprueba que la original esté emitida (PRE-2), crea la rectificativa con las líneas corregidas y comprueba el umbral. `ServicioFacturacion` busca la serie de tipo rectificativa y llama a `emitir()`. La rectificativa numera y deja su historial, y después marca la original como rectificada sin modificarla (POST-1, RB-11).
 
-- **Saldo 0 o negativo:** si la original no estaba pagada, pasa a pagada con `registrarEstadoCobro()`, y `ServicioRecordatorios` (área 5) recibe «estado de cobro cambiado» y deja de enviar recordatorios (A-27, RB-37).
+Si la rectificativa es un **abono** (total negativo, `esAbono()`), emite el evento «abono emitido».
+
+**Diagrama 2. El área 6 recalcula el cobro.** `ServicioCobros` (área 6) recibe «abono emitido» y recalcula el saldo de la original:
+
+- **Saldo 0 o negativo:** si la original no estaba pagada, pasa a pagada con `registrarEstadoCobro()`. El área 6 emite «estado de cobro cambiado» y `ServicioRecordatorios.alCambiarEstadoCobro()` (área 5) cancela los recordatorios pendientes de esa factura (A-27, RB-37).
 - **Saldo negativo:** el abono supera el saldo pendiente. Lo habitual es que se corrija una factura ya cobrada, pero también pasa si se abona más de lo que se debía. La diferencia queda a favor del cliente y la original se marca con `marcarCobroExcesivo()`. Qué se hace con ese dinero (devolución o saldo a favor) depende de Q-12, que sigue abierta.
 
 **Decisiones**
 
-- Se usa un solo diagrama con un fragmento `opt` para el abono: la única diferencia con una rectificativa positiva es el aviso al área 6. Una rectificativa positiva tiene su propio estado de cobro y no lanza el aviso.
+- El abono va en un fragmento `opt` al final del diagrama 1: la única diferencia con una rectificativa positiva es el aviso al área 6. Una rectificativa positiva tiene su propio estado de cobro y no lanza el aviso, así que el diagrama 2 solo ocurre con abonos.
 - El aviso se entrega cuando la emisión ya está guardada, para que el área 6 calcule el saldo con el abono incluido.
 - FA-1 (sobre el umbral) sigue el mismo camino que el diagrama 2 de CU-15 y no se repite.
 - POST-2 (el saldo del cliente refleja la corrección) no necesita ningún paso: el saldo del cliente no se guarda, se calcula al consultarlo (CU-33) y ya incluye el abono.
@@ -67,8 +73,10 @@ Si la rectificativa es un **abono** (total negativo, `esAbono()`), emite el even
 
 **Escenario automático, sin actor.** El planificador (área 10) entra por el proxy de permisos con la identidad de sistema: no es un rol de usuario, solo puede lanzar las tareas programadas y en la auditoría queda como «Sistema». Si el proxy la rechaza, se registra como fallo en `EjecucionProceso` y salta una alerta (CU-56).
 
-1. **Vencimientos.** `ServicioCobros.actualizarVencimientos()` pasa a VENCIDA las facturas pendientes sin ningún cobro cuyo vencimiento ha pasado, con `registrarEstadoCobro()`. Es la transición «Pendiente → Vencida (Sistema)» de la Entrega 1.
-2. **Límites de impago.** `ServicioCobros.comprobarImpagos()` lee los dos límites de `ConfiguracionGlobal`:
+La tarea se divide en dos diagramas, uno por paso, dentro de la misma `EjecucionProceso`: el diagrama 1 la crea y el diagrama 2 la finaliza.
+
+1. **Vencimientos (diagrama 1).** `ServicioCobros.actualizarVencimientos()` pasa a VENCIDA las facturas pendientes sin ningún cobro cuyo vencimiento ha pasado, con `registrarEstadoCobro()`. Es la transición «Pendiente → Vencida (Sistema)» de la Entrega 1.
+2. **Límites de impago (diagrama 2).** `ServicioCobros.comprobarImpagos()` lee los dos límites de `ConfiguracionGlobal`:
    - Revisa **todas** las facturas con saldo y el vencimiento pasado (`estaVencida()`), no solo las que acaban de vencer. Las que vencieron hace días siguen envejeciendo, y son ellas las que cruzan el límite de días (UR-92).
    - Comprueba la deuda de cada cliente afectado con `consultarSaldo()` (UR-93).
    - Si se supera un límite, emite «impago sobre el límite». El área 7 lo escucha (`ManejadorAlertasCobro`) y crea la alerta (`FACTURA_VENCIDA` o `ALERTA_DEUDA`), que el usuario ve en su pantalla de trabajo (CU-37).
@@ -89,8 +97,10 @@ Si la rectificativa es un **abono** (total negativo, `esAbono()`), emite el even
 |---|---|---|
 | `cu15_1_emitir_factura.puml` | CU-15 (flujo principal, FE-1 en nota) | `InterfazWeb`; `ProxyFacturacion` (RB-15, auditoría); `ServicioFacturacion` (orquesta); `GeneradorPuntual` (crea); `FacturaPuntual`, `LineaFactura`, `HistorialEstadoFactura`; `ConfiguracionGlobal` (umbral); `SerieFacturacion` (número, RB-01); `GestorDocumentos` (PDF) |
 | `cu15_2_emitir_requiere_aprobacion.puml` | CU-15 FA-3, CU-22 | Los anteriores y `ServicioAprobaciones` (área 4), que crea la `SolicitudExcepcion` |
-| `tarea_vencimientos_impagos.puml` | UR-92, UR-93, CU-37 (alerta), CU-56 (fallo de la tarea) | `Planificador` y `EjecucionProceso` (área 10); `ProxyCobros` (identidad de sistema); `ServicioCobros` (`actualizarVencimientos()`, `comprobarImpagos()`, `estaVencida()`, `consultarSaldo()`); `ConfiguracionGlobal` (límites); `Factura` (`registrarEstadoCobro()`); `ManejadorAlertasCobro` y `ServicioNotificaciones` (área 7) |
-| `cu19_emitir_rectificativa.puml` | CU-19 (flujo principal, FE-1 y FA-1 en nota), A-27 | `ProxyFacturacion` (RB-21); `ServicioFacturacion`; `GeneradorRectificativa`; `FacturaRectificativa`; la factura original (`marcarRectificada()`, `registrarEstadoCobro()`); `ServicioCobros` (área 6, escucha el abono) |
+| `cu19_1_emitir_rectificativa.puml` | CU-19 (flujo principal, FE-1 y FA-1 en nota) | `ProxyFacturacion` (RB-21); `ServicioFacturacion`; `GeneradorRectificativa`; `FacturaRectificativa`; la factura original (`marcarRectificada()`); `GestorDocumentos` (PDF) |
+| `cu19_2_abono_recalculo_cobro.puml` | CU-19 (abono), A-27, RB-37 | `ServicioCobros` (área 6: escucha el abono, `calcularSaldoPendiente()`); la factura original (`registrarEstadoCobro()`, `marcarCobroExcesivo()`); `ServicioRecordatorios` (área 5, `alCambiarEstadoCobro()`) |
+| `tarea_1_vencimientos.puml` | Transición «Pendiente → Vencida», CU-56 (fallo de la tarea) | `Planificador` y `EjecucionProceso` (área 10); `ProxyCobros` (identidad de sistema); `ServicioCobros` (`actualizarVencimientos()`); `Factura` (`registrarEstadoCobro()`) |
+| `tarea_2_impagos.puml` | UR-92, UR-93, CU-37 (alerta) | `Planificador` y `EjecucionProceso` (área 10); `ProxyCobros`; `ServicioCobros` (`comprobarImpagos()`, `estaVencida()`, `consultarSaldo()`); `ConfiguracionGlobal` (límites); `ManejadorAlertasCobro` y `ServicioNotificaciones` (área 7) |
 
 ## Consistencia
 

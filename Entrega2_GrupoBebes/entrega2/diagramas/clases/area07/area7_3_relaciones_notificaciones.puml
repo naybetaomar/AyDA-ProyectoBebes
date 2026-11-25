@@ -25,7 +25,7 @@ class Cliente <<referencia>> {
 
 class Factura <<referencia>> {
     - id : Long
-    - numeroFactura : String
+    - numeroFactura : String [0..1]
     - /total : Decimal
 }
 

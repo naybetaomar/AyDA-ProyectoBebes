@@ -1,0 +1,114 @@
+@startuml cu19_1_emitir_rectificativa
+title CU-19 (1) Emitir factura rectificativa — corrección con abono (A-27)
+hide footbox
+skinparam maxMessageSize 120
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Administrador__" as A
+participant "__: InterfazWeb__" as UI
+participant "__: ProxyFacturacion__" as PX
+participant "__: ServicioFacturacion__" as SF
+participant "__: GeneradorRectificativa__" as GR
+participant "__: SerieFacturacion__" as SE
+participant "__original : Factura__" as O
+participant "__: GestorDocumentos__" as GD
+
+A -> UI ++ : rectificarFactura(datos : DatosFactura)
+UI -> PX ++ : emitirRectificativa(datos : DatosFactura)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente)
+note right of PX
+  Solo Administrador o
+  Superadministrador (RB-21).
+  FE-1: un Usuario operativo
+  recibe la denegación.
+end note
+PX -> SF ++ : emitirRectificativa(datos : DatosFactura)
+
+SF -> GR ++ : generar(datos : DatosFactura)
+GR -> GR : crearFactura(datos : DatosFactura)
+note right of GR
+  Rechaza la operación si la
+  original no está EMITIDA (PRE-2).
+end note
+create participant "__r : FacturaRectificativa__" as R
+GR --> R : FacturaRectificativa(datos)
+GR -> R ++ : agregarLinea(linea : LineaFactura)
+note right of R : una vez por cada línea corregida
+autonumber stop
+return
+autonumber resume
+GR -> R ++ : calcularTotales()
+autonumber stop
+return
+autonumber resume
+GR -> R ++ : requiereAprobacion(umbral : Decimal)
+autonumber stop
+return false
+autonumber resume
+note right of GR
+  Umbral leído de ConfiguracionGlobal,
+  como en CU-15. FA-1 (lo supera):
+  queda pendiente de aprobación y se
+  emite al aprobarse (CU-15 diagrama 2).
+end note
+autonumber stop
+return r
+autonumber resume
+
+SF ->o] : buscar periodo abierto y serie RECTIFICATIVA en BD
+autonumber stop
+SF <--o] : periodo, serie
+autonumber resume
+
+SF -> R ++ : emitir(serie : SerieFacturacion, periodo : PeriodoContable)
+R -> R : super.emitir(serie, periodo)
+R -> SE ++ : asignarSiguienteNumeroFactura()
+autonumber stop
+return numeroFactura
+autonumber resume
+R -> O ++ : marcarRectificada()
+autonumber stop
+return
+autonumber resume
+note right of O
+  La original no se modifica:
+  solo pasa a RECTIFICADA
+  (POST-1, RB-11).
+end note
+autonumber stop
+return
+autonumber resume
+
+SF -> GD ++ : generarPdf(r : Factura)
+autonumber stop
+return rutaPdf, hashPdf
+autonumber resume
+SF ->o] : guardar rectificativa, líneas, original e historiales en BD
+
+opt r.esAbono() (total negativo)
+  R -[#2E7D32]->>] : «abono emitido»(abono : FacturaRectificativa)
+  note right of R
+    **Aviso (verde)** al área 6:
+    continúa en CU-19 (2).
+    Se entrega con la emisión
+    ya guardada.
+  end note
+end
+
+autonumber stop
+return r
+return r (EMITIDA)
+return rectificativa emitida
+autonumber resume
+
+note over R, O
+  Cada cambio de estado (BORRADOR → EMITIDA en r,
+  EMITIDA → RECTIFICADA en la original) deja su
+  HistorialEstadoFactura (FR-09).
+  Un abono no tiene estado de cobro (A-27).
+end note
+@enduml

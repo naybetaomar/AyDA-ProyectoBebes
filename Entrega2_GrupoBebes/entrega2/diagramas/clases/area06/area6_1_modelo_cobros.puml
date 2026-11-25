@@ -1,6 +1,5 @@
 @startuml area6_1_modelo_cobros
 skinparam classAttributeIconSize 0
-skinparam linetype ortho
 hide empty members
 title Área 6 — Diagrama 1: Modelo de cobros, conciliación y saldo
 

@@ -1,0 +1,65 @@
+@startuml cu19_2_abono_recalculo_cobro
+title CU-19 (2) Recálculo del cobro de la original tras un abono (A-27)
+hide footbox
+skinparam maxMessageSize 120
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+participant "__: ServicioCobros__" as SC
+participant "__original : Factura__" as O
+participant "__: ServicioRecordatorios__" as SR
+
+[-[#2E7D32]->> SC : «abono emitido»(abono : FacturaRectificativa)
+activate SC
+SC -> SC : recalcularEstadoCobro(original : Factura)
+SC -> SC ++ : calcularSaldoPendiente(original : Factura)
+SC ->o] : sumar conciliaciones, baja y abonos de la original en BD
+autonumber stop
+SC <--o] : importes
+autonumber resume
+deactivate SC
+
+opt saldo pendiente ≤ 0
+  opt original.estadoCobro ≠ PAGADA
+    SC -> O ++ : registrarEstadoCobro(estado = PAGADA, motivo : String)
+    autonumber stop
+    return
+    autonumber resume
+  end
+  opt saldo pendiente < 0 (el abono supera el saldo)
+    SC -> O ++ : marcarCobroExcesivo(excesivo = true)
+    autonumber stop
+    return
+    autonumber resume
+    note right of O
+      La diferencia queda
+      **a favor del cliente**.
+      Qué se hace con ella:
+      pendiente de Q-12.
+    end note
+  end
+  SC ->o] : guardar original e historial en BD
+  opt el estado de cobro ha cambiado
+    SC -[#2E7D32]->> SR ++ : «estado de cobro cambiado»(original, PAGADA)
+    SR -> SR : alCambiarEstadoCobro(factura : Factura, estado : EstadoCobro)
+    SR ->o] : cancelar los recordatorios pendientes de envío de la original en BD
+    deactivate SR
+  end
+end
+deactivate SC
+
+note over SC
+  El área 3 no llama al área 6: ServicioCobros
+  escucha el aviso (Observer en la E3).
+  POST-2: el saldo del cliente no se guarda;
+  se calcula al consultarlo (CU-33).
+end note
+note over SR
+  Área 5: deja de enviar
+  recordatorios de la
+  original (RB-37).
+end note
+@enduml

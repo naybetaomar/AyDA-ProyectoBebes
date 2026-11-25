@@ -1,15 +1,15 @@
 @startuml er_area11
-title E-R físico — Área 11: API externa — PROPUESTA
+title E-R físico — Área 11: API externa
 hide circle
 skinparam linetype ortho
 skinparam nodesep 50
 skinparam ranksep 60
 
-package "Área 11 — API externa" #E8EEF8 {
+package "Área 11 — API externa" #FFF8E5 {
   entity consumidor_api {
     * id : BIGINT <<PK>>
     --
-    * credencial_hash : VARCHAR(100)
+    * credencial_hash : VARCHAR(100) <<UNIQUE>>
     * limite_solicitudes : INTEGER
     * periodo_limite : VARCHAR(10) {MINUTO, HORA, DIA}
     * activo : BOOLEAN
@@ -21,7 +21,8 @@ package "Área 11 — API externa" #E8EEF8 {
     consumidor_api_id : BIGINT <<FK>>
     * fecha : TIMESTAMP
     * operacion : VARCHAR(20) {CONSULTAR_DATOS, ENVIAR_SOLICITUD}
-    * resultado : VARCHAR(20) {CORRECTA, NO_AUTORIZADA, LIMITE_EXCEDIDO, ERROR}
+    * resultado : VARCHAR(20) {CORRECTA, NO_AUTORIZADA,
+      LIMITE_EXCEDIDO, RECHAZADA, ERROR}
     codigo_incidencia : VARCHAR(50)
   }
 
@@ -32,7 +33,7 @@ package "Área 11 — API externa" #E8EEF8 {
     * cliente_id : BIGINT <<FK>>
     tarea_id : BIGINT <<FK>> <<UNIQUE>>
     * tipo : VARCHAR(10) {BAJA}
-    * estado_validacion : VARCHAR(10) {PENDIENTE, VALIDADA, RECHAZADA}
+    * estado_validacion : VARCHAR(10) {VALIDADA, RECHAZADA}
     motivo_rechazo : VARCHAR(500)
   }
 }
@@ -62,15 +63,18 @@ note right of llamada_api
 end note
 
 note right of solicitud_externa
-  CHECK: motivo_rechazo obligatorio si
-  estado_validacion = 'RECHAZADA' y nulo en otro caso.
-  tarea_id nulo hasta que el área 7 crea la Tarea.
-  Las reglas de la baja las valida el área 2.
+  Nace VALIDADA o RECHAZADA en la misma llamada (RB-31):
+  CHECK: VALIDADA ⇔ con tarea_id y sin motivo_rechazo;
+  RECHAZADA ⇔ con motivo_rechazo y sin tarea_id.
+  Las reglas de la baja las valida el área 2
+  (comprobarBaja()); la baja la hace después una
+  persona al resolver la tarea (CU-12 FA-1).
 end note
 
 note as Auditoria
-  **Trazabilidad (NFR-03):** todas las tablas llevan creado_por, creado_en,
-  modificado_por, modificado_en (FK a usuario; nulo = Sistema).
+  **Trazabilidad (NFR-03):** consumidor_api y solicitud_externa llevan
+  creado_por, creado_en, modificado_por, modificado_en (FK a usuario;
+  nulo = Sistema). llamada_api no: es en sí un registro.
   No se dibujan. Las clases de diseño (FachadaAPI, DTO, proxy,
   servicios) no tienen tabla. Leyenda: * = NOT NULL.
 end note

@@ -1,0 +1,88 @@
+@startuml area5_1_modelo_comunicaciones
+skinparam classAttributeIconSize 0
+hide empty members
+title Área 5 — Diagrama 1: Plantillas, recordatorios y mensajes
+
+class PlantillaComunicacion {
+  - id : Long {readOnly}
+  - tipo : TipoPlantilla
+  - idioma : String
+  - asunto : String
+  - cuerpo : String
+  - variablesObligatorias : String [1..*]
+  - activa : Boolean
+  --
+  + validarVariables() : Boolean
+  + generarTexto(factura : Factura) : String
+}
+
+class ReglaRecordatorio {
+  - id : Long {readOnly}
+  - cadencia : Integer
+  - diasTrasVencimiento : Integer
+  - activa : Boolean
+  --
+  + tocaRecordatorio(fechaVencimiento : Date, hoy : Date) : Boolean
+}
+
+class Mensaje {
+  - id : Long {readOnly}
+  - canal : Canal
+  - estadoEntrega : EstadoEntrega
+  - intentos : Integer
+  - fechaEnvio : DateTime [0..1]
+  - motivoFallo : String [0..1]
+  --
+  + registrarIntento() : void
+  + marcarEnviado(fecha : DateTime) : void
+  + marcarEntregado() : void
+  + marcarFallido(motivo : String) : void
+}
+
+enum TipoPlantilla {
+  FACTURA
+  RECORDATORIO
+}
+enum EstadoEntrega {
+  PENDIENTE
+  ENVIADO
+  ENTREGADO
+  FALLIDO
+}
+enum Canal <<referencia>>
+
+' Clases de otras áreas
+class Factura <<referencia>>
+class Contacto <<referencia>>
+
+ReglaRecordatorio "0..*" -right-> "1" PlantillaComunicacion : usa >
+PlantillaComunicacion "1" -down- "0..*" Mensaje : genera >
+Factura "1" -down- "0..*" Mensaje : se comunica con >
+Contacto "1" -down- "0..*" Mensaje : recibe >
+
+PlantillaComunicacion ..> TipoPlantilla
+Mensaje ..> EstadoEntrega
+Mensaje ..> Canal
+
+note right of PlantillaComunicacion
+  **validarVariables()**: el cuerpo contiene
+  empresa, número de factura, importe y
+  vencimiento (RB-16, CU-30 FE-1).
+  Cada mensaje guarda la plantilla usada (RB-35).
+  Una plantilla por tipo e idioma (CU-29 paso 3).
+end note
+
+note bottom of ReglaRecordatorio
+  tocaRecordatorio(): han pasado
+  diasTrasVencimiento y, después, cada
+  «cadencia» días (CU-29, CU-30).
+end note
+
+note bottom of Mensaje
+  Una fila por envío; reintentar (CU-28) usa
+  el mismo mensaje y suma un intento: la factura
+  no se duplica ni consume numeración.
+  {ENVIADO o ENTREGADO ⇒ fechaEnvio};
+  {FALLIDO ⇒ motivoFallo}.
+end note
+@enduml

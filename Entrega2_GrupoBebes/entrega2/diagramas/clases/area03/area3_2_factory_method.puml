@@ -17,7 +17,7 @@ class ServicioFacturacion {
   + finalizarFacturacionRecurrente(configuracion : ConfiguracionRecurrente, fecha : Date) : void
   + registrarFacturasMigradas(datos : DatosFactura [1..*]) : ResultadoMigracion
   + registrarEstadoEnvio(factura : Factura, estado : EstadoEnvio) : void
-  + marcarEnDisputa(factura : Factura, motivo : String) : void
+  + marcarEnDisputa(factura : Factura, motivo : String, fechaRevision : Date) : void
   + quitarDisputa(factura : Factura) : void
   + alResolverSolicitud(solicitud : SolicitudExcepcion) : void
 }
@@ -104,7 +104,8 @@ note right of ServicioFacturacion
   y ResultadoMigracion (importación parcial: las filas válidas se guardan y las
   erróneas se devuelven con su motivo).
   Escucha el evento «solicitud resuelta» (área 4) con alResolverSolicitud():
-  aprobada → emitir(); rechazada → factura.volverABorrador() conservando lo propuesto.
+  aprobada → emitir(); rechazada → factura.volverABorrador() conservando lo propuesto;
+  excepción de prorrateo aprobada → configuracion.aplicarExcepcionSinProrrateo() (CU-22).
   emitir() pide la serie y el periodo y llama a factura.emitir().
   No calcula saldo ni vencimiento: eso es del área 6.
 end note

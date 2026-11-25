@@ -36,7 +36,7 @@ class SolicitudExcepcion <<referencia>> {
 }
 class Conciliacion <<referencia>> {
   - importeAplicado : Decimal
-  - fecha : Date
+  - fecha : DateTime
   - /deshecha : Boolean
 }
 class Usuario <<referencia>> {
