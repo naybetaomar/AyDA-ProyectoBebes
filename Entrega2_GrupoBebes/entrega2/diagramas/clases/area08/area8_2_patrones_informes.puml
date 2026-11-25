@@ -10,6 +10,7 @@ class ServicioInformes {
     + exportarInforme(tipo : TipoInforme, criterios : String, formato : FormatoExportacion) : ExportacionMasiva
     + compilarPaqueteContable(periodoId : Long) : PaqueteContable
     + ejecutarInformeProgramado(informeId : Long) : void
+    + borrarExportacionesCaducadas(fecha : DateTime) : Integer
 }
 
 class ResumenFinancieroDTO <<DTO>> {
@@ -24,7 +25,7 @@ class ResumenFinancieroDTO <<DTO>> {
 }
 
 class GeneradorPaqueteContable {
-    + compilarZIP(facturas : List, cobros : List) : String
+    + compilarZIP(facturas : Factura [0..*], cobros : MovimientoCobro [0..*]) : String
     + calcularHash(ruta : String) : String
 }
 

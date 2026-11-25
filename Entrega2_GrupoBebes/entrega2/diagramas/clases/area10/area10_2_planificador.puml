@@ -1,4 +1,4 @@
-@startuml area10_1b_planificador
+@startuml area10_2_planificador
 title Área 10 — Planificador y ejecución
 
 skinparam classAttributeIconSize 0
@@ -9,7 +9,8 @@ hide empty members
 package "Área 10 — Planificador y ejecución" #LightYellow {
 
   interface TareaAutomatica {
-    + ejecutar() : void
+    + tipo() : TipoProceso
+    + ejecutar(ejecucion : EjecucionProceso) : void
   }
 
   class Planificador <<componente interno>> {
@@ -29,9 +30,9 @@ package "Área 10 — Planificador y ejecución" #LightYellow {
   class EjecucionProceso {
     - id : Long {readOnly}
     - tipo : TipoProceso
-    - fechaInicio : Timestamp
-    - fechaFin : Timestamp [0..1]
-    - /duracion : Duration
+    - fechaInicio : DateTime
+    - fechaFin : DateTime [0..1]
+    - /duracionSegundos : Integer
     - procesados : Integer
     - fallos : Integer
     - causa : String [0..1]
@@ -53,13 +54,13 @@ package "Área 10 — Planificador y ejecución" #LightYellow {
     - id : Long {readOnly}
     - codigoIncidencia : String {readOnly}
     - mensajeInterno : String
-    - fecha : Timestamp {readOnly}
+    - fecha : DateTime {readOnly}
     - severidad : SeveridadError
     - origen : String
     - traza : String [0..1]
     - resuelto : Boolean
-    - fechaResolucion : Timestamp [0..1]
-    + registrar(codigo : String, mensaje : String, severidad : SeveridadError, origen : String) : ErrorTecnico
+    - fechaResolucion : DateTime [0..1]
+    + {static} registrar(codigo : String, mensaje : String, severidad : SeveridadError, origen : String) : ErrorTecnico
     + marcarResuelto(realizadoPor : Usuario) : void
     + /mensajeParaUsuario() : String
   }
@@ -120,7 +121,29 @@ note bottom of Planificador
   Cada tarea invoca al servicio de su área a través de su
   Proxy correspondiente. Un rechazo del Proxy se registra
   como fallo en `EjecucionProceso` (BR-04) y alerta (CU-56).
-  Nota: `ACTUALIZACION_VENCIMIENTOS` incluye `comprobarImpagos()` (Área 6).
+  ejecutar(tipo) crea la EjecucionProceso y se la pasa a la
+  tarea, que anota lo procesado y los fallos; al final, finalizar().
+end note
+
+note right of TipoProceso
+  **Qué lanza cada tarea** (siempre por el proxy del servicio):
+  FACTURACION_RECURRENTE → ServicioFacturacion.generarRecurrentes(fecha) (3)
+  RECORDATORIOS → ServicioRecordatorios.procesarVencimientos(fecha) (5)
+  CAMPANIA_ANUAL → ServicioRelacionComercial.prepararRevisionAnual(anio) (2)
+  AVISO_REACTIVACION_PAUSAS →
+      ServicioRelacionComercial.avisarReactivacionesPendientes(fecha) (2)
+  CADUCIDAD_DELEGACIONES → ServicioUsuarios.caducarDelegaciones(fecha) (9)
+  COPIA_SEGURIDAD → ServicioCopias.lanzarCopia() (9)
+  CONCILIACION → ServicioCobros.conciliarAutomaticamente(movimiento),
+      por cada movimiento sin conciliar (6)
+  INFORMES_PROGRAMADOS → ServicioInformes.ejecutarInformeProgramado(id),
+      por cada informe que toca (8)
+  ACTUALIZACION_VENCIMIENTOS → ServicioCobros.actualizarVencimientos(fecha)
+      y después comprobarImpagos(fecha) (6)
+  BORRADO_EXPORTACIONES_CADUCADAS →
+      ServicioInformes.borrarExportacionesCaducadas(fecha) (8)
+  CARGA_DATOS_DEMO → la implementa el área 10 sobre el
+      esquema de demostración (CU-55)
 end note
 
 @enduml

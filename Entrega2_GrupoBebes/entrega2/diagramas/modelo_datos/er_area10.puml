@@ -1,141 +1,152 @@
-@startuml modelo_fisico_area10
-title Modelo físico de datos · Área 10 (Configuración y sistema)
-
+@startuml er_area10
+title E-R físico — Área 10: Configuración y sistema
 hide circle
 skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 60
 
-entity "CONFIGURACION_GLOBAL" as ConfigGlobal {
-  * id : BIGINT <<PK>>
-  --
-  * nombre : VARCHAR(100)
-  * descripcion : VARCHAR(255)
+package "Área 10 — Configuración y sistema" #FFF8E5 {
+  entity configuracion_global {
+    * id : BIGINT <<PK>>
+    --
+    * nombre : VARCHAR(100)
+    * descripcion : VARCHAR(255)
+  }
+
+  entity entrada_configuracion {
+    * id : BIGINT <<PK>>
+    --
+    * clave : VARCHAR(100)
+    * valor : TEXT
+    * tipo_dato : VARCHAR(10) {ENTERO, DECIMAL, BOOLEANO, TEXTO,
+      JSON, MONEDA, FECHA}
+    * descripcion : VARCHAR(255)
+    * validada : BOOLEAN
+    * fecha_vigencia_desde : DATE
+    fecha_vigencia_hasta : DATE
+    .. asociaciones ..
+    * configuracion_global_id : BIGINT <<FK>> (CASCADE)
+  }
+
+  entity tarea_programada {
+    * id : BIGINT <<PK>>
+    --
+    * tipo : VARCHAR(40) <<UNIQUE>> {TipoProceso}
+    * cron : VARCHAR(50)
+    * activa : BOOLEAN
+  }
+
+  entity ejecucion_proceso {
+    * id : BIGINT <<PK>>
+    --
+    * tipo : VARCHAR(40) {TipoProceso}
+    * fecha_inicio : TIMESTAMP
+    fecha_fin : TIMESTAMP
+    * procesados : INTEGER
+    * fallos : INTEGER
+    causa : TEXT
+    * estado : VARCHAR(25) {EN_CURSO, COMPLETADA,
+      COMPLETADA_CON_FALLOS, FALLIDA, CANCELADA}
+  }
+
+  entity detalle_fallo {
+    * id : BIGINT <<PK>>
+    --
+    * entidad_afectada : VARCHAR(150)
+    * motivo : TEXT
+    codigo_incidencia : VARCHAR(50)
+    .. asociaciones ..
+    * ejecucion_proceso_id : BIGINT <<FK>> (CASCADE)
+  }
+
+  entity error_tecnico {
+    * id : BIGINT <<PK>>
+    --
+    * codigo_incidencia : VARCHAR(50) <<UNIQUE>>
+    * mensaje_interno : TEXT
+    * fecha : TIMESTAMP
+    * severidad : VARCHAR(10) {INFO, WARNING, ERROR, CRITICO}
+    * origen : VARCHAR(100)
+    traza : TEXT
+    * resuelto : BOOLEAN
+    fecha_resolucion : TIMESTAMP
+    .. asociaciones ..
+    ejecucion_proceso_id : BIGINT <<FK>>
+    resuelto_por_id : BIGINT <<FK>>
+  }
+
+  entity calendario_laboral {
+    * id : BIGINT <<PK>>
+    --
+    * nombre : VARCHAR(100)
+    * pais : VARCHAR(50)
+    * anio : INTEGER
+  }
+
+  entity dia_laborable_calendario {
+    * id : BIGINT <<PK>>
+    --
+    * dia_semana : VARCHAR(10) {LUNES ... DOMINGO}
+    .. asociaciones ..
+    * calendario_laboral_id : BIGINT <<FK>> (CASCADE)
+  }
+
+  entity fecha_festiva {
+    * id : BIGINT <<PK>>
+    --
+    * fecha : DATE
+    * descripcion : VARCHAR(150)
+    * ambito : VARCHAR(10) {NACIONAL, REGIONAL, LOCAL}
+    .. asociaciones ..
+    * calendario_laboral_id : BIGINT <<FK>> (CASCADE)
+  }
 }
 
-entity "ENTRADA_CONFIGURACION" as EntradaConfig {
-  * id : BIGINT <<PK>>
-  --
-  * configuracion_global_id : BIGINT <<FK>>
-  * clave : VARCHAR(100)
-  * valor : TEXT
-  * tipo_dato : VARCHAR(20)
-  * descripcion : VARCHAR(255)
-  * validada : BOOLEAN
-  * fecha_vigencia_desde : DATE
-  fecha_vigencia_hasta : DATE [NULL]
+package "Otras áreas" #EEEEEE {
+  entity usuario <<área 9>> {
+    * id : BIGINT <<PK>>
+  }
 }
 
-entity "TAREA_PROGRAMADA" as TareaProg {
-  * id : BIGINT <<PK>>
-  --
-  * tipo : VARCHAR(50)
-  * cron : VARCHAR(50)
-  * activa : BOOLEAN
-}
+configuracion_global ||--|{ entrada_configuracion : contiene
+ejecucion_proceso ||--o{ detalle_fallo : registra
+ejecucion_proceso |o--o{ error_tecnico : agrega
+calendario_laboral ||--|{ dia_laborable_calendario : define
+calendario_laboral ||--o{ fecha_festiva : contiene
+usuario |o--o{ error_tecnico : resuelve
 
-entity "EJECUCION_PROCESO" as Ejecucion {
-  * id : BIGINT <<PK>>
-  --
-  * tipo : VARCHAR(50)
-  * fecha_inicio : TIMESTAMP
-  fecha_fin : TIMESTAMP [NULL]
-  * procesados : INTEGER
-  * fallos : INTEGER
-  causa : TEXT [NULL]
-  * estado : VARCHAR(30)
-}
-
-entity "DETALLE_FALLO" as DetalleFallo {
-  * id : BIGINT <<PK>>
-  --
-  * ejecucion_proceso_id : BIGINT <<FK>>
-  * entidad_afectada : VARCHAR(150)
-  * motivo : TEXT
-  codigo_incidencia : VARCHAR(50) [NULL]
-}
-
-entity "ERROR_TECNICO" as ErrorTec {
-  * id : BIGINT <<PK>>
-  --
-  ejecucion_proceso_id : BIGINT <<FK>> [NULL]
-  resuelto_por : BIGINT <<FK>> [NULL]
-  * codigo_incidencia : VARCHAR(50)
-  * mensaje_interno : TEXT
-  * fecha : TIMESTAMP
-  * severidad : VARCHAR(20)
-  * origen : VARCHAR(100)
-  traza : TEXT [NULL]
-  * resuelto : BOOLEAN
-  fecha_resolucion : TIMESTAMP [NULL]
-}
-
-entity "CALENDARIO_LABORAL" as Calendario {
-  * id : BIGINT <<PK>>
-  --
-  * nombre : VARCHAR(100)
-  * pais : VARCHAR(50)
-  * anio : INTEGER
-}
-
-entity "DIA_LABORABLE_CALENDARIO" as DiaLab {
-  * id : BIGINT <<PK>>
-  --
-  * calendario_laboral_id : BIGINT <<FK>>
-  * dia_semana : VARCHAR(15)
-}
-
-entity "FECHA_FESTIVA" as Festivo {
-  * id : BIGINT <<PK>>
-  --
-  * calendario_laboral_id : BIGINT <<FK>>
-  * fecha : DATE
-  * descripcion : VARCHAR(150)
-  * ambito : VARCHAR(20)
-}
-
-' Relaciones de composición y agregación propias del Área 10
-ConfigGlobal ||--|{ EntradaConfig : contiene
-Ejecucion ||--o{ DetalleFallo : registra
-Ejecucion |o--o{ ErrorTec : agrega
-Calendario ||--|{ DiaLab : define_dias
-Calendario ||--o{ Festivo : contiene
-
-note bottom of EntradaConfig
-  **Restricciones:**
-  - UNIQUE (configuracion_global_id, clave, fecha_vigencia_desde)
-  - CHECK (tipo_dato IN ('ENTERO','DECIMAL','BOOLEANO','TEXTO','JSON','MONEDA','FECHA'))
-  - CHECK (fecha_vigencia_hasta IS NULL OR fecha_vigencia_hasta >= fecha_vigencia_desde)
+note right of entrada_configuracion
+  EXCLUDE: una misma clave no puede tener
+  dos vigencias que se solapen [desde, hasta).
+  CHECK: hasta nula o posterior a desde.
 end note
 
-note bottom of Ejecucion
-  **Restricciones:**
-  - CHECK (tipo IN ('FACTURACION_RECURRENTE','RECORDATORIOS','CAMPANIA_ANUAL',
-    'AVISO_REACTIVACION_PAUSAS','CADUCIDAD_DELEGACIONES','COPIA_SEGURIDAD',
-    'CONCILIACION','INFORMES_PROGRAMADOS','ACTUALIZACION_VENCIMIENTOS',
-    'BORRADO_EXPORTACIONES_CADUCADAS','CARGA_DATOS_DEMO'))
-  - CHECK (estado IN ('EN_CURSO','COMPLETADA','COMPLETADA_CON_FALLOS','FALLIDA','CANCELADA'))
-  - CHECK (procesados >= 0 AND fallos >= 0)
-  - CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio)
+note right of ejecucion_proceso
+  CHECK: EN_CURSO si y solo si no tiene fecha_fin.
+  CHECK: FALLIDA o CANCELADA exigen causa.
+  CHECK: procesados y fallos no negativos.
 end note
 
-note bottom of ErrorTec
-  **Restricciones:**
-  - UNIQUE (codigo_incidencia)
-  - CHECK (severidad IN ('INFO','WARNING','ERROR','CRITICO'))
-  - CHECK ((resuelto = FALSE AND fecha_resolucion IS NULL AND resuelto_por IS NULL)
-           OR (resuelto = TRUE AND fecha_resolucion IS NOT NULL))
+note right of error_tecnico
+  CHECK: resuelto si y solo si tiene fecha_resolucion;
+  sin resolver no tiene resuelto_por_id
+  (resuelto con resuelto_por_id nulo = Sistema).
 end note
 
-note bottom of DiaLab
-  **Restricciones:**
-  - UNIQUE (calendario_laboral_id, dia_semana)
-  - CHECK (dia_semana IN ('LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO','DOMINGO'))
+note bottom of fecha_festiva
+  UNIQUE (calendario_laboral_id, fecha) y
+  UNIQUE (calendario_laboral_id, dia_semana)
+  en dia_laborable_calendario.
+  calendario_laboral: UNIQUE (pais, anio).
+  Que la fecha sea del año del calendario
+  lo comprueba el servicio (cruza tablas).
 end note
 
-note bottom of Festivo
-  **Restricciones:**
-  - UNIQUE (calendario_laboral_id, fecha)
-  - CHECK (ambito IN ('NACIONAL','REGIONAL','LOCAL'))
-  - En CALENDARIO_LABORAL: UNIQUE (pais, anio)
-end note
-
+legend bottom left
+  * = NOT NULL. Trazabilidad (creado_por, creado_en, modificado_por,
+  modificado_en) en configuracion_global, entrada_configuracion,
+  tarea_programada y calendario_laboral; dia_laborable_calendario y
+  fecha_festiva solo creado_por y creado_en. No se dibuja.
+  ejecucion_proceso, detalle_fallo y error_tecnico son registros en sí mismos.
+endlegend
 @enduml

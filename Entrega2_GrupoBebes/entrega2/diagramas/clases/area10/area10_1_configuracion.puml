@@ -1,4 +1,4 @@
-@startuml area10_1a_configuracion
+@startuml area10_1_configuracion
 title Área 10 — Configuración
 
 skinparam classAttributeIconSize 0
@@ -16,7 +16,7 @@ package "Área 10 — Configuración" #LightYellow {
     + obtenerEntrada(clave : String) : EntradaConfiguracion
     + obtenerValor(clave : String, fecha : Date) : Object
     + validarEntrada(clave : String, valor : String) : ResultadoValidacion
-    + actualizarEntrada(clave : String, valor : String, realizadoPor : Usuario) : ResultadoActualizacion
+    + actualizarEntrada(clave : String, valor : String) : ResultadoActualizacion
     + listarVigentes(fecha : Date) : EntradaConfiguracion [0..*]
   }
 
@@ -60,10 +60,18 @@ package "Área 9 — Seguridad y Auditoría" {
 
 ConfiguracionGlobal "1" *-- "1..*" EntradaConfiguracion : contiene >
 EntradaConfiguracion --> TipoDatoConfig : usa >
-ConfiguracionGlobal ..> Usuario : realizadoPor (auditoría) >
+ConfiguracionGlobal ..> Usuario : modificadoPor (auditoría) >
 ConfiguracionGlobal ..> ResultadoValidacion : devuelve >
 ConfiguracionGlobal ..> ResultadoActualizacion : devuelve >
 EntradaConfiguracion ..> ResultadoValidacion : devuelve >
+
+note right of ConfiguracionGlobal
+  **Punto de entrada del área 10** para la configuración,
+  a través del proxy (solo Superadministrador puede
+  actualizar). Quién hace el cambio no es un parámetro:
+  lo da el ContextoSeguridad y queda en modificadoPor.
+  Las demás áreas leen con obtenerValor(clave, fecha).
+end note
 
 
 

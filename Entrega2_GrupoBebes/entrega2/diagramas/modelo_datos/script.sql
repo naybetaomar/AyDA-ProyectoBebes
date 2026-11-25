@@ -2,8 +2,8 @@
 -- E-R físico — Turbine · Grupo Bebes · Entrega 2 · PostgreSQL 16
 -- Áreas 1 (clientes), 2 (relación comercial), 3 (facturas), 4 (aprobaciones
 -- y periodos), 5 (envío y comunicaciones), 6 (cobros), 7 (notificaciones),
--- 8 (informes y contabilidad), 9 (usuarios, seguridad y auditoría)
--- y 11 (API externa).
+-- 8 (informes y contabilidad), 9 (usuarios, seguridad y auditoría),
+-- 10 (configuración y sistema) y 11 (API externa).
 -- Las tablas van en orden de dependencia: por eso las de un área que apuntan
 -- a factura (áreas 1 y 4) están después del área 3, y la descarga de
 -- ficheros (área 9) va al final.
@@ -23,6 +23,7 @@
 -- v9 (25/11): motivo y fecha de revisión de la disputa de una factura (CU-31).
 -- v10 (25/11): solicitud de excepción sobre una factura o una configuración
 -- recurrente (prorrateo, CU-22); formato de la exportación masiva.
+-- v11 (25/11): añade las tablas del área 10.
 -- =====================================================================
 
 -- =====================================================================
@@ -1120,6 +1121,138 @@ CREATE TABLE solicitud_externa (
     CONSTRAINT ck_solicitud_externa_resultado CHECK (
         (estado_validacion = 'VALIDADA'  AND tarea_id IS NOT NULL AND motivo_rechazo IS NULL) OR
         (estado_validacion = 'RECHAZADA' AND tarea_id IS NULL AND motivo_rechazo IS NOT NULL))
+);
+
+-- =====================================================================
+-- ÁREA 10 — CONFIGURACIÓN Y SISTEMA (solo apunta a usuario)
+-- =====================================================================
+
+CREATE TABLE configuracion_global (
+    id                  BIGSERIAL     PRIMARY KEY,
+    nombre              VARCHAR(100)  NOT NULL,
+    descripcion         VARCHAR(255)  NOT NULL,
+    creado_por          BIGINT        REFERENCES usuario(id),
+    creado_en           TIMESTAMP     NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    modificado_por      BIGINT        REFERENCES usuario(id),
+    modificado_en       TIMESTAMP
+);
+
+-- Cada valor con su vigencia: se sabe qué valor aplicaba en una fecha (Q-07).
+CREATE TABLE entrada_configuracion (
+    id                       BIGSERIAL     PRIMARY KEY,
+    configuracion_global_id  BIGINT        NOT NULL REFERENCES configuracion_global(id) ON DELETE CASCADE,  -- composición
+    clave                    VARCHAR(100)  NOT NULL,
+    valor                    TEXT          NOT NULL,
+    tipo_dato                VARCHAR(10)   NOT NULL CHECK (tipo_dato IN ('ENTERO', 'DECIMAL', 'BOOLEANO', 'TEXTO', 'JSON', 'MONEDA', 'FECHA')),
+    descripcion              VARCHAR(255)  NOT NULL,
+    validada                 BOOLEAN       NOT NULL DEFAULT FALSE,
+    fecha_vigencia_desde     DATE          NOT NULL,
+    fecha_vigencia_hasta     DATE,
+    creado_por          BIGINT        REFERENCES usuario(id),
+    creado_en           TIMESTAMP     NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    modificado_por      BIGINT        REFERENCES usuario(id),
+    modificado_en       TIMESTAMP,
+    CONSTRAINT ck_entrada_vigencia CHECK (fecha_vigencia_hasta IS NULL OR fecha_vigencia_hasta > fecha_vigencia_desde),
+    CONSTRAINT ex_entrada_solape EXCLUDE USING gist (
+        configuracion_global_id WITH =,
+        clave WITH =,
+        daterange(fecha_vigencia_desde, fecha_vigencia_hasta, '[)') WITH &&
+    )
+);
+
+CREATE TABLE tarea_programada (
+    id                  BIGSERIAL     PRIMARY KEY,
+    tipo                VARCHAR(40)   NOT NULL UNIQUE CHECK (tipo IN (
+        'FACTURACION_RECURRENTE', 'RECORDATORIOS', 'CAMPANIA_ANUAL', 'AVISO_REACTIVACION_PAUSAS',
+        'CADUCIDAD_DELEGACIONES', 'COPIA_SEGURIDAD', 'CONCILIACION', 'INFORMES_PROGRAMADOS',
+        'ACTUALIZACION_VENCIMIENTOS', 'BORRADO_EXPORTACIONES_CADUCADAS', 'CARGA_DATOS_DEMO')),
+    cron                VARCHAR(50)   NOT NULL,
+    activa              BOOLEAN       NOT NULL DEFAULT TRUE,
+    creado_por          BIGINT        REFERENCES usuario(id),
+    creado_en           TIMESTAMP     NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    modificado_por      BIGINT        REFERENCES usuario(id),
+    modificado_en       TIMESTAMP
+);
+
+-- Registro de cada ejecución del planificador; es en sí un registro (sin trazabilidad).
+CREATE TABLE ejecucion_proceso (
+    id            BIGSERIAL    PRIMARY KEY,
+    tipo          VARCHAR(40)  NOT NULL CHECK (tipo IN (
+        'FACTURACION_RECURRENTE', 'RECORDATORIOS', 'CAMPANIA_ANUAL', 'AVISO_REACTIVACION_PAUSAS',
+        'CADUCIDAD_DELEGACIONES', 'COPIA_SEGURIDAD', 'CONCILIACION', 'INFORMES_PROGRAMADOS',
+        'ACTUALIZACION_VENCIMIENTOS', 'BORRADO_EXPORTACIONES_CADUCADAS', 'CARGA_DATOS_DEMO')),
+    fecha_inicio  TIMESTAMP    NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    fecha_fin     TIMESTAMP,
+    procesados    INTEGER      NOT NULL DEFAULT 0 CHECK (procesados >= 0),
+    fallos        INTEGER      NOT NULL DEFAULT 0 CHECK (fallos >= 0),
+    causa         TEXT,
+    estado        VARCHAR(25)  NOT NULL DEFAULT 'EN_CURSO'
+                  CHECK (estado IN ('EN_CURSO', 'COMPLETADA', 'COMPLETADA_CON_FALLOS', 'FALLIDA', 'CANCELADA')),
+    CONSTRAINT ck_ejecucion_fin CHECK ((estado = 'EN_CURSO') = (fecha_fin IS NULL)),
+    CONSTRAINT ck_ejecucion_orden CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio),
+    CONSTRAINT ck_ejecucion_causa CHECK (estado NOT IN ('FALLIDA', 'CANCELADA') OR causa IS NOT NULL)  -- BR-04, CU-56
+);
+CREATE INDEX ix_ejecucion_tipo_fecha ON ejecucion_proceso (tipo, fecha_inicio);
+
+CREATE TABLE detalle_fallo (
+    id                    BIGSERIAL     PRIMARY KEY,
+    ejecucion_proceso_id  BIGINT        NOT NULL REFERENCES ejecucion_proceso(id) ON DELETE CASCADE,  -- composición
+    entidad_afectada      VARCHAR(150)  NOT NULL,
+    motivo                TEXT          NOT NULL,
+    codigo_incidencia     VARCHAR(50)
+);
+
+-- FR-62/63: mensaje_interno y traza nunca se muestran al usuario final.
+CREATE TABLE error_tecnico (
+    id                    BIGSERIAL     PRIMARY KEY,
+    ejecucion_proceso_id  BIGINT        REFERENCES ejecucion_proceso(id),
+    codigo_incidencia     VARCHAR(50)   NOT NULL UNIQUE,
+    mensaje_interno       TEXT          NOT NULL,
+    fecha                 TIMESTAMP     NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    severidad             VARCHAR(10)   NOT NULL CHECK (severidad IN ('INFO', 'WARNING', 'ERROR', 'CRITICO')),
+    origen                VARCHAR(100)  NOT NULL,
+    traza                 TEXT,
+    resuelto              BOOLEAN       NOT NULL DEFAULT FALSE,
+    fecha_resolucion      TIMESTAMP,
+    resuelto_por_id       BIGINT        REFERENCES usuario(id),   -- nulo con resuelto = TRUE: Sistema
+    CONSTRAINT ck_error_resuelto CHECK (resuelto = (fecha_resolucion IS NOT NULL)),
+    CONSTRAINT ck_error_resuelto_por CHECK (resuelto OR resuelto_por_id IS NULL),
+    CONSTRAINT ck_error_orden CHECK (fecha_resolucion IS NULL OR fecha_resolucion >= fecha)
+);
+
+-- FR-83, Q-02: calendario de España en la fase inicial.
+CREATE TABLE calendario_laboral (
+    id                  BIGSERIAL     PRIMARY KEY,
+    nombre              VARCHAR(100)  NOT NULL,
+    pais                VARCHAR(50)   NOT NULL,
+    anio                INTEGER       NOT NULL CHECK (anio BETWEEN 2000 AND 2100),
+    creado_por          BIGINT        REFERENCES usuario(id),
+    creado_en           TIMESTAMP     NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    modificado_por      BIGINT        REFERENCES usuario(id),
+    modificado_en       TIMESTAMP,
+    CONSTRAINT uq_calendario_pais_anio UNIQUE (pais, anio)
+);
+
+CREATE TABLE dia_laborable_calendario (
+    id                     BIGSERIAL    PRIMARY KEY,
+    calendario_laboral_id  BIGINT       NOT NULL REFERENCES calendario_laboral(id) ON DELETE CASCADE,  -- composición
+    dia_semana             VARCHAR(10)  NOT NULL
+                           CHECK (dia_semana IN ('LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO')),
+    creado_por             BIGINT        REFERENCES usuario(id),
+    creado_en              TIMESTAMP     NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    CONSTRAINT uq_dia_laborable UNIQUE (calendario_laboral_id, dia_semana)
+);
+
+-- Que la fecha sea del año del calendario lo comprueba el servicio.
+CREATE TABLE fecha_festiva (
+    id                     BIGSERIAL     PRIMARY KEY,
+    calendario_laboral_id  BIGINT        NOT NULL REFERENCES calendario_laboral(id) ON DELETE CASCADE,  -- composición
+    fecha                  DATE          NOT NULL,
+    descripcion            VARCHAR(150)  NOT NULL,
+    ambito                 VARCHAR(10)   NOT NULL CHECK (ambito IN ('NACIONAL', 'REGIONAL', 'LOCAL')),
+    creado_por             BIGINT        REFERENCES usuario(id),
+    creado_en              TIMESTAMP     NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
+    CONSTRAINT uq_fecha_festiva UNIQUE (calendario_laboral_id, fecha)
 );
 
 -- =====================================================================

@@ -9,23 +9,29 @@ skinparam sequenceArrowColor #A80036
 skinparam sequenceLifeLineBorderColor #A80036
 
 participant "__: Planificador__" as P
+participant "__t : TareaAutomatica__" as T
 participant "__: ProxyCobros__" as PX
 participant "__: ServicioCobros__" as SC
 participant "__f : Factura__" as F
 
-P -> P ++ : ejecutarVencimientos()
+P -> P ++ : ejecutar(tipo = ACTUALIZACION_VENCIMIENTOS)
 create participant "__e : EjecucionProceso__" as E
-P --> E : EjecucionProceso(VENCIMIENTOS)
+P --> E : EjecucionProceso(tipo)
+P -> T ++ : ejecutar(ejecucion = e)
+note right of P
+  Antes, el planificador deja su
+  IdentidadSistema en ContextoSeguridad.
+end note
 
-P -> PX ++ : actualizarVencimientos(fecha : Date)
+T -> PX ++ : actualizarVencimientos(fecha : Date)
 PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
 note right of PX
   Solicitante: la IdentidadSistema
   que el planificador deja en
   ContextoSeguridad. Auditoría con
   usuario nulo (= Sistema).
-  Si rechaza, el planificador lo
-  registra como fallo y salta una
+  Si rechaza, la tarea lo registra
+  como fallo en e y salta una
   alerta (CU-56).
 end note
 PX -> SC ++ : actualizarVencimientos(fecha : Date)
@@ -44,17 +50,16 @@ autonumber stop
 return
 return
 autonumber resume
-P -> E ++ : registrarProcesado(cantidad : Integer)
+T -> E ++ : registrarProcesado(cantidad : Integer)
 autonumber stop
 return
 autonumber resume
-deactivate P
 
 note over SC, F
   Transición PENDIENTE → VENCIDA de la tabla de estados
   de la Entrega 1 (actor: Sistema). Cada cambio deja su
   HistorialEstadoFactura (COBRO, PENDIENTE, VENCIDA).
   Después, la misma tarea comprueba los límites de
-  impago: diagrama (2).
+  impago: diagrama (2), que sigue con t y e activos.
 end note
 @enduml

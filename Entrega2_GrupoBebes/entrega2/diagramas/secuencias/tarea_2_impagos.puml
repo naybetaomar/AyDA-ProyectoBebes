@@ -9,6 +9,7 @@ skinparam sequenceArrowColor #A80036
 skinparam sequenceLifeLineBorderColor #A80036
 
 participant "__: Planificador__" as P
+participant "__t : TareaAutomatica__" as T
 participant "__e : EjecucionProceso__" as E
 participant "__: ProxyCobros__" as PX
 participant "__: ServicioCobros__" as SC
@@ -17,7 +18,8 @@ participant "__: ManejadorAlertasCobro__" as MA
 participant "__: ServicioNotificaciones__" as SN
 
 activate P
-P -> PX ++ : comprobarImpagos(fecha : Date)
+activate T
+T -> PX ++ : comprobarImpagos(fecha : Date)
 PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
 PX -> SC ++ : comprobarImpagos(fecha : Date)
 SC -> CG ++ : obtenerValor(clave = "diasMaximosVencida", fecha : Date)
@@ -68,6 +70,8 @@ end
 autonumber stop
 return
 return
+T --> P
+deactivate T
 autonumber resume
 
 P -> E ++ : finalizar()

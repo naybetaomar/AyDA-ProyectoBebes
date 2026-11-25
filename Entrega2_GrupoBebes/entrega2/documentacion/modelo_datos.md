@@ -2,7 +2,7 @@
 
 ## Alcance
 
-Esta versión recoge el modelo de las **áreas 1 a 9 y 11**. Todas están en `script.sql`. El área 10 se añade cuando se valide su diagrama.
+Esta versión recoge el modelo de las **11 áreas**. Todas están en `script.sql`.
 
 Fuentes: `diagramas/modelo_datos/er_area1.puml` a `er_area11.puml` y `script.sql` (PostgreSQL 16). Cada diagrama dibuja las tablas de su área y, en gris, las de otras áreas a las que apunta. Notación: entidad–relación física (patas de gallo) con tablas, PK, FK, tipos y cardinalidades; `*` indica NOT NULL.
 
@@ -14,6 +14,7 @@ Tablas del área 5: `plantilla_comunicacion`, `variable_plantilla`, `regla_recor
 Tablas del área 6: `movimiento_cobro`, `conciliacion` y `baja_contable`.
 Tablas del área 7: `notificacion`, `preferencia_notificacion`, `incidencia`, `comentario` y `tarea`.
 Tablas del área 8: `objetivo_facturacion`, `paquete_contable`, `tipo_cambio`, `exportacion_masiva`, `informe_programado` y `destinatario_informe`.
+Tablas del área 10: `configuracion_global`, `entrada_configuracion`, `tarea_programada`, `ejecucion_proceso`, `detalle_fallo`, `error_tecnico`, `calendario_laboral`, `dia_laborable_calendario` y `fecha_festiva`.
 Tablas del área 11: `consumidor_api`, `llamada_api` y `solicitud_externa`.
 Tablas del área 9: `usuario`, `sesion`, `token_recuperacion`, `asignacion_cliente`, `delegacion`, `registro_auditoria`, `descarga_fichero`, `copia_seguridad` y `restauracion_copia`.
 
@@ -78,6 +79,12 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 - `USUARIO (1)` y `CLIENTE (1)` — `ASIGNACION_CLIENTE (0..N)`: un solo responsable vigente por cliente.
 - `DESCARGA_FICHERO`: de un documento (área 1) o de una exportación (área 8), exactamente uno.
 
+**Área 10**
+- `CONFIGURACION_GLOBAL (1)` — `ENTRADA_CONFIGURACION (1..N)`, `EJECUCION_PROCESO (1)` — `DETALLE_FALLO (0..N)` y `CALENDARIO_LABORAL (1)` — `DIA_LABORABLE_CALENDARIO (1..N)` y `FECHA_FESTIVA (0..N)`: composiciones.
+- `EJECUCION_PROCESO (0..1)` — `ERROR_TECNICO (0..N)`: un error técnico puede no venir de una ejecución (por ejemplo, de la API).
+- `USUARIO (0..1)` — `ERROR_TECNICO (0..N)`: quién lo resolvió (`resuelto_por_id`).
+- `TAREA_PROGRAMADA` no tiene FK: una fila por tipo de proceso.
+
 **Área 11**
 - `CONSUMIDOR_API (0..1)` — `LLAMADA_API (0..N)`: nulo cuando la credencial no es válida.
 - `CONSUMIDOR_API (1)` y `CLIENTE (1)` — `SOLICITUD_EXTERNA (0..N)`; `SOLICITUD_EXTERNA (0..1)` — `TAREA (0..1)` (área 7).
@@ -95,7 +102,8 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 - **Cobro excesivo (A-28):** el importe que supera el saldo no se aplica a la factura; queda sin aplicar en el movimiento, que pasa a revisión (`en_revision`), y la factura se marca con `cobro_excesivo`.
 - **Estado «vencida» guardado:** `VENCIDA` es un valor de `estado_cobro`; una tarea diaria del planificador marca las facturas sin ningún cobro cuyo vencimiento ha pasado (`ServicioCobros.actualizarVencimientos()`).
 - **Importes y fechas:** `DECIMAL(12,2)` en importes y `DECIMAL(5,2)` en porcentajes (NFR-31); instantes en UTC con `TIMESTAMP` y fechas legales con `DATE` (NFR-42, NFR-43).
-- **Trazabilidad (NFR-03):** todas las tablas llevan `creado_por`, `creado_en`, `modificado_por` y `modificado_en`, salvo las que son en sí un registro (`historial_estado_factura`, `sesion`, `token_recuperacion`, `registro_auditoria`, `descarga_fichero` y `llamada_api`), que no las llevan, y las tablas cuyas filas solo se añaden y nunca se modifican (`tramo_importe`, `cliente_etiqueta`, `reapertura_periodo`, `variable_plantilla`), que solo llevan `creado_por` y `creado_en`. Las dos FK a `usuario` admiten nulos (nulo = Sistema). No se dibujan en el diagrama.
+- **Trazabilidad (NFR-03):** todas las tablas llevan `creado_por`, `creado_en`, `modificado_por` y `modificado_en`, salvo las que son en sí un registro (`historial_estado_factura`, `sesion`, `token_recuperacion`, `registro_auditoria`, `descarga_fichero`, `llamada_api`, `ejecucion_proceso`, `detalle_fallo` y `error_tecnico`), que no las llevan, y las tablas cuyas filas solo se añaden y nunca se modifican (`tramo_importe`, `cliente_etiqueta`, `reapertura_periodo`, `variable_plantilla`, `dia_laborable_calendario`, `fecha_festiva`), que solo llevan `creado_por` y `creado_en`. Las dos FK a `usuario` admiten nulos (nulo = Sistema). No se dibujan en el diagrama.
+- **Configuración con vigencia:** cada valor de `entrada_configuracion` tiene su intervalo de vigencia, y un cambio crea una fila nueva en lugar de sobrescribir la anterior. Así se sabe qué valor aplicaba en una fecha (Q-07).
 - **Nombres:** tablas en singular y `snake_case`, PK `id`, FK `<tabla>_id` o por el rol cuando hay dos (`realizado_por_id`, `deshecho_por_id`).
 
 ## Reglas y restricciones
@@ -158,6 +166,11 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 | `UNIQUE (credencial_hash)` | `consumidor_api` | Un consumidor por credencial |
 | `CHECK`: sin consumidor solo si no autorizada; error ⇒ `codigo_incidencia` | `llamada_api` | FR-61 |
 | `CHECK`: validada ⇔ con tarea; rechazada ⇔ con motivo | `solicitud_externa` | CU-58, RB-31 |
+| `EXCLUDE USING gist` sobre `daterange(desde, hasta)` por clave | `entrada_configuracion` | Un solo valor vigente por clave y fecha (Q-07) |
+| `UNIQUE (tipo)` | `tarea_programada` | Una programación por tipo de proceso |
+| `CHECK`: en curso ⇔ sin `fecha_fin`; fallida o cancelada ⇒ `causa` | `ejecucion_proceso` | BR-04, CU-56 |
+| `UNIQUE (codigo_incidencia)`; `CHECK`: resuelto ⇔ `fecha_resolucion`; sin resolver ⇒ sin `resuelto_por_id` | `error_tecnico` | FR-61, FR-62 |
+| `UNIQUE (pais, anio)`; `UNIQUE` del día y del festivo por calendario | `calendario_laboral`, `dia_laborable_calendario`, `fecha_festiva` | FR-83, Q-02 |
 
 **Las garantiza la aplicación** (cruzan tablas o dependen de cálculos). **La notación gráfica no las valida:**
 - El tipo de la serie corresponde al de la factura: rectificativa para una rectificativa y ordinaria en otro caso. Se comprueba al emitir.
@@ -167,6 +180,7 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 - Los rangos de tarifa no dejan huecos (CU-14 FE-1); los solapes sí los impide la base de datos.
 - Una regla de recordatorio usa una plantilla de tipo RECORDATORIO.
 - Un informe programado tiene al menos un destinatario con permiso para recibirlo (RB-33).
+- La fecha de un festivo es del año de su calendario.
 
 ## Trazabilidad
 
@@ -188,6 +202,8 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 | A-28 | `movimiento_cobro.en_revision`, `motivo_revision`; `factura.cobro_excesivo` | El sobrante queda sin aplicar en el movimiento |
 | CU-36, RB-08 | `baja_contable` | Baja explícita (anulada o incobrable) aprobada mediante una solicitud |
 | RB-10, A-27 | Sin columna: lo calcula `ServicioCobros` | Saldo pendiente ≠ facturación total |
+| CU-56, BR-04 | `ejecucion_proceso`, `detalle_fallo`, `error_tecnico` | Cada ejecución del planificador queda registrada con sus fallos |
+| FR-83, Q-02 | `calendario_laboral`, `dia_laborable_calendario`, `fecha_festiva` | Traslado de vencimientos y recordatorios al siguiente día laborable |
 | NFR-03 | `creado_por`, `creado_en`, `modificado_por`, `modificado_en`; `historial_estado_factura` | Nulo = Sistema |
 | NFR-31, NFR-42, NFR-43 | Tipos `DECIMAL` y `TIMESTAMP` en UTC | Sin coma flotante |
 
@@ -198,6 +214,4 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 - **Excepción sobre una configuración recurrente (aplicada el 25/11, pendiente de confirmar en la reunión):** la solicitud de excepción va sobre una factura o sobre una configuración recurrente (la de prorrateo, que se propone antes de que exista la factura). `factura_id` admite nulos, hay una columna `configuracion_recurrente_id` y un `CHECK` de «exactamente una».
 - **Borrado de un borrador y solicitud de excepción:** el script usa `ON DELETE CASCADE`: si se borra un borrador, se borran sus solicitudes. No afecta a las de prorrateo, que van sobre la configuración.
 - **Destino del sobrante cobrado (Q-12):** devolución o saldo a favor. El modelo deja el importe en el movimiento sin aplicar, sea cual sea el destino.
-- **Alta de la tarea diaria de vencimientos** (`actualizarVencimientos()`) en el planificador del área 10.
 - **Aprobación de las clases de las áreas 3 y 6.** Mientras estén en «Propuesta», el modelo también lo está.
-- **Área 10:** sus tablas se incorporarán cuando se valide su diagrama de clases.

@@ -1,4 +1,4 @@
-@startuml area10_1c_calendario
+@startuml area10_3_calendario
 title Área 10 — Calendario laboral
 
 skinparam classAttributeIconSize 0
