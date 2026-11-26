@@ -1,0 +1,84 @@
+@startuml cu17_2_recuperacion_tras_caida
+title CU-17 Facturación recurrente — 2. Recuperación tras una caída
+hide footbox
+skinparam maxMessageSize 140
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Sistema (tarea programada)__" as S
+participant "__: Planificador__" as P
+participant "__e1 : EjecucionProceso__" as E1
+participant "__t : TareaAutomatica__" as T
+participant "__: ProxyFacturacion__" as PX
+participant "__: ServicioFacturacion__" as SF
+
+S -> P ++ : ejecutar(tipo = FACTURACION_RECURRENTE)
+note right of P
+  Al volver a arrancar, el planificador
+  revisa si la generación del día 1
+  se quedó a medias.
+end note
+P ->o] : buscar ejecución EN_CURSO de FACTURACION_RECURRENTE en BD
+autonumber stop
+P <--o] : e1
+autonumber resume
+
+opt hay una ejecución a medias
+  P -> E1 ++ : registrarFallo(motivo = "caída", entidad : String)
+  autonumber stop
+  return
+  autonumber resume
+  P -> E1 ++ : finalizar()
+  autonumber stop
+  return
+  autonumber resume
+
+  create participant "__e2 : EjecucionProceso__" as E2
+  P --> E2 : EjecucionProceso(tipo)
+  P -> T ++ : ejecutar(ejecucion = e2)
+  T -> PX ++ : generarRecurrentes(fecha = día 1 del mes)
+  PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
+  PX -> SF ++ : generarRecurrentes(fecha : Date)
+
+  SF ->o] : buscar configuraciones activas sin factura de ese mes en BD
+  autonumber stop
+  SF <--o] : solo las que faltan
+  autonumber resume
+  note right of SF
+    Las facturas que ya se generaron
+    antes de la caída no vuelven a salir.
+  end note
+
+  loop para cada configuración pendiente
+    ref over SF : generar, emitir y guardar la cuota\n(igual que en el diagrama 1)
+  end
+
+  autonumber stop
+  return facturas
+  return facturas
+  autonumber resume
+  T -> E2 ++ : registrarProcesado(cantidad : Integer)
+  autonumber stop
+  return
+  T --> P
+  deactivate T
+  autonumber resume
+  P -> E2 ++ : finalizar()
+  autonumber stop
+  return
+  autonumber resume
+end
+deactivate P
+
+note over PX, SF
+  Aunque se repita la generación, la base de
+  datos no deja guardar dos facturas del mismo
+  mes para la misma configuración (FR-100).
+  El Administrador ve el resultado en el
+  estado del sistema (CU-56).
+end note
+@enduml
+
