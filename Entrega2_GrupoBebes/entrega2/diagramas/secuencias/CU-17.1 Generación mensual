@@ -1,0 +1,79 @@
+@startuml cu17_1_generar_recurrentes
+title CU-17 Facturación recurrente — 1. Generación mensual por el planificador
+hide footbox
+skinparam maxMessageSize 140
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Sistema (tarea programada)__" as S
+participant "__: Planificador__" as P
+participant "__t : TareaAutomatica__" as T
+participant "__: ProxyFacturacion__" as PX
+participant "__: ServicioFacturacion__" as SF
+participant "__c : ConfiguracionRecurrente__" as C
+participant "__: GeneradorRecurrente__" as GR
+
+S -> P ++ : ejecutar(tipo = FACTURACION_RECURRENTE)
+note right of S : día 1 de cada mes
+create participant "__e : EjecucionProceso__" as E
+P --> E : EjecucionProceso(tipo)
+P -> T ++ : ejecutar(ejecucion = e)
+T -> PX ++ : generarRecurrentes(fecha : Date)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
+note right of PX
+  Solicitante:
+  la IdentidadSistema («Sistema»).
+end note
+PX -> SF ++ : generarRecurrentes(fecha : Date)
+SF ->o] : buscar configuraciones activas sin factura del mes en BD
+autonumber stop
+SF <--o] : configuraciones
+autonumber resume
+
+loop para cada configuración c
+  SF -> C ++ : seFactura(periodoInicio : Date)
+  autonumber stop
+  return true
+  autonumber resume
+  SF -> C ++ : importeVigente(fecha : Date)
+  autonumber stop
+  return importe
+  autonumber resume
+  SF -> GR ++ : generar(datos : DatosFactura)
+  create participant "__f : FacturaRecurrente__" as F
+  GR --> F : FacturaRecurrente(datos)
+  opt primer mes y alta después del día 1
+    GR -> F : aplicarProrrateo(fechaInicio : Date)
+  end
+  autonumber stop
+  GR --> SF : f
+  deactivate GR
+  autonumber resume
+  SF -> SF : emitir(f : Factura)
+  SF ->o] : guardar factura en BD
+end
+
+autonumber stop
+return facturas
+return facturas
+autonumber resume
+T -> E : registrarProcesado(cantidad : Integer)
+autonumber stop
+T --> P
+deactivate T
+autonumber resume
+P -> E : finalizar()
+deactivate P
+
+note over C, F
+  No se factura en pausa o tras la baja;
+  el importe sale del tramo vigente.
+  El primer mes solo se cobra la parte
+  proporcional (sin ella si hay FA-1).
+  emitir() pone serie, número y PDF
+  como en CU-15.
+end note
+@enduml
