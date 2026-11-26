@@ -1,0 +1,56 @@
+@startuml cu48_2_credencial_incorrecta
+title CU-48 Acceder al sistema — 2. Credencial incorrecta
+hide footbox
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Persona sin sesión__" as P
+participant "__: InterfazWeb__" as UI
+participant "__: ServicioAcceso__" as SA
+participant "__u : Usuario__" as U
+participant "__: RegistroAuditoria__" as RA
+
+P -> UI ++ : iniciarSesion(email : String, credencial : String)
+UI -> SA ++ : autenticar(email : String, credencial : String)
+SA -> SA : pasar email a minúsculas
+SA ->o] : buscar Usuario por email en BD
+autonumber stop
+SA <--o] : u (o nada)
+autonumber resume
+
+alt no existe ningún Usuario con ese email
+  SA --> RA : RegistroAuditoria(usuario = nulo, accion = "LOGIN_FALLIDO")
+  SA ->o] : guardar RegistroAuditoria en BD
+else existe el Usuario pero la credencial no coincide
+  SA -> U ++ : estaBloqueado(ahora : DateTime)
+  autonumber stop
+  return false
+  autonumber resume
+  SA -> SA : comprobarCredencial(credencial, u.credencialHash)
+  SA -> U ++ : registrarIntentoFallido()
+  note right of U
+    Suma intentosFallidos. Al 5.º fallo seguido
+    se fija bloqueadoHasta = ahora + 15 min (A-07).
+  end note
+  autonumber stop
+  return
+  autonumber resume
+  SA --> RA : RegistroAuditoria(u, accion = "LOGIN_FALLIDO")
+  SA ->o] : guardar Usuario y RegistroAuditoria en BD
+end
+
+autonumber stop
+return error: credenciales incorrectas
+autonumber resume
+autonumber stop
+return error: credenciales incorrectas
+autonumber resume
+
+note over SA
+  Se devuelve el mismo error en los dos casos,
+  para no revelar si el email existe.
+end note
+@enduml
