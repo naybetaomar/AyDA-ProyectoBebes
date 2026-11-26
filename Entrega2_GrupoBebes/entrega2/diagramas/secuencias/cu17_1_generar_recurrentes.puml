@@ -36,24 +36,26 @@ autonumber resume
 loop para cada configuración c
   SF -> C ++ : seFactura(periodoInicio : Date)
   autonumber stop
-  return true
+  return seFactura
   autonumber resume
-  SF -> C ++ : importeVigente(fecha : Date)
-  autonumber stop
-  return importe
-  autonumber resume
-  SF -> GR ++ : generar(datos : DatosFactura)
-  create participant "__f : FacturaRecurrente__" as F
-  GR --> F : FacturaRecurrente(datos)
-  opt primer mes y alta después del día 1
-    GR -> F : aplicarProrrateo(fechaInicio : Date)
+  opt seFactura (no está en pausa ni dada de baja)
+    SF -> C ++ : importeVigente(fecha : Date)
+    autonumber stop
+    return importe
+    autonumber resume
+    SF -> GR ++ : generar(datos : DatosFactura)
+    create participant "__f : FacturaRecurrente__" as F
+    GR --> F : FacturaRecurrente(datos)
+    opt primer mes y alta después del día 1
+      GR -> F : aplicarProrrateo(fechaInicio : Date)
+    end
+    autonumber stop
+    GR --> SF : f
+    deactivate GR
+    autonumber resume
+    SF -> SF : emitir(f : Factura)
+    SF ->o] : guardar factura en BD
   end
-  autonumber stop
-  GR --> SF : f
-  deactivate GR
-  autonumber resume
-  SF -> SF : emitir(f : Factura)
-  SF ->o] : guardar factura en BD
 end
 
 autonumber stop

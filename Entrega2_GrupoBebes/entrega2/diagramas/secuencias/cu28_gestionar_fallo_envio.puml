@@ -1,0 +1,80 @@
+@startuml cu28_gestionar_fallo_envio
+title CU-28 Gestionar fallo de envío
+hide footbox
+skinparam maxMessageSize 120
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Usuario operativo__" as U
+participant "__: InterfazWeb__" as UI
+participant "__: ProxyEnvio__" as PX
+participant "__: ServicioEnvio__" as SE
+participant "__m : Mensaje__" as M
+participant "__: AdaptadorCorreo__" as AC
+participant "__: ServicioFacturacion__" as SF
+
+U -> UI ++ : verFallosEnvio(f : Factura)
+note right of U
+  Llega desde la alerta de la
+  pantalla de trabajo (CU-37).
+end note
+UI -> PX ++ : consultarMensajes(factura : Factura)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente)
+PX -> SE ++ : consultarMensajes(factura : Factura)
+SE ->o] : buscar mensajes de la factura en BD
+autonumber stop
+SE <--o] : mensajes
+return mensajes
+return mensajes
+return mensajes con estadoEntrega y motivoFallo
+autonumber resume
+
+opt el motivo es un dato de contacto erróneo
+  ref over U, UI : CU-03 Modificar contacto (email, teléfono o canal preferido)
+end
+
+U -> UI ++ : reintentarEnvio(m : Mensaje)
+UI -> PX ++ : reintentarEnvio(mensaje : Mensaje)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente)
+PX -> SE ++ : reintentarEnvio(mensaje : Mensaje)
+SE -> M : registrarIntento()
+SE -> AC ++ : enviar(mensaje = m)
+autonumber stop
+return resultado
+autonumber resume
+note right of AC
+  Con los datos de contacto ya
+  corregidos; el adaptador llama
+  al servicio simulado como en CU-27.
+end note
+
+alt envío aceptado
+  SE -> M : marcarEnviado(fecha : DateTime)
+  SE -> SF ++ : registrarEstadoEnvio(factura : Factura, estado = ENVIADA)
+  autonumber stop
+  return
+  autonumber resume
+else sigue fallando
+  SE -> M : marcarFallido(motivo : String)
+  SE -[#2E7D32]->>] : «fallos de envío»(factura : Factura, mensaje : Mensaje)
+  note right of SE
+    Con tres fallos seguidos, el área 7
+    abre una incidencia y avisa (FE-1, FR-80).
+  end note
+end
+
+autonumber stop
+return
+return
+return resultado del reintento
+autonumber resume
+
+note over SE, M
+  Se reintenta con el **mismo** mensaje y la
+  **misma** factura: no se duplica la factura
+  ni se consume numeración. Se puede repetir.
+end note
+@enduml
