@@ -4,8 +4,8 @@ title Área 9 — Diagrama 2: Patrón Proxy de permisos
 skinparam classAttributeIconSize 0
 hide empty members
 
-class Planificador <<referencia>>
-class EjecucionProceso <<referencia>>
+class Planificador <<referencia área 10>>
+class EjecucionProceso <<referencia área 10>>
 
 interface Solicitante {
   + esSistema() : Boolean
@@ -32,7 +32,7 @@ interface IServicioFacturacion {
   + marcarEnDisputa(factura : Factura, motivo : String, fechaRevision : Date) : void
 }
 
-class ServicioFacturacion <<referencia>>
+class ServicioFacturacion <<referencia área 3>>
 
 abstract class ProxyPermisos {
   # autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente [0..1], usuarioAfectado : Usuario [0..1]) : void
@@ -82,10 +82,10 @@ class AccesoDenegado <<exception>> {
   - motivo : String
 }
 
-enum Rol <<referencia>>
-class AsignacionCliente <<referencia>>
-class Delegacion <<referencia>>
-class RegistroAuditoria <<referencia>>
+enum Rol
+class AsignacionCliente
+class Delegacion
+class RegistroAuditoria
 
 Planificador ..> ContextoSeguridad : establece la\nidentidad del sistema >
 Planificador ..> IServicioFacturacion : llama a través del proxy >

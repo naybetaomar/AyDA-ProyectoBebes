@@ -126,9 +126,9 @@ enum TipoTarea {
     CONCILIACION_MANUAL
 }
 
-enum Canal <<referencia>>
+enum Canal <<referencia área 1>>
 
-enum Rol <<referencia>>
+enum Rol <<referencia área 9>>
 
 Notificacion ..> EstadoNotificacion
 Notificacion ..> PrioridadNotificacion

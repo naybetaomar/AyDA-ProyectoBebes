@@ -73,9 +73,9 @@ enum Canal {
 }
 
 ' ===== Referencias a otras áreas =====
-class Factura <<referencia>>
-class RelacionComercial <<referencia>>
-class AsignacionCliente <<referencia>>
+class Factura <<referencia área 3>>
+class RelacionComercial <<referencia área 2>>
+class AsignacionCliente <<referencia área 9>>
 
 ' ===== Núcleo del área 1 =====
 Cliente "1" *-down- "1..*" Contacto : tiene >

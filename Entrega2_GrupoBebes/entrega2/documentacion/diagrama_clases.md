@@ -35,7 +35,7 @@ Todas las áreas siguen las mismas reglas de notación:
 - Atributos **privados** (`-`) y operaciones públicas (`+`). Derivados con `/` (`/total`, `/importeSinAplicar`), inmutables con `{readOnly}` y opcionales con `[0..1]`.
 - Toda asociación lleva **multiplicidad en los dos extremos** y un verbo o nombre de rol.
 - Los estados y tipos cerrados son **enumerados**, nunca `String`. Los compartidos (`EstadoCobro`, `Rol`, `Canal`…) tienen un único conjunto de valores para todas las áreas.
-- Una clase de otra área se dibuja con el estereotipo **`<<referencia>>`**: solo su nombre o sus atributos clave. Se define completa en su área. El enumerado compartido `Canal` es del área 1 (nace en `Contacto.canalPreferido`); las áreas 5 y 7 lo usan como referencia.
+- Una clase de otra área se dibuja con el estereotipo **`<<referencia área N>>`**, donde N es el área que la define: solo su nombre o sus atributos clave. Se define completa en su área. Una clase de la misma área que aparece en otro diagrama del área va solo con su nombre, sin estereotipo. El enumerado compartido `Canal` es del área 1 (nace en `Contacto.canalPreferido`); las áreas 5 y 7 lo usan como referencia.
 - **`<<infraestructura>>`** marca los componentes técnicos que no son de ningún área funcional, como `GestorDocumentos` (guarda los ficheros: PDF, adjuntos y exportaciones). Se describen en `arquitectura.md`.
 - Las restricciones que no se ven en las flechas van en notas: `{único: …}`, invariantes y precondiciones.
 - Los campos de trazabilidad (`creadoPor`, `creadoEn`, `modificadoPor`, `modificadoEn`, NFR-03) no se dibujan en cada clase. Se indican una vez en una nota del diagrama.

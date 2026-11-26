@@ -14,32 +14,32 @@ FacturaRecurrente "0..*" -down-> "1" ConfiguracionRecurrente : generada desde >
 Factura "1" *-right- "0..*" HistorialEstadoFactura : registra >
 
 ' Clases de otras áreas
-class Cliente <<referencia>> {
+class Cliente <<referencia área 1>> {
   - id : Long
   - razonSocial : String
   - identificadorFiscal : String
 }
-class RelacionComercial <<referencia>> {
+class RelacionComercial <<referencia área 2>> {
   - id : Long
   - fechaInicio : Date
 }
-class PeriodoContable <<referencia>> {
+class PeriodoContable <<referencia área 4>> {
   - id : Long
   - inicio : Date
   - fin : Date
   - estado : EstadoPeriodo
 }
-class SolicitudExcepcion <<referencia>> {
+class SolicitudExcepcion <<referencia área 4>> {
   - id : Long
   - tipo : TipoSolicitud
   - estado : EstadoSolicitud
 }
-class Conciliacion <<referencia>> {
+class Conciliacion <<referencia área 6>> {
   - importeAplicado : Decimal
   - fecha : DateTime
   - /deshecha : Boolean
 }
-class Usuario <<referencia>> {
+class Usuario <<referencia área 9>> {
   - id : Long
   - nombre : String
   - rol : Rol

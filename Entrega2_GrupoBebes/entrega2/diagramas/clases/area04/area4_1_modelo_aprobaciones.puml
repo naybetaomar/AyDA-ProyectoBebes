@@ -59,10 +59,10 @@ enum EstadoPeriodo {
 }
 
 ' Clases de otras áreas
-class Usuario <<referencia>>
-class Factura <<referencia>>
-class ConfiguracionRecurrente <<referencia>>
-class PaqueteContable <<referencia>>
+class Usuario <<referencia área 9>>
+class Factura <<referencia área 3>>
+class ConfiguracionRecurrente <<referencia área 3>>
+class PaqueteContable <<referencia área 8>>
 
 Usuario "1" -down- "0..*" SolicitudExcepcion : solicita >
 Usuario "0..1" -down- "0..*" SolicitudExcepcion : resuelve >

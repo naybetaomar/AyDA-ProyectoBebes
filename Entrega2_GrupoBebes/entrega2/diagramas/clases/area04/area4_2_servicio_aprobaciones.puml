@@ -17,11 +17,11 @@ class ServicioAprobaciones {
   + reabrirPeriodo(periodo : PeriodoContable, motivo : String) : ReaperturaPeriodo
 }
 
-class SolicitudExcepcion <<referencia>>
-class PeriodoContable <<referencia>>
-class ReaperturaPeriodo <<referencia>>
+class SolicitudExcepcion
+class PeriodoContable
+class ReaperturaPeriodo
 
-class ConfiguracionGlobal <<referencia>> {
+class ConfiguracionGlobal <<referencia área 10>> {
   + obtenerValor(clave : String, fecha : Date) : Object
 }
 

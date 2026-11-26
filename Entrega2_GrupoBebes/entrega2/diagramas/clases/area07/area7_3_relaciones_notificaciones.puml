@@ -17,19 +17,19 @@ class Comentario
 class Tarea
 
 ' Clases de otras áreas (referencias)
-class Cliente <<referencia>> {
+class Cliente <<referencia área 1>> {
     - id : Long
     - razonSocial : String
     - identificadorFiscal : String
 }
 
-class Factura <<referencia>> {
+class Factura <<referencia área 3>> {
     - id : Long
     - numeroFactura : String [0..1]
     - /total : Decimal
 }
 
-class Usuario <<referencia>> {
+class Usuario <<referencia área 9>> {
     - id : Long
     - nombre : String
     - rol : Rol

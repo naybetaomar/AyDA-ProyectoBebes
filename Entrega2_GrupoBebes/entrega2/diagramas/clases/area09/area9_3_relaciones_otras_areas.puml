@@ -12,19 +12,19 @@ class RegistroAuditoria
 class CopiaSeguridad
 
 ' Clases de otras áreas
-class Cliente <<referencia>> {
+class Cliente <<referencia área 1>> {
   - id : Long
   - razonSocial : String
 }
-class Documento <<referencia>> {
+class Documento <<referencia área 1>> {
   - id : Long
   - nombre : String
 }
-class ExportacionMasiva <<referencia>> {
+class ExportacionMasiva <<referencia área 8>> {
   - id : Long
   - fechaCaducidad : DateTime
 }
-class Planificador <<referencia>>
+class Planificador <<referencia área 10>>
 
 AsignacionCliente "0..*" -down- "1" Cliente : sobre >
 DescargaFichero "0..*" -down- "0..1" Documento : descarga >

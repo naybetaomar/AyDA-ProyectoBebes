@@ -61,10 +61,10 @@ enum EstadoRevision {
 }
 
 ' Clases de otras áreas
-class Cliente <<referencia>>
-class Usuario <<referencia>>
-class ConfiguracionRecurrente <<referencia>>
-enum EstadoCliente <<referencia>>
+class Cliente <<referencia área 1>>
+class Usuario <<referencia área 9>>
+class ConfiguracionRecurrente <<referencia área 3>>
+enum EstadoCliente <<referencia área 1>>
 
 ' Relaciones
 Cliente "1" -down- "0..*" RelacionComercial : tiene >

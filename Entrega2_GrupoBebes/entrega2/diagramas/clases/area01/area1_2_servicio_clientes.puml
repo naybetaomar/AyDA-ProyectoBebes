@@ -73,15 +73,15 @@ package "DTO del área 1" <<Rectangle>> {
   }
 }
 
-class ServicioFacturacion <<referencia>>
-class ServicioRelacionComercial <<referencia>>
-class ServicioNotificaciones <<referencia>>
+class ServicioFacturacion <<referencia área 3>>
+class ServicioRelacionComercial <<referencia área 2>>
+class ServicioNotificaciones <<referencia área 7>>
 class GestorDocumentos <<infraestructura>>
-class ServicioUsuarios <<referencia>> {
+class ServicioUsuarios <<referencia área 9>> {
   + reasignarCliente(cliente : Cliente, nuevoResponsable : Usuario) : void
 }
-class Tarea <<referencia>>
-class ResumenFactura <<referencia>>
+class Tarea <<referencia área 7>>
+class ResumenFactura <<referencia área 3>>
 
 ServicioClientes .down.> "DTO del área 1" : usa >
 ServicioClientes .left.> AccionMasiva

@@ -18,16 +18,16 @@ interface IServicioCopias {
 }
 class ServicioCopias
 class ProxyCopias
-abstract class ProxyPermisos <<referencia>>
+abstract class ProxyPermisos
 
-class ContextoSeguridad <<referencia>>
-class Usuario <<referencia>>
-class Sesion <<referencia>>
-class TokenRecuperacion <<referencia>>
-class RegistroAuditoria <<referencia>>
-class CopiaSeguridad <<referencia>>
-class RestauracionCopia <<referencia>>
-class Planificador <<referencia>>
+class ContextoSeguridad
+class Usuario
+class Sesion
+class TokenRecuperacion
+class RegistroAuditoria
+class CopiaSeguridad
+class RestauracionCopia
+class Planificador <<referencia área 10>>
 
 ServicioAcceso .down.> Usuario : comprueba credencial\ny bloqueo >
 ServicioAcceso .down.> Sesion : <<create>>

@@ -49,11 +49,11 @@ enum EstadoEntrega {
   ENTREGADO
   FALLIDO
 }
-enum Canal <<referencia>>
+enum Canal <<referencia área 1>>
 
 ' Clases de otras áreas
-class Factura <<referencia>>
-class Contacto <<referencia>>
+class Factura <<referencia área 3>>
+class Contacto <<referencia área 1>>
 
 ReglaRecordatorio "0..*" -right-> "1" PlantillaComunicacion : usa >
 PlantillaComunicacion "1" -down- "0..*" Mensaje : genera >

@@ -25,7 +25,7 @@ class ServicioRelacionComercial {
   + buscarRango(facturacionAnual : Decimal) : RangoTarifa
 }
 
-class ServicioFacturacion <<referencia>> {
+class ServicioFacturacion <<referencia área 3>> {
   + crearConfiguracionRecurrente(relacion : RelacionComercial, importe : Decimal) : ConfiguracionRecurrente
   + actualizarImporteRecurrente(configuracion : ConfiguracionRecurrente, importe : Decimal, desde : Date) : void
   + pausarFacturacionRecurrente(configuracion : ConfiguracionRecurrente, desde : Date) : void
@@ -33,7 +33,7 @@ class ServicioFacturacion <<referencia>> {
   + finalizarFacturacionRecurrente(configuracion : ConfiguracionRecurrente, fecha : Date) : void
   + consultarFacturacionAnual(cliente : Cliente, anio : Integer) : Decimal
 }
-class ServicioNotificaciones <<referencia>> {
+class ServicioNotificaciones <<referencia área 7>> {
   + crearTarea(tipo : TipoTarea, descripcion : String, cliente : Cliente [0..1], origen : String) : Tarea
 }
 

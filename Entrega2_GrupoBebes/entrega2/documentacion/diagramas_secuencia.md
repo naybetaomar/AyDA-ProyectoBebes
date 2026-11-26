@@ -10,7 +10,7 @@ Se han elegido escenarios sobre todo de los casos de uso del **núcleo** de la p
 - los adaptadores de proveedores externos;
 - los avisos (eventos) entre áreas.
 
-Entre todos, cada uno de los cinco eventos entre áreas aparece al menos en una secuencia. «Impago sobre el límite» no lo dispara ningún caso de uso, sino una tarea diaria del planificador, así que tiene su propio escenario automático. Las variantes de un mismo caso de uso (un flujo alternativo o de excepción relevante) van en un diagrama aparte.
+Entre todos, los eventos entre áreas aparecen al menos en una secuencia. «Impago sobre el límite» no lo dispara ningún caso de uso, sino una tarea diaria del planificador, así que tiene su propio escenario automático. Las variantes de un mismo caso de uso (un flujo alternativo o de excepción relevante) van en un diagrama aparte.
 
 | Diagrama | Caso de uso y escenario | Responsable |
 |---|---|---|
@@ -20,8 +20,10 @@ Entre todos, cada uno de los cinco eventos entre áreas aparece al menos en una 
 | `cu19_2_abono_recalculo_cobro.puml` | CU-19 (2): el área 6 recibe el abono y recalcula el cobro de la original (A-27) | Abdelnaybet |
 | `tarea_1_vencimientos.puml` | Tarea diaria del planificador (1): facturas que pasan a vencidas | Abdelnaybet |
 | `tarea_2_impagos.puml` | Tarea diaria del planificador (2): alertas de impago (UR-92, UR-93; la alerta se ve en CU-37) | Abdelnaybet |
-| *pendiente* | CU-17: facturación recurrente lanzada por el planificador | Luca |
-| *pendiente* | CU-27 / CU-28: envío de una factura y fallo de envío | Ana |
+| `cu17_1_generar_recurrentes.puml` | CU-17 (1), flujo principal: generación mensual por el planificador | Luca |
+| `cu17_2_recuperacion_tras_caida.puml` | CU-17 (2): recuperación tras una caída a mitad de la generación | Luca |
+| `cu27_enviar_factura.puml` | CU-27, flujo principal: envío por correo; el fallo emite «fallos de envío» | Ana |
+| `cu28_gestionar_fallo_envio.puml` | CU-28: consultar el fallo, corregir el contacto y reintentar | Ana |
 | *pendiente* | CU-22 / CU-23: proponer una excepción y resolverla | Cristóbal |
 | *pendiente* | CU-48: acceder al sistema | Guille |
 | *pendiente* | CU-34 / CU-35: cobro por la pasarela y conciliación | Loraine |
@@ -87,6 +89,45 @@ El planificador lanza `ejecutar(ACTUALIZACION_VENCIMIENTOS)`: crea la `Ejecucion
 - **UR-93 puede llegar con hasta un día de retraso.** La deuda también crece al emitir una factura (área 3), pero solo se comprueba en esta tarea. Comprobarlo también al emitir obligaría al área 3 a conocer los límites de cobro. Se acepta para la primera versión.
 - **Detecta el área 6 y avisa el área 7.** El área 6 es la que conoce el saldo y el vencimiento; el área 7 solo crea la alerta.
 
+## CU-17: Generar facturas recurrentes
+
+**Diagrama 1. Generación mensual.** El día 1 de cada mes el planificador lanza `ejecutar(FACTURACION_RECURRENTE)`: crea la `EjecucionProceso` y se la pasa a la `TareaAutomatica`, que entra por `ProxyFacturacion` con la identidad de sistema. `ServicioFacturacion.generarRecurrentes()` busca las configuraciones activas que aún no tienen factura ese mes y, para cada una:
+
+- comprueba con `seFactura()` que no está en pausa ni dada de baja;
+- toma el importe del tramo vigente (`importeVigente()`);
+- crea la factura con el `GeneradorRecurrente` (Factory Method), que aplica el prorrateo el primer mes si el alta fue después del día 1;
+- la emite como en CU-15 (serie, número y PDF) y la guarda.
+
+Al final, la tarea anota en la ejecución las facturas generadas y el planificador la finaliza.
+
+**Diagrama 2. Recuperación tras una caída.** Si el sistema se cae a mitad de la generación, al volver a arrancar el planificador encuentra la ejecución que quedó en curso, le registra el fallo y la finaliza. Después lanza una ejecución nueva, y `generarRecurrentes()` solo encuentra las configuraciones que se quedaron sin factura.
+
+**Decisiones**
+
+- **Sin duplicados.** La búsqueda excluye las configuraciones que ya tienen factura del mes, y además la base de datos impide guardar dos facturas del mismo mes para la misma configuración (FR-100). Repetir la generación es seguro.
+- **Excepción sin prorrateo (FA-1).** Si se aprobó la excepción de CU-22, la configuración ya tiene aplicado `aplicarExcepcionSinProrrateo()` y el generador no prorratea. Se indica en una nota.
+- El resultado de cada ejecución lo ve el Administrador en el estado del sistema (CU-56).
+
+## CU-27 y CU-28: Enviar factura y gestionar el fallo
+
+**CU-27. Enviar la factura.** El Usuario operativo pide enviar una factura emitida y `ProxyEnvio` comprueba que el cliente está en su cartera. `ServicioEnvio.enviarFactura()`:
+
+1. Obtiene el contacto de facturación del cliente y comprueba el consentimiento para su canal preferido. WhatsApp solo con un número válido y consentimiento (RB-28).
+2. Compone el texto con la plantilla (`generarTexto()`) y obtiene el PDF de `GestorDocumentos`.
+3. Crea el `Mensaje`, registra el intento y lo envía por `CanalEnvio` (patrón Adapter). En el diagrama, `AdaptadorCorreo` llama al servicio de correo simulado.
+4. Según el resultado:
+   - **Aceptado:** marca el mensaje como enviado y pide al área 3 que pase la factura a `ENVIADA`.
+   - **Rechazado:** marca el mensaje como fallido con el motivo, pide al área 3 `FALLO_ENVIO` y emite «fallos de envío». El área 7 (`ManejadorAlertasEnvio`) crea la alerta de la pantalla de trabajo (CU-37).
+
+**CU-28. Gestionar el fallo.** Desde la alerta, el usuario consulta los mensajes de la factura (`consultarMensajes()`) y ve el motivo del fallo. Si es un dato de contacto erróneo, lo corrige (CU-03). Después reintenta con `reintentarEnvio()`. Si vuelve a fallar se emite de nuevo «fallos de envío», y con tres fallos seguidos el área 7 abre una incidencia (FE-1, FR-80).
+
+**Decisiones**
+
+- **El área 5 no toca la factura.** Pide el cambio de estado de envío al área 3 (`registrarEstadoEnvio()`), y cada cambio deja su historial (tipo ENVIO, FR-09).
+- **El reintento usa el mismo mensaje y la misma factura.** Solo suma un intento: la factura no se duplica ni consume numeración.
+- **Detecta el área 5 y avisa el área 7.** El área 5 no sabe nada de alertas ni de incidencias; solo emite el evento.
+- Corregir el contacto es otro caso de uso (CU-03) y aparece como referencia.
+
 ## Otros escenarios
 
 *Cada responsable describe aquí su diagrama: escenario, pasos principales y decisiones.*
@@ -99,11 +140,15 @@ El planificador lanza `ejecutar(ACTUALIZACION_VENCIMIENTOS)`: crea la `Ejecucion
 | `cu15_2_emitir_requiere_aprobacion.puml` | CU-15 FA-3, CU-22 | Los anteriores y `ServicioAprobaciones` (área 4), que crea la `SolicitudExcepcion` |
 | `cu19_1_emitir_rectificativa.puml` | CU-19 (flujo principal, FE-1 y FA-1 en nota) | `ProxyFacturacion` (RB-21); `ServicioFacturacion`; `GeneradorRectificativa`; `FacturaRectificativa`; la factura original (`marcarRectificada()`); `GestorDocumentos` (PDF) |
 | `cu19_2_abono_recalculo_cobro.puml` | CU-19 (abono), A-27, RB-37 | `ServicioCobros` (área 6: escucha el abono, `calcularSaldoPendiente()`); la factura original (`registrarEstadoCobro()`, `marcarCobroExcesivo()`); `ServicioRecordatorios` (área 5, `alCambiarEstadoCobro()`) |
+| `cu17_1_generar_recurrentes.puml` | CU-17 (flujo principal; FA-1 en nota) | `Planificador`, `TareaAutomatica` y `EjecucionProceso` (área 10); `ProxyFacturacion` (identidad de sistema); `ServicioFacturacion` (`generarRecurrentes()`, `emitir()`); `ConfiguracionRecurrente` (`seFactura()`, `importeVigente()`); `GeneradorRecurrente`; `FacturaRecurrente` (`aplicarProrrateo()`) |
+| `cu17_2_recuperacion_tras_caida.puml` | CU-17 (recuperación), FR-100, CU-56 | `Planificador` y `EjecucionProceso` (`registrarFallo()`, `finalizar()`); `TareaAutomatica`; `ProxyFacturacion`; `ServicioFacturacion` |
+| `cu27_enviar_factura.puml` | CU-27, RB-28, FR-09 | `ProxyEnvio`; `ServicioEnvio` (`enviarFactura()`); `Cliente` (`contactoFacturacion()`) y `Contacto` (`tieneConsentimiento()`) (área 1); `PlantillaComunicacion` (`generarTexto()`); `GestorDocumentos` (PDF); `Mensaje`; `AdaptadorCorreo` y `ServicioCorreoSimulado` (Adapter); `ServicioFacturacion` y `Factura` (`registrarEstadoEnvio()`) |
+| `cu28_gestionar_fallo_envio.puml` | CU-28 (FE-1 en nota), CU-03 (referencia), FR-80 | `ProxyEnvio`; `ServicioEnvio` (`consultarMensajes()`, `reintentarEnvio()`); `Mensaje` (`registrarIntento()`, `marcarEnviado()`, `marcarFallido()`); `AdaptadorCorreo`; `ServicioFacturacion` |
 | `tarea_1_vencimientos.puml` | Transición «Pendiente → Vencida», CU-56 (fallo de la tarea) | `Planificador`, `TareaAutomatica` y `EjecucionProceso` (área 10); `ProxyCobros` (identidad de sistema); `ServicioCobros` (`actualizarVencimientos()`); `Factura` (`registrarEstadoCobro()`) |
 | `tarea_2_impagos.puml` | UR-92, UR-93, CU-37 (alerta) | `Planificador`, `TareaAutomatica` y `EjecucionProceso` (área 10); `ProxyCobros`; `ServicioCobros` (`comprobarImpagos()`, `estaVencida()`, `consultarSaldo()`); `ConfiguracionGlobal` (límites); `ManejadorAlertasCobro` y `ServicioNotificaciones` (área 7) |
 
 ## Consistencia
 
-- **Con el diagrama de clases.** Los participantes y operaciones del dominio y de los servicios existen en los diagramas de clases con el mismo nombre y los mismos parámetros. Las secuencias de las áreas 3 y 6 usan `area3_1`, `area3_2` y `area6_2`. `InterfazWeb` es un componente de la arquitectura, no una clase. *Pendiente: `ProxyPermisos` (área 9) y `GestorDocumentos` (responsable por decidir) se comprobarán cuando estén sus diagramas.*
+- **Con el diagrama de clases.** Los participantes y operaciones del dominio y de los servicios existen en los diagramas de clases con el mismo nombre y los mismos parámetros. `InterfazWeb` es un componente de la arquitectura, no una clase. Cada servicio tiene su proxy (`ProxyFacturacion`, `ProxyCobros`, `ProxyEnvio`…), que implementa la misma interfaz que el servicio (`area9_2`). `GestorDocumentos` es infraestructura y no tiene operaciones definidas en el diagrama de clases; en las secuencias aparecen con un nombre que describe lo que hacen (`generarPdf()`, `obtenerPdf()`).
 - **Con la arquitectura.** Los participantes siguen las capas de la vista 1: la interfaz y la API entran por el proxy de permisos, el proxy llama al servicio del área, y el servicio usa el dominio, la configuración, el gestor de documentos y la persistencia. Los avisos en verde son los mismos que las flechas verdes de la vista 2.
 - **Diferencia de nivel de abstracción.** Las secuencias no muestran el mecanismo de los eventos (Observer, Entrega 3) ni las clases de persistencia: el acceso a la base de datos se resume en un mensaje.

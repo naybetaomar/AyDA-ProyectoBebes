@@ -72,24 +72,24 @@ enum EstadoValidacion {
 }
 
 ' ---------- Referencias de otras áreas ----------
-class ProxyPermisos <<referencia>> <<Proxy>>
-class ServicioClientes <<referencia>>
-class ServicioFacturacion <<referencia>> {
+class ProxyPermisos <<referencia área 9>> <<Proxy>>
+class ServicioClientes <<referencia área 1>>
+class ServicioFacturacion <<referencia área 3>> {
   + consultarFacturas(cliente : Cliente) : ResumenFactura [0..*]
 }
-class ServicioCobros <<referencia>> {
+class ServicioCobros <<referencia área 6>> {
   + consultarSaldo(cliente : Cliente) : ResumenSaldo
 }
-class ServicioRelacionComercial <<referencia>> {
+class ServicioRelacionComercial <<referencia área 2>> {
   + comprobarBaja(cliente : Cliente, fecha : Date) : String [0..1]
 }
-class ServicioNotificaciones <<referencia>> {
+class ServicioNotificaciones <<referencia área 7>> {
   + crearTarea(tipo : TipoTarea, descripcion : String, cliente : Cliente [0..1], origen : String) : Tarea
 }
-class ResumenFactura <<referencia>>
-class ResumenSaldo <<referencia>>
-class Cliente <<referencia>>
-class Tarea <<referencia>>
+class ResumenFactura <<referencia área 3>>
+class ResumenSaldo <<referencia área 6>>
+class Cliente <<referencia área 1>>
+class Tarea <<referencia área 7>>
 
 ' ---------- Facade ----------
 FachadaAPI .left.> ConsumidorAPI : autentica >

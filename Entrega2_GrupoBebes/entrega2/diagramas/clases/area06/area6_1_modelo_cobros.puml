@@ -64,7 +64,7 @@ enum TipoBajaContable {
   INCOBRABLE
 }
 
-abstract class Factura <<referencia>> {
+abstract class Factura <<referencia área 3>> {
   - id : Long
   - numeroFactura : String [0..1]
   - estadoCobro : EstadoCobro [0..1]

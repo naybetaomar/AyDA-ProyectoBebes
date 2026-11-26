@@ -96,9 +96,9 @@ enum SeveridadError {
 }
 
 package "Área 9 — Seguridad y Auditoría" {
-  class Usuario <<referencia>>
-  class IdentidadSistema <<referencia>>
-  class ContextoSeguridad <<referencia>>
+  class Usuario <<referencia área 9>>
+  class IdentidadSistema <<referencia área 9>>
+  class ContextoSeguridad <<referencia área 9>>
 }
 
 Planificador "1" *-- "0..*" TareaProgramada : programa >

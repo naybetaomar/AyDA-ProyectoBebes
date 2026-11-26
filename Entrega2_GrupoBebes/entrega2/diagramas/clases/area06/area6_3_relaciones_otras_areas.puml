@@ -9,28 +9,28 @@ class Conciliacion
 class BajaContable
 
 ' Clases de otras áreas
-abstract class Factura <<referencia>> {
+abstract class Factura <<referencia área 3>> {
   - id : Long
   - estadoCobro : EstadoCobro [0..1]
 }
-class FacturaRectificativa <<referencia>> {
+class FacturaRectificativa <<referencia área 3>> {
   - motivo : String
   --
   + esAbono() : Boolean
 }
-class Cliente <<referencia>> {
+class Cliente <<referencia área 1>> {
   - id : Long
   - razonSocial : String
 }
-class Usuario <<referencia>> {
+class Usuario <<referencia área 9>> {
   - id : Long
   - rol : Rol
 }
-class SolicitudExcepcion <<referencia>> {
+class SolicitudExcepcion <<referencia área 4>> {
   - id : Long
   - estado : EstadoSolicitud
 }
-class HistorialEstadoFactura <<referencia>>
+class HistorialEstadoFactura <<referencia área 3>>
 
 MovimientoCobro "1" -- "0..*" Conciliacion : se aplica en >
 Factura "1" -- "0..*" Conciliacion : se concilia en >

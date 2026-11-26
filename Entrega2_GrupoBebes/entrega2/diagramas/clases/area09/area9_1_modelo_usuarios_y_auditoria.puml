@@ -76,7 +76,7 @@ class Delegacion {
   + estaVigente(fecha : Date) : Boolean
 }
 
-class Cliente <<referencia>>
+class Cliente <<referencia área 1>>
 
 class RegistroAuditoria {
   - id : Long {readOnly}

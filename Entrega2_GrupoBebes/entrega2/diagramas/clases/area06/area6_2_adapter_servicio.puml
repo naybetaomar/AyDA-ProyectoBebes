@@ -36,7 +36,7 @@ class AdaptadorBanco {
 class ClienteStripe <<externo>>
 class ApiBanco <<externo>>
 
-class ServicioAprobaciones <<referencia>>
+class ServicioAprobaciones <<referencia área 4>>
 
 class MovimientoCobro
 class Conciliacion

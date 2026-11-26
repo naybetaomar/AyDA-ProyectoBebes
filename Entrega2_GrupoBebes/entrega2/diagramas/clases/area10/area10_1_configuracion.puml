@@ -55,7 +55,7 @@ enum TipoDatoConfig {
 }
 
 package "Área 9 — Seguridad y Auditoría" {
-  class Usuario <<referencia>>
+  class Usuario <<referencia área 9>>
 }
 
 ConfiguracionGlobal "1" *-- "1..*" EntradaConfiguracion : contiene >

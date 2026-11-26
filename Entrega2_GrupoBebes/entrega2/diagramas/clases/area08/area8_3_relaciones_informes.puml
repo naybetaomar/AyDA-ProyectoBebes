@@ -17,14 +17,14 @@ class ExportacionMasiva
 class InformeProgramado
 
 ' Clases de otras áreas (referencias)
-class PeriodoContable <<referencia>> {
+class PeriodoContable <<referencia área 4>> {
     - id : Long
     - inicio : Date
     - fin : Date
     - estado : EstadoPeriodo
 }
 
-class Usuario <<referencia>> {
+class Usuario <<referencia área 9>> {
     - id : Long
     - nombre : String
     - rol : Rol

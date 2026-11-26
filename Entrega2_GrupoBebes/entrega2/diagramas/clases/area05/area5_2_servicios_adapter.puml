@@ -36,20 +36,20 @@ class ServicioWhatsAppSimulado <<externo>> {
   + enviarWhatsApp(telefono : String, texto : String) : Boolean
 }
 
-class Mensaje <<referencia>>
-class PlantillaComunicacion <<referencia>>
-class ReglaRecordatorio <<referencia>>
-class Contacto <<referencia>>
-class ServicioFacturacion <<referencia>> {
+class Mensaje
+class PlantillaComunicacion
+class ReglaRecordatorio
+class Contacto <<referencia área 1>>
+class ServicioFacturacion <<referencia área 3>> {
   + registrarEstadoEnvio(factura : Factura, estado : EstadoEnvio) : void
   + marcarEnDisputa(factura : Factura, motivo : String, fechaRevision : Date) : void
   + quitarDisputa(factura : Factura) : void
 }
-class ServicioCobros <<referencia>> {
+class ServicioCobros <<referencia área 6>> {
   + estaVencida(factura : Factura) : Boolean
 }
 class GestorDocumentos <<infraestructura>>
-class CalendarioLaboral <<referencia>> {
+class CalendarioLaboral <<referencia área 10>> {
   + siguienteDiaLaborable(fecha : Date) : Date
 }
 
