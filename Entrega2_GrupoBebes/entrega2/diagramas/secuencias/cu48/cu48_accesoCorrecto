@@ -1,0 +1,57 @@
+@startuml cu48_1_acceso_correcto
+title CU-48 Acceder al sistema — 1. Acceso correcto
+hide footbox
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Persona sin sesión__" as P
+participant "__: InterfazWeb__" as UI
+participant "__: ServicioAcceso__" as SA
+participant "__u : Usuario__" as U
+participant "__: ContextoSeguridad__" as CS
+
+P -> UI ++ : iniciarSesion(email : String, credencial : String)
+UI -> SA ++ : autenticar(email : String, credencial : String)
+note right of SA
+  No pasa por el proxy: todavía no hay
+  solicitante. El email se pasa a
+  minúsculas antes de buscarlo.
+end note
+SA -> SA : pasar email a minúsculas
+SA ->o] : buscar Usuario por email en BD
+autonumber stop
+SA <--o] : u
+autonumber resume
+SA -> U ++ : estaBloqueado(ahora : DateTime)
+autonumber stop
+return false
+autonumber resume
+SA -> SA : comprobarCredencial(credencial, u.credencialHash)
+create participant "__s : Sesion__" as S
+SA --> S : Sesion(u)
+SA -> CS ++ : establecerUsuario(u : Usuario)
+autonumber stop
+return
+autonumber resume
+create participant "__: RegistroAuditoria__" as RA
+SA --> RA : RegistroAuditoria(u, accion = "LOGIN")
+SA ->o] : guardar Sesion y RegistroAuditoria en BD
+
+autonumber stop
+return s
+autonumber resume
+autonumber stop
+return sesión iniciada
+autonumber resume
+autonumber stop
+return acceso concedido
+autonumber resume
+
+note over SA, S
+  La sesión caduca a los 30 min sin actividad (A-06):
+  la comprueba validarSesion() en cada petición.
+end note
+@enduml
