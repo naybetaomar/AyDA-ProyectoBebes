@@ -1,5 +1,5 @@
 @startuml arquitectura_3_despliegue
-title Arquitectura de Turbine — 3. Vista de despliegue — BORRADOR
+title Arquitectura de Turbine — 3. Vista de despliegue
 
 node "Puesto del usuario" {
   artifact "Navegador web" as Nav

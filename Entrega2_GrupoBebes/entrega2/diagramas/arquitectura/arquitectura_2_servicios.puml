@@ -1,5 +1,5 @@
 @startuml arquitectura_2_servicios
-title Arquitectura de Turbine — 2. Detalle de servicios: lógica y eventos entre áreas — BORRADOR
+title Arquitectura de Turbine — 2. Detalle de servicios: lógica y eventos entre áreas
 skinparam componentStyle uml2
 skinparam nodesep 60
 skinparam ranksep 70

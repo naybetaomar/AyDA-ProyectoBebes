@@ -1,5 +1,5 @@
 @startuml arquitectura_1_general
-title Arquitectura de Turbine — 1. Vista general (componentes en capas) — BORRADOR
+title Arquitectura de Turbine — 1. Vista general (componentes en capas)
 skinparam componentStyle uml2
 skinparam packageStyle rectangle
 skinparam nodesep 35
