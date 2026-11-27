@@ -70,21 +70,16 @@ AdaptadorCorreo -down-> ServicioCorreoSimulado : adapta >
 AdaptadorWhatsApp -down-> ServicioWhatsAppSimulado : adapta >
 
 note right of ServicioEnvio
-  **Punto de entrada del área 5**, a través del
-  proxy de permisos (área 9).
-  **enviarFactura()**: elige el canal preferido
-  del contacto de facturación; WhatsApp solo con
-  número válido y consentimiento (RB-28). Crea el
-  Mensaje con la plantilla y pide al área 3
-  registrarEstadoEnvio(ENVIADA).
-  Si el envío falla: marcarFallido(),
-  registrarEstadoEnvio(FALLO_ENVIO) y emite
-  «fallos de envío»; el área 7 crea la incidencia
-  y avisa tras tres fallos seguidos (CU-28 FE-1, FR-80).
-  **reintentarEnvio()** (CU-28): mismo mensaje y misma
-  factura, tras corregir el contacto (área 1).
-  **guardarPlantilla()** rechaza una plantilla sin las
-  variables obligatorias (CU-30 FE-1).
+  **Punto de entrada del área 5**, a través del proxy.
+  **enviarFactura()**: canal preferido del contacto de
+  facturación; WhatsApp solo con número válido y
+  consentimiento (RB-28). Crea el Mensaje y pide al
+  área 3 registrarEstadoEnvio().
+  Si falla: marcarFallido(), FALLO_ENVIO y «fallos de
+  envío» al área 7 (CU-28, FR-80).
+  **reintentarEnvio()**: mismo mensaje y misma factura.
+  **guardarPlantilla()**: exige las variables
+  obligatorias (CU-30 FE-1).
 end note
 
 note bottom of ServicioRecordatorios

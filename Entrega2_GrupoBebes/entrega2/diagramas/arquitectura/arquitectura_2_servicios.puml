@@ -32,6 +32,7 @@ S8 --> S6 : cifras (lectura)
 S3 -[#2E7D32,dashed]-> S6 : abono emitido
 S4 -[#2E7D32,dashed]-> S3 : solicitud resuelta
 S4 -[#2E7D32,dashed]-> S6 : solicitud resuelta
+S4 -[#2E7D32,dashed]-> S7 : solicitud creada
 S4 -[#2E7D32,dashed]-> S7 : solicitud resuelta
 S6 -[#2E7D32,dashed]-> S5 : estado de cobro cambiado
 S6 -[#2E7D32,dashed]-> S7 : impago sobre el límite

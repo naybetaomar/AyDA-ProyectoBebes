@@ -7,7 +7,7 @@ skinparam nodesep 80
 skinparam ranksep 100
 hide empty members
 
-title Área 7 — Diagrama 3 (propuesta): Relaciones con otras áreas
+title Área 7 — Diagrama 3: Relaciones con otras áreas
 
 ' Clases del Área 7 (definidas en el diagrama 1)
 class Notificacion

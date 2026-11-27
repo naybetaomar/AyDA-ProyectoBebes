@@ -196,44 +196,28 @@ HistorialEstadoFactura ..> TipoEstado
 SerieFacturacion ..> TipoSerie
 
 note top of Factura
-  **id**: identificador interno, existe desde el borrador.
-  **numeroFactura**: número legal; se asigna en emitir()
-  desde la serie (RB-01) y no se modifica.
-  **estadoCobro** y **estadoEnvio**: nulos hasta emitirse (A-23);
-  estadoCobro también es nulo en los abonos (A-27).
-  **Lo que se factura (área 3) / lo que se cobra (área 6).**
-  El saldo pendiente y el vencimiento los calcula
-  ServicioCobros (área 6). Factura solo guarda estadoCobro
-  y cobroExcesivo (marca de la E1), que actualiza el área 6
-  con registrarEstadoCobro() y marcarCobroExcesivo()
-  (guardan el cambio en el historial).
-  La lógica va solo del área 6 a la 3.
-  Serie y periodo: 0..1 en borrador; 1 una vez emitida.
-  **Disputa** (CU-31): {enDisputa ⇔ motivoDisputa y
-  fechaRevisionDisputa informados}; no cambia el estado de cobro.
-  **emitir()**: la serie debe pertenecer a la EntidadEmisora
-  de la factura {serie.entidadEmisora = entidadEmisora}
-  y, en puntuales y recurrentes, de tipo ORDINARIA
-  {serie.tipo = ORDINARIA}; la rectificativa, ver su nota.
+  **numeroFactura**: se asigna en emitir() desde la serie
+  (RB-01) y no cambia; **id** existe desde el borrador.
+  **estadoCobro** y **estadoEnvio**: nulos hasta emitirse
+  (A-23); estadoCobro, también en los abonos (A-27).
+  El saldo y el vencimiento los calcula el área 6, que
+  actualiza estadoCobro y cobroExcesivo con
+  registrarEstadoCobro() y marcarCobroExcesivo().
+  Serie y periodo: 0..1 en borrador, 1 al emitir, con
+  {serie.entidadEmisora = entidadEmisora} y, salvo en la
+  rectificativa, {serie.tipo = ORDINARIA}.
+  **Disputa** (CU-31): {enDisputa ⇔ motivo y fecha de
+  revisión}; no cambia el estado de cobro.
 end note
 
 note bottom of FacturaRectificativa
-  Sobrescribe **emitir()**: llama a super.emitir()
-  y después a facturaOriginal.marcarRectificada()
-  (CU-19, RB-11). La original no cambia mientras
-  la rectificativa siga en borrador o pendiente.
-  Se emite en una serie específica
-  {serie.tipo = RECTIFICATIVA}
-  (RD 1619/2012, art. 6.1.a).
-  **esAbono()** = total negativo: compensa el saldo
-  de la original y no tiene estado de cobro (A-27).
-  Al emitirse un abono, emite el evento «abono
-  emitido» (evento de dominio; Observer en la E3).
-  No recalcula el cobro de la original: lo hace
-  el área 6, que escucha el evento.
-  Si el abono supera el saldo, la diferencia queda
-  a favor del cliente: el área 6 marca cobroExcesivo
-  (destino pendiente de Q-12).
+  **emitir()**: super.emitir() y después
+  facturaOriginal.marcarRectificada() (CU-19, RB-11).
+  Serie {tipo = RECTIFICATIVA} (RD 1619/2012, art. 6.1.a).
+  **esAbono()** = total negativo: sin estado de cobro
+  propio (A-27). Al emitirse lanza «abono emitido»;
+  el área 6 recalcula el cobro de la original y, si el
+  abono supera el saldo, marca cobroExcesivo (Q-12).
 end note
 
 note bottom of FacturaRecurrente
@@ -255,20 +239,15 @@ note bottom of HistorialEstadoFactura
 end note
 
 note right of ConfiguracionRecurrente
-  CU-17. El importe lo fija el área 2 (alta, corrección
-  y revisión anual) con actualizarImporteRecurrente();
-  el área 3 no lee RangoTarifa (dependencia solo 2 → 3).
-  **importeVigente(fecha)**: el tramo con el mayor
-  desde ≤ fecha. Se conservan todos los tramos, así una
-  factura generada tarde (recuperación, FR-100) sale con
-  el importe de su periodo (RB-36).
-  **seFactura(periodo)**: fechaActivacion ≤ periodo,
-  periodo < fechaFin (baja, CU-12) y el periodo no cae
-  en ningún PeriodoPausa (CU-11, RB-05). Las pausas
-  pasadas se conservan: la recuperación no factura
-  los meses pausados (RB-26).
-  **excepcionSinProrrateo** = true → no se
-  factura el mes de alta (FA-1).
+  CU-17. El importe lo fija el área 2 con
+  actualizarImporteRecurrente(); el área 3 no lee
+  RangoTarifa (dependencia solo 2 → 3).
+  **importeVigente(fecha)**: el tramo vigente en esa fecha.
+  Se conservan todos, así una factura atrasada sale con
+  el importe de su periodo (FR-100, RB-36).
+  **seFactura(periodo)**: activa, antes de la baja y fuera
+  de cualquier PeriodoPausa (CU-11, CU-12, RB-05).
+  **excepcionSinProrrateo**: no se factura el mes de alta (FA-1).
 end note
 
 note bottom of TramoImporte

@@ -4,7 +4,7 @@ skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide empty members
 
-title Área 8 — Diagrama 1: Modelo de informes y contabilidad (v3)
+title Área 8 — Diagrama 1: Modelo de informes y contabilidad 
 
 class ObjetivoFacturacion {
     - id : Long {readOnly}
@@ -107,7 +107,7 @@ end note
 
 note bottom of InformeProgramado
     **Informes Programados (CU-44)**
-    La ejecución es orquestada por ServicioInformes e invocada por el Job Scheduler (Área 10). 
+    La ejecución es orquestada por ServicioInformes e lanzada por el planificador (área 10). 
     Destinatarios vinculados a Usuario.
 end note
 

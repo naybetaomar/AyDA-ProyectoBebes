@@ -92,21 +92,15 @@ GeneradorRecurrente .down.> FacturaRecurrente : <<create>>
 GeneradorRectificativa .down.> FacturaRectificativa : <<create>>
 
 note right of ServicioFacturacion
-  **Punto de entrada del área 3** (igual que ServicioCobros en el 6).
-  Las demás áreas lo llaman a través del proxy de permisos:
-  · área 1: consultarFacturas() para la ficha (CU-02), registrarFacturasMigradas() (CU-06)
-  · área 2: crear/actualizarImporte/pausar/reanudar/finalizar...Recurrente() y
-    consultarFacturacionAnual() (CU-10 a CU-13)
-  · área 5: registrarEstadoEnvio(), marcarEnDisputa() / quitarDisputa() (CU-27, CU-28, CU-31)
-  · área 10: generarRecurrentes() desde la tarea programada (CU-17)
-  · área 11: consultarFacturas() (CU-57)
-  Lo que sale hacia otras áreas va en DTO: ResumenFactura (lo usan las áreas 1 y 11)
-  y ResultadoMigracion (importación parcial: las filas válidas se guardan y las
-  erróneas se devuelven con su motivo).
-  Escucha el evento «solicitud resuelta» (área 4) con alResolverSolicitud():
-  aprobada → emitir(); rechazada → factura.volverABorrador() conservando lo propuesto;
-  excepción de prorrateo aprobada → configuracion.aplicarExcepcionSinProrrateo() (CU-22).
-  emitir() pide la serie y el periodo y llama a factura.emitir().
+  **Punto de entrada del área 3**, a través del proxy. Lo llaman:
+  · área 1: consultarFacturas(), registrarFacturasMigradas() (CU-02, CU-06)
+  · área 2: la facturación recurrente y consultarFacturacionAnual() (CU-10 a CU-13)
+  · área 5: registrarEstadoEnvio(), marcarEnDisputa(), quitarDisputa()
+  · área 10: generarRecurrentes() (CU-17); área 11: consultarFacturas() (CU-57)
+  Hacia fuera devuelve DTO: ResumenFactura y ResultadoMigracion.
+  **alResolverSolicitud()** escucha «solicitud resuelta» (área 4):
+  aprobada → emitir(); rechazada → volverABorrador();
+  prorrateo aprobado → aplicarExcepcionSinProrrateo() (CU-22).
   No calcula saldo ni vencimiento: eso es del área 6.
 end note
 

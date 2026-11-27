@@ -97,16 +97,12 @@ note right of ServicioClientes
   **Punto de entrada del área 1** (CU-01 a CU-09),
   a través del proxy de permisos (área 9).
   registrarCliente(): rechaza un identificador fiscal
-  repetido y exige un contacto de facturación (RB-27).
-  ejecutarAccionMasiva(): crea la Tarea (área 7) para
-  seguir el progreso y aplica la acción cliente a cliente,
-  registrando éxitos y fallos (CU-07). REASIGNAR llama a
-  ServicioUsuarios.reasignarCliente() (área 9) y es
-  solo para Administrador (RB-15).
-  anonimizarContacto(): anonimización parcial si hay datos
-  que deben conservarse (CU-09 FE-1); el resultado dice
-  qué se conserva y por qué.
-  Dependencias en un solo sentido: el área 1 llama
-  a las áreas 2, 3, 7 y 9, y ellas no llaman al área 1.
+  repetido y exige contacto de facturación (RB-27).
+  ejecutarAccionMasiva(): crea una Tarea (área 7) y aplica
+  la acción cliente a cliente (CU-07). REASIGNAR la hace
+  el área 9 y es solo para Administrador (RB-15).
+  anonimizarContacto(): parcial si hay datos que deben
+  conservarse; dice cuáles y por qué (CU-09 FE-1).
+  El área 1 llama a las áreas 2, 3, 7 y 9, nunca al revés.
 end note
 @enduml

@@ -45,20 +45,15 @@ Planificador .down.> IServicioCopias : copia programada,\na través del proxy >
 
 note left of ServicioAcceso
   **Login (CU-48) y recuperación de contraseña.**
-  El email se pasa a minúsculas antes de buscarlo.
   No pasa por el proxy: todavía no hay solicitante.
-  autenticar() suma los intentos fallidos y bloquea
-  15 min tras 5 seguidos (A-07); si acierta, crea la
-  Sesion y deja el Usuario en ContextoSeguridad.
-  **validarSesion()**: la llama la interfaz web en
-  cada petición, antes de entrar en el proxy.
-  Si sesion.estaCaducada() (30 min sin actividad,
-  A-06), la cierra y pide volver a iniciar sesión;
-  si no, llama a registrarActividad() y deja el
-  Usuario en ContextoSeguridad. La API y el
-  planificador no tienen sesión: dejan su propia
-  identidad en el contexto.
-  El token caduca a las 24 h y se guarda solo su hash.
+  **autenticar()**: email en minúsculas; bloquea 15 min
+  tras 5 fallos seguidos (A-07); si acierta, pone los
+  intentos a 0, crea la Sesion y deja el Usuario en
+  el ContextoSeguridad.
+  **validarSesion()**: en cada petición; tras 30 min sin
+  actividad cierra la sesión (A-06). La API y el
+  planificador dejan su propia identidad.
+  Token de recuperación: 24 h, solo su hash.
   Registra en auditoría los accesos y los fallos.
 end note
 

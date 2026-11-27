@@ -120,30 +120,24 @@ note bottom of Planificador
   `ContextoSeguridad` antes de ejecutar la `TareaAutomatica`.
   Cada tarea invoca al servicio de su área a través de su
   Proxy correspondiente. Un rechazo del Proxy se registra
-  como fallo en `EjecucionProceso` (BR-04) y alerta (CU-56).
+  como fallo en `EjecucionProceso` y alerta (CU-56).
   ejecutar(tipo) crea la EjecucionProceso y se la pasa a la
   tarea, que anota lo procesado y los fallos; al final, finalizar().
 end note
 
 note right of TipoProceso
-  **Qué lanza cada tarea** (siempre por el proxy del servicio):
-  FACTURACION_RECURRENTE → ServicioFacturacion.generarRecurrentes(fecha) (3)
-  RECORDATORIOS → ServicioRecordatorios.procesarVencimientos(fecha) (5)
-  CAMPANIA_ANUAL → ServicioRelacionComercial.prepararRevisionAnual(anio) (2)
-  AVISO_REACTIVACION_PAUSAS →
-      ServicioRelacionComercial.avisarReactivacionesPendientes(fecha) (2)
-  CADUCIDAD_DELEGACIONES → ServicioUsuarios.caducarDelegaciones(fecha) (9)
-  COPIA_SEGURIDAD → ServicioCopias.lanzarCopia() (9)
-  CONCILIACION → ServicioCobros.conciliarAutomaticamente(movimiento),
-      por cada movimiento sin conciliar (6)
-  INFORMES_PROGRAMADOS → ServicioInformes.ejecutarInformeProgramado(id),
-      por cada informe que toca (8)
-  ACTUALIZACION_VENCIMIENTOS → ServicioCobros.actualizarVencimientos(fecha)
-      y después comprobarImpagos(fecha) (6)
-  BORRADO_EXPORTACIONES_CADUCADAS →
-      ServicioInformes.borrarExportacionesCaducadas(fecha) (8)
-  CARGA_DATOS_DEMO → la implementa el área 10 sobre el
-      esquema de demostración (CU-55)
+  **Qué lanza cada tarea** (por el proxy de su servicio):
+  FACTURACION_RECURRENTE → generarRecurrentes() (3)
+  RECORDATORIOS → procesarVencimientos() (5)
+  CAMPANIA_ANUAL → prepararRevisionAnual() (2)
+  AVISO_REACTIVACION_PAUSAS → avisarReactivacionesPendientes() (2)
+  CADUCIDAD_DELEGACIONES → caducarDelegaciones() (9)
+  COPIA_SEGURIDAD → lanzarCopia() (9)
+  CONCILIACION → conciliarAutomaticamente(), por movimiento (6)
+  INFORMES_PROGRAMADOS → ejecutarInformeProgramado() (8)
+  ACTUALIZACION_VENCIMIENTOS → actualizarVencimientos() y comprobarImpagos() (6)
+  BORRADO_EXPORTACIONES_CADUCADAS → borrarExportacionesCaducadas() (8)
+  CARGA_DATOS_DEMO → la propia área 10 (CU-55)
 end note
 
 @enduml

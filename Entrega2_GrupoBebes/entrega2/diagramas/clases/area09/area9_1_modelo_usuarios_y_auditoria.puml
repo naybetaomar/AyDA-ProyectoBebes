@@ -35,6 +35,7 @@ class Usuario {
   + cambiarRol(nuevoRol : Rol) : void
   + desactivar() : void
   + registrarIntentoFallido() : void
+  + reiniciarIntentos() : void
   + estaBloqueado(ahora : DateTime) : Boolean
 }
 
@@ -122,6 +123,8 @@ RestauracionCopia ..> ResultadoRestauracion
 note bottom of Usuario
   {único: email}.
   Bloqueo: 5 fallos seguidos = 15 min (A-07).
+  Un acceso correcto pone los intentos a 0
+  (reiniciarIntentos()).
   cambiarRol() y desactivar() solo cambian el valor;
   las reglas las comprueba ServicioUsuarios (diagrama 2),
   entre ellas RB-39: siempre queda al menos un

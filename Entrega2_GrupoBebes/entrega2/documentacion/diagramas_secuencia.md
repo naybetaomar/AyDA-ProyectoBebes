@@ -24,8 +24,12 @@ Entre todos, los eventos entre áreas aparecen al menos en una secuencia. «Impa
 | `cu17_2_recuperacion_tras_caida.puml` | CU-17 (2): recuperación tras una caída a mitad de la generación | Luca |
 | `cu27_enviar_factura.puml` | CU-27, flujo principal: envío por correo; el fallo emite «fallos de envío» | Ana |
 | `cu28_gestionar_fallo_envio.puml` | CU-28: consultar el fallo, corregir el contacto y reintentar | Ana |
-| *pendiente* | CU-22 / CU-23: proponer una excepción y resolverla | Cristóbal |
-| *pendiente* | CU-48: acceder al sistema | Guille |
+| `cu48_1_acceso_correcto.puml` | CU-48 (1), flujo principal: acceso correcto | Guillermo |
+| `cu48_2_credencial_incorrecta.puml` | CU-48 (2): credencial incorrecta | Guillermo |
+| `cu48_3_cuenta_bloqueada.puml` | CU-48 (3): cuenta bloqueada | Guillermo |
+| `cu22_proponer_excepcion_prorrateo.puml` | CU-22: proponer una excepción de prorrateo (la propuesta de una factura sigue CU-15, diagrama 2) | Cristóbal |
+| `cu23_1_aprobar_solicitud.puml` | CU-23 (1), flujo principal: aprobar (FE-1 y FA-1 como alternativas) | Cristóbal |
+| `cu23_2_rechazar_solicitud.puml` | CU-23 (2), FA-2: rechazar con comentario | Cristóbal |
 | *pendiente* | CU-34 / CU-35: cobro por la pasarela y conciliación | Loraine |
 | *pendiente* | CU-57 / CU-58: consulta y solicitud por la API externa | Imad |
 
@@ -38,7 +42,7 @@ Todos los diagramas siguen las mismas reglas:
 - **Creación:** los objetos se crean con una flecha discontinua hacia la caja del participante, que aparece a esa altura.
 - **Base de datos:** el acceso a la base de datos se dibuja como un mensaje hacia un punto en el borde derecho («buscar… en BD», «guardar… en BD»). La persistencia no es una clase del dominio.
 - **Avisos entre áreas (eventos):** flecha verde. Indica que el área que emite no llama a la que escucha (ver «Lógica entre áreas en un solo sentido» en `diagrama_clases.md`).
-- **Comprobación de permisos:** toda petición de un usuario, de la API o del planificador entra por el proxy de permisos, que la autoriza y la registra en la auditoría antes de llamar al servicio.
+- **Comprobación de permisos:** toda petición de un usuario, de la API o del planificador entra por el proxy de permisos, que la autoriza y la registra en la auditoría antes de llamar al servicio. La única excepción es el inicio de sesión (CU-48), que ocurre antes de que haya un solicitante.
 
 ## CU-15: Emitir factura puntual
 
@@ -128,9 +132,41 @@ Al final, la tarea anota en la ejecución las facturas generadas y el planificad
 - **Detecta el área 5 y avisa el área 7.** El área 5 no sabe nada de alertas ni de incidencias; solo emite el evento.
 - Corregir el contacto es otro caso de uso (CU-03) y aparece como referencia.
 
-## Otros escenarios
+## CU-48: Acceder al sistema
 
-*Cada responsable describe aquí su diagrama: escenario, pasos principales y decisiones.*
+La persona escribe su email y su credencial, y la interfaz llama a `ServicioAcceso.autenticar()`. No pasa por el proxy, porque todavía no hay solicitante. El email se pasa a minúsculas antes de buscarlo. Hay un diagrama por cada resultado:
+
+- **Diagrama 1. Acceso correcto.** Comprueba que la cuenta no está bloqueada (`estaBloqueado()`) y la credencial. Pone los intentos fallidos a 0 (`reiniciarIntentos()`), crea la `Sesion`, deja el usuario en el `ContextoSeguridad` (`establecer()`) y registra el acceso en la auditoría.
+- **Diagrama 2. Credencial incorrecta.** Si el email no existe, solo registra el fallo. Si existe, suma un intento fallido (`registrarIntentoFallido()`); al quinto seguido, la cuenta queda bloqueada 15 minutos (A-07).
+- **Diagrama 3. Cuenta bloqueada.** No comprueba la credencial ni suma intentos. Registra el intento y responde hasta cuándo dura el bloqueo.
+
+**Decisiones**
+
+- **El mismo error si el email no existe y si la credencial no coincide,** para no revelar qué emails están dados de alta.
+- **`ServicioAcceso` registra él mismo en la auditoría,** porque el inicio de sesión no pasa por el proxy.
+- **La caducidad de la sesión** (30 minutos sin actividad, A-06) la comprueba `validarSesion()` en cada petición. No hace falta una tarea programada.
+
+## CU-22 y CU-23: Proponer una excepción y resolverla
+
+**CU-22. Proponer una excepción de prorrateo.** El Usuario operativo propone no cobrar el prorrateo del primer mes de una facturación recurrente. La factura todavía no existe, así que la propuesta va sobre la `ConfiguracionRecurrente`. `ProxyAprobaciones` comprueba que el cliente está en su cartera (FE-1, RB-15). `ServicioAprobaciones.solicitarExcepcionProrrateo()` toma el solicitante del `ContextoSeguridad`, lee de la configuración el importe que se dejaría de facturar (`calcularPrimeraCuota()`) y crea la `SolicitudExcepcion` PENDIENTE. Al guardarla emite «solicitud creada», y el área 7 (`ManejadorSolicitudesResueltas`) avisa a cada aprobador (paso 4).
+
+La **propuesta de una factura** (descuento, importe o fecha manual) no se repite: es el diagrama 2 de CU-15, con el tipo de la modificación y el motivo de `DatosFactura`. La factura queda pendiente de aprobación sin número (RB-25).
+
+**CU-23 (1). Aprobar.** El Administrador abre la bandeja con `listarPendientes()` y aprueba una solicitud. `ServicioAprobaciones.aprobar()` toma el aprobador del `ContextoSeguridad`, lee el umbral de `ConfiguracionGlobal` y comprueba dos casos, que son las alternativas del diagrama:
+
+- **FE-1, autoaprobación:** el aprobador es quien la pidió (FR-74).
+- **FA-1, supera el umbral:** el importe supera el umbral y el aprobador no es Superadministrador (RB-04). La solicitud sigue pendiente hasta que la resuelva un Superadministrador.
+
+Si puede aprobar, `s.aprobar()` guarda el aprobador, el comentario y la fecha (paso 4), y el servicio emite «solicitud resuelta». El área 3 (`alResolverSolicitud()`) aplica lo aprobado (paso 5): en una excepción de prorrateo llama a `aplicarExcepcionSinProrrateo()`; en una factura, la emite como en el diagrama 1 de CU-15. El área 7 avisa al solicitante.
+
+**CU-23 (2). Rechazar (FA-2).** El comentario es obligatorio. `s.rechazar()` deja la solicitud rechazada y se emite «solicitud resuelta». Si era una factura, el área 3 la devuelve a borrador con `volverABorrador()`, conservando lo propuesto y dejando el historial, para que el solicitante la corrija y la reenvíe (POST-2). Si era una excepción de prorrateo, no se aplica. El área 7 avisa al solicitante con el motivo (CU-37).
+
+**Decisiones**
+
+- **El área 4 no toca la factura ni la configuración.** Solo resuelve la solicitud y emite el evento; quien la pidió (área 3, o área 6 en una baja contable) actúa al recibirlo. Así la dependencia va del área 3 a la 4 y no al revés.
+- **El umbral lo lee el servicio, no la interfaz.** La interfaz no accede a `ConfiguracionGlobal`: todo pasa por el proxy.
+- **Las comprobaciones de FE-1 y FA-1 se repiten al rechazar.** Se indica en una nota del diagrama 2 en lugar de dibujarlas otra vez.
+
 
 ## Trazabilidad
 
@@ -144,6 +180,12 @@ Al final, la tarea anota en la ejecución las facturas generadas y el planificad
 | `cu17_2_recuperacion_tras_caida.puml` | CU-17 (recuperación), FR-100, CU-56 | `Planificador` y `EjecucionProceso` (`registrarFallo()`, `finalizar()`); `TareaAutomatica`; `ProxyFacturacion`; `ServicioFacturacion` |
 | `cu27_enviar_factura.puml` | CU-27, RB-28, FR-09 | `ProxyEnvio`; `ServicioEnvio` (`enviarFactura()`); `Cliente` (`contactoFacturacion()`) y `Contacto` (`tieneConsentimiento()`) (área 1); `PlantillaComunicacion` (`generarTexto()`); `GestorDocumentos` (PDF); `Mensaje`; `AdaptadorCorreo` y `ServicioCorreoSimulado` (Adapter); `ServicioFacturacion` y `Factura` (`registrarEstadoEnvio()`) |
 | `cu28_gestionar_fallo_envio.puml` | CU-28 (FE-1 en nota), CU-03 (referencia), FR-80 | `ProxyEnvio`; `ServicioEnvio` (`consultarMensajes()`, `reintentarEnvio()`); `Mensaje` (`registrarIntento()`, `marcarEnviado()`, `marcarFallido()`); `AdaptadorCorreo`; `ServicioFacturacion` |
+| `cu48_1_acceso_correcto.puml` | CU-48 (flujo principal), A-06 | `ServicioAcceso` (`autenticar()`); `Usuario` (`estaBloqueado()`, `reiniciarIntentos()`); `Sesion`; `ContextoSeguridad` (`establecer()`); `RegistroAuditoria` |
+| `cu48_2_credencial_incorrecta.puml` | CU-48 (credencial incorrecta), A-07 | `ServicioAcceso`; `Usuario` (`estaBloqueado()`, `registrarIntentoFallido()`); `RegistroAuditoria` |
+| `cu48_3_cuenta_bloqueada.puml` | CU-48 (cuenta bloqueada), A-07 | `ServicioAcceso`; `Usuario` (`estaBloqueado()`); `RegistroAuditoria` |
+| `cu22_proponer_excepcion_prorrateo.puml` | CU-22 (flujo principal; FE-1 en nota), RB-25 | `ProxyAprobaciones` (RB-15); `ServicioAprobaciones` (`solicitarExcepcionProrrateo()`); `ContextoSeguridad` (`solicitanteActual()`); `ConfiguracionRecurrente` (`calcularPrimeraCuota()`); `SolicitudExcepcion`; `ManejadorSolicitudesResueltas` y `ServicioNotificaciones` (área 7) |
+| `cu23_1_aprobar_solicitud.puml` | CU-23 (flujo principal, FE-1, FA-1), FR-74, RB-04 | `ProxyAprobaciones`; `ServicioAprobaciones` (`listarPendientes()`, `aprobar()`); `ContextoSeguridad`; `ConfiguracionGlobal` (umbral); `SolicitudExcepcion` (`aprobar()`); `ServicioFacturacion` (`alResolverSolicitud()`); `ConfiguracionRecurrente` (`aplicarExcepcionSinProrrateo()`); `ManejadorSolicitudesResueltas` |
+| `cu23_2_rechazar_solicitud.puml` | CU-23 FA-2, POST-2, CU-37 | `ProxyAprobaciones`; `ServicioAprobaciones` (`rechazar()`); `SolicitudExcepcion` (`rechazar()`); `ServicioFacturacion` (`alResolverSolicitud()`); `Factura` (`volverABorrador()`); `HistorialEstadoFactura`; `ManejadorSolicitudesResueltas` y `ServicioNotificaciones` (área 7) |
 | `tarea_1_vencimientos.puml` | Transición «Pendiente → Vencida», CU-56 (fallo de la tarea) | `Planificador`, `TareaAutomatica` y `EjecucionProceso` (área 10); `ProxyCobros` (identidad de sistema); `ServicioCobros` (`actualizarVencimientos()`); `Factura` (`registrarEstadoCobro()`) |
 | `tarea_2_impagos.puml` | UR-92, UR-93, CU-37 (alerta) | `Planificador`, `TareaAutomatica` y `EjecucionProceso` (área 10); `ProxyCobros`; `ServicioCobros` (`comprobarImpagos()`, `estaVencida()`, `consultarSaldo()`); `ConfiguracionGlobal` (límites); `ManejadorAlertasCobro` y `ServicioNotificaciones` (área 7) |
 

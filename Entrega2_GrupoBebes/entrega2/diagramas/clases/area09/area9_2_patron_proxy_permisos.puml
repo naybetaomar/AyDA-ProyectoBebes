@@ -48,7 +48,7 @@ interface IServicioUsuarios {
   + reasignarCliente(cliente : Cliente, nuevoResponsable : Usuario) : void
   + delegarClientes(origen : Usuario, suplente : Usuario, desde : Date, caducidad : Date) : Delegacion
   + caducarDelegaciones(fecha : Date) : void
-  + registrarDescarga(usuario : Usuario, documento : Documento [0..1], exportacion : ExportacionMasiva [0..1]) : DescargaFichero
+  + registrarDescarga(documento : Documento [0..1], exportacion : ExportacionMasiva [0..1]) : DescargaFichero
 }
 
 class ServicioUsuarios

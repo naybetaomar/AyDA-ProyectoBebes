@@ -5,12 +5,12 @@ title Área 4 — Diagrama 2: Servicio de aprobaciones
 
 class ServicioAprobaciones {
   .. Solicitudes (CU-22 a CU-24) ..
-  + solicitar(factura : Factura, solicitante : Usuario, tipo : TipoSolicitud, importe : Decimal, motivo : String [0..1]) : SolicitudExcepcion
-  + solicitarExcepcionProrrateo(configuracion : ConfiguracionRecurrente, solicitante : Usuario, motivo : String) : SolicitudExcepcion
+  + solicitar(factura : Factura, tipo : TipoSolicitud, importe : Decimal, motivo : String [0..1]) : SolicitudExcepcion
+  + solicitarExcepcionProrrateo(configuracion : ConfiguracionRecurrente, motivo : String) : SolicitudExcepcion
   + listarPendientes() : SolicitudExcepcion [0..*]
-  + listarMisSolicitudes(solicitante : Usuario) : SolicitudExcepcion [0..*]
-  + aprobar(solicitud : SolicitudExcepcion, aprobador : Usuario, comentario : String [0..1]) : void
-  + rechazar(solicitud : SolicitudExcepcion, aprobador : Usuario, comentario : String) : void
+  + listarMisSolicitudes() : SolicitudExcepcion [0..*]
+  + aprobar(solicitud : SolicitudExcepcion, comentario : String [0..1]) : void
+  + rechazar(solicitud : SolicitudExcepcion, comentario : String) : void
   .. Periodos contables (CU-25, CU-26) ..
   + operacionesPendientes(periodo : PeriodoContable) : String [0..*]
   + cerrarPeriodo(periodo : PeriodoContable) : void
@@ -31,28 +31,17 @@ ServicioAprobaciones .down.> ReaperturaPeriodo : <<create>>
 ServicioAprobaciones .right.> ConfiguracionGlobal : umbral de\naprobación >
 
 note right of ServicioAprobaciones
-  **Punto de entrada del área 4**, a través del proxy
-  de permisos (área 9). La llaman la interfaz,
-  el área 3 (factura sobre el umbral, CU-15 FA-3)
-  y el área 6 (baja contable, CU-36).
-  **solicitar()** (CU-22): guarda la solicitud PENDIENTE
-  y emite «solicitud creada»; el área 7 avisa a los
-  aprobadores (paso 4). Lo propuesto no se emite (RB-25).
-  **solicitarExcepcionProrrateo()** (CU-22): igual, pero
-  sobre la configuración recurrente, con importe 0.
-  **listarPendientes()** (CU-23): la bandeja; cada
-  solicitud con su importe y el umbral vigente.
-  **aprobar()**: si el importe supera el umbral
-  (obtenerValor("umbral_aprobacion")), exige que el
-  aprobador sea Superadministrador (RB-04, FA-1);
-  si es el solicitante, lo rechaza (FR-74, FE-1).
-  **aprobar() / rechazar()** emiten «solicitud resuelta»:
-  la escuchan el área 3 (emite la factura o la devuelve
-  a borrador), el área 6 (registra la baja contable)
-  y el área 7 (avisa al solicitante).
-  **cerrarPeriodo()**: si operacionesPendientes() no
-  está vacío, no cierra y las lista (CU-25 FE-2).
-  El área 4 no llama a las áreas 3, 6 ni 7: emite eventos
-  (Observer en la E3).
+  **Punto de entrada del área 4**, a través del proxy.
+  La llaman la interfaz, el área 3 (CU-15 FA-3) y el
+  área 6 (CU-36). Quién solicita o resuelve lo da el
+  ContextoSeguridad, no es un parámetro.
+  **solicitar()** (CU-22): la solicitud queda PENDIENTE
+  y emite «solicitud creada» (el área 7 avisa).
+  **aprobar()**: por encima del umbral, solo
+  Superadministrador (RB-04); nunca el solicitante
+  (FR-74). **rechazar()** exige comentario.
+  Las dos emiten «solicitud resuelta» (áreas 3, 6 y 7).
+  **cerrarPeriodo()**: no cierra si hay operaciones
+  pendientes (CU-25 FE-2).
 end note
 @enduml

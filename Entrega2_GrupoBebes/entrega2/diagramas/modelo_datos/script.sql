@@ -1190,7 +1190,7 @@ CREATE TABLE ejecucion_proceso (
                   CHECK (estado IN ('EN_CURSO', 'COMPLETADA', 'COMPLETADA_CON_FALLOS', 'FALLIDA', 'CANCELADA')),
     CONSTRAINT ck_ejecucion_fin CHECK ((estado = 'EN_CURSO') = (fecha_fin IS NULL)),
     CONSTRAINT ck_ejecucion_orden CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio),
-    CONSTRAINT ck_ejecucion_causa CHECK (estado NOT IN ('FALLIDA', 'CANCELADA') OR causa IS NOT NULL)  -- BR-04, CU-56
+    CONSTRAINT ck_ejecucion_causa CHECK (estado NOT IN ('FALLIDA', 'CANCELADA') OR causa IS NOT NULL)  -- CU-56
 );
 CREATE INDEX ix_ejecucion_tipo_fecha ON ejecucion_proceso (tipo, fecha_inicio);
 

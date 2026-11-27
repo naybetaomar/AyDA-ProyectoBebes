@@ -1,5 +1,5 @@
 @startuml arquitectura_1_general
-title Arquitectura de Turbine — 1. Vista general (componentes en capas)
+title Arquitectura de Turbine — 1. Vista general
 skinparam componentStyle uml2
 skinparam packageStyle rectangle
 skinparam nodesep 35
@@ -15,22 +15,23 @@ package "1. Presentación" #E3F2FD {
 }
 
 package "2. Seguridad (área 9)" #FCE4EC {
+  [ServicioAcceso\n(inicio de sesión)] as Acceso
   [ProxyPermisos] as Proxy
   [Auditoría\n(RegistroAuditoria)] as Audit
 }
 
 package "3. Servicios de aplicación (uno por área; detalle en la vista 2)" as Servicios #FFF8E5 {
   together {
-    [ServicioClientes (1)] as S1
-    [ServicioRelacionComercial (2)] as S2
-    [ServicioFacturacion (3)] as S3
-    [ServicioAprobaciones (4)] as S4
+    [ServicioClientes (área 1)] as S1
+    [ServicioRelacionComercial (área 2)] as S2
+    [ServicioFacturacion (área 3)] as S3
+    [ServicioAprobaciones (área 4)] as S4
   }
   together {
-    [ServicioEnvio / Recordatorios (5)] as S5
-    [ServicioCobros (6)] as S6
-    [ServicioNotificaciones (7)] as S7
-    [ServicioInformes (8)] as S8
+    [ServicioEnvio / Recordatorios (área 5)] as S5
+    [ServicioCobros (área 6)] as S6
+    [ServicioNotificaciones (área 7)] as S7
+    [ServicioInformes (área 8)] as S8
   }
 }
 
@@ -78,11 +79,13 @@ S7 -[hidden]right- S8
 Plan -[hidden]down- Conf
 GD -[hidden]right- AStripe
 
-' --- Entradas: todas pasan por el proxy ---
+' --- Entradas: todas pasan por el proxy, salvo el inicio de sesión ---
 Usuario -down-> UI : HTTPS
 SistExt -down-> API : REST (credencial de API, NFR-50)
 Stripe --> WH : webhook (pago)
 UI -down-> Proxy
+UI -down-> Acceso : login y\nvalidar sesión
+Acceso --> Audit : accesos y fallos
 API -down-> Proxy
 WH -down-> Proxy : identidad de sistema
 Plan -right-> Proxy : identidad de sistema
@@ -117,6 +120,8 @@ note right of Proxy
   **Restricciones arquitectónicas**
   • Toda entrada (interfaz, API, webhooks y planificador)
     pasa por el proxy: permisos + auditoría (RB-15, RB-31).
+    Solo el inicio de sesión (ServicioAcceso) va antes,
+    porque todavía no hay solicitante.
   • Nada de la presentación accede a la BD ni al dominio.
   • Entre servicios, la lógica va en un solo sentido;
     los avisos de vuelta son eventos (vista 2).
@@ -126,12 +131,9 @@ note right of Proxy
 end note
 
 legend right
-  **Patrón:** arquitectura en capas (n-tier), como en la sesión 1.7.
+  **Patrón:** arquitectura en capas (n-tier).
   Capas = estructura lógica (esta vista); en lo físico,
-  cliente-servidor con la aplicación en un único contenedor
-  (vista 3, despliegue).
-  Cada servicio lee sus propios datos por el repositorio;
-  los de otra área, a través de su servicio (vista 2).
+  cliente-servidor con la aplicación en un único contenedor.
   **Atributos de calidad:**
   Seguridad — proxy único, credenciales separadas (NFR-50).
   Mantenibilidad — capas, adaptadores, dependencias en un sentido.

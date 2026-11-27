@@ -10,41 +10,44 @@ La arquitectura se describe con tres diagramas complementarios, en `diagramas/ar
 | `arquitectura_2_servicios.puml` | Detalle de los servicios | Dependencias de lógica entre los servicios de las áreas (flechas continuas) y avisos entre áreas (flechas verdes discontinuas, eventos) |
 | `arquitectura_3_despliegue.puml` | Despliegue (complementaria) | Nodos físicos: puesto del usuario, servidor de aplicación en un contenedor, base de datos, almacenamiento de ficheros y de copias |
 
-La vista 1 es la estructura **lógica**; la 3 es la **física** y solo la complementa. Estilo general: arquitectura en capas (presentación, seguridad, servicios de aplicación, persistencia) con un dominio compartido; en lo físico, cliente-servidor con la aplicación en un único contenedor.
+La vista 1 es la estructura **lógica**; la 3 es la **física** y solo la complementa. 
 
-Cada servicio corresponde a un área funcional de la Entrega 1 (áreas 1 a 8). Las áreas 9, 10 y 11 son transversales: seguridad y auditoría, configuración y planificador, y API externa.
+Estilo general: arquitectura en capas (presentación, seguridad, servicios de aplicación, persistencia) con un dominio compartido; en lo físico, cliente-servidor con la aplicación en un único contenedor.
+
+Cada servicio corresponde a un área funcional de nuestro sistema (áreas 1 a la 8). Las áreas 9, 10 y 11 son transversales.
 
 ## Responsabilidades
 
 | Componente | Responsabilidad | Relaciones principales |
 |---|---|---|
-| Interfaz web | Entrada y presentación de datos de los usuarios internos (Usuario operativo, Administrador, Superadministrador) | ProxyPermisos |
+| Interfaz web | Entrada y presentación de datos de los usuarios internos (Usuario operativo, Administrador, Superadministrador) | ProxyPermisos; ServicioAcceso (inicio de sesión) |
 | FachadaAPI (área 11) | Punto de entrada de los sistemas externos (CU-57, CU-58). Sus credenciales son distintas de las de la interfaz (NFR-50) | ProxyPermisos |
 | Receptor de webhooks | Recibe la notificación de pago de la pasarela | ProxyPermisos (con identidad de sistema) |
-| ProxyPermisos (área 9) | Único punto de entrada a los servicios: comprueba rol y cartera asignada (RB-15) y registra la acción | Auditoría; servicios de aplicación |
+| ServicioAcceso (área 9) | Inicio de sesión, sesiones y recuperación de contraseña (CU-48). No pasa por el proxy, porque todavía no hay solicitante. En cada petición valida la sesión y deja el usuario en el `ContextoSeguridad` | Interfaz web; Auditoría |
+| ProxyPermisos (área 9) | Único punto de entrada a los servicios: comprueba rol y cartera asignada (RB-15) y registra la acción. Hay un proxy por servicio, con la misma interfaz que el servicio real | Auditoría; servicios de aplicación |
 | Auditoría (`RegistroAuditoria`) | Conserva quién hizo qué y cuándo (NFR-03); nulo = acción del Sistema | ProxyPermisos |
-| ServicioClientes (1) | Clientes, contactos, preferencias de comunicación, documentos y privacidad | ServicioRelacionComercial (estado del cliente); ServicioFacturacion (facturas de la ficha, histórico importado); ServicioNotificaciones (tarea de la acción masiva); GestorDocumentos. Leído por ServicioEnvio |
-| ServicioRelacionComercial (2) | Relación comercial, suscripciones, tarifas y revisión anual. Calcula el estado del cliente | ServicioFacturacion (importe, pausa y baja de la facturación recurrente; facturación anual, CU-13); ServicioNotificaciones (aviso de reactivación) |
-| ServicioFacturacion (3) | Emisión de facturas puntuales, recurrentes y rectificativas; series y borradores | ServicioAprobaciones (solicita aprobación); GestorDocumentos (PDF); ConfiguracionGlobal (umbral) |
-| ServicioAprobaciones (4) | Solicitudes de excepción y su resolución. Es genérico: no conoce facturas ni bajas | Avisa de «solicitud resuelta» a ServicioFacturacion, ServicioCobros y ServicioNotificaciones; ConfiguracionGlobal (umbral, RB-04) |
-| ServicioEnvio / Recordatorios (5) | Envío de facturas y recordatorios de pago | ServicioFacturacion, ServicioClientes, ServicioCobros (¿vencida?); GestorDocumentos; adaptadores de correo y WhatsApp; ConfiguracionGlobal (calendario) |
-| ServicioCobros (6) | Registro de cobros, conciliación, saldo pendiente y bajas contables | ServicioFacturacion (estado de cobro); ServicioAprobaciones (bajas); adaptadores de Stripe y banco; avisa a ServicioEnvio y ServicioNotificaciones |
-| ServicioNotificaciones (7) | Notificaciones, alertas, tareas e incidencias | Recibe avisos de los servicios 4, 5 y 6 |
-| ServicioInformes (8) | Dashboard, informes y exportaciones | Lee cifras de ServicioFacturacion y ServicioCobros; GestorDocumentos (exportaciones) |
+| ServicioClientes (área 1) | Clientes, contactos, preferencias de comunicación, documentos y privacidad | ServicioRelacionComercial (estado del cliente); ServicioFacturacion (facturas de la ficha, histórico importado); ServicioNotificaciones (tarea de la acción masiva); GestorDocumentos. Leído por ServicioEnvio |
+| ServicioRelacionComercial (área 2) | Relación comercial, suscripciones, tarifas y revisión anual. Calcula el estado del cliente | ServicioFacturacion (importe, pausa y baja de la facturación recurrente; facturación anual, CU-13); ServicioNotificaciones (aviso de reactivación) |
+| ServicioFacturacion (área 3) | Emisión de facturas puntuales, recurrentes y rectificativas; series y borradores | ServicioAprobaciones (solicita aprobación); GestorDocumentos (PDF); ConfiguracionGlobal (umbral) |
+| ServicioAprobaciones (área 4) | Solicitudes de excepción y su resolución. Es genérico: no conoce facturas ni bajas | Avisa de «solicitud creada» a ServicioNotificaciones y de «solicitud resuelta» a ServicioFacturacion, ServicioCobros y ServicioNotificaciones; ConfiguracionGlobal (umbral, RB-04) |
+| ServicioEnvio / Recordatorios (área 5) | Envío de facturas y recordatorios de pago | ServicioFacturacion, ServicioClientes, ServicioCobros (¿vencida?); GestorDocumentos; adaptadores de correo y WhatsApp; ConfiguracionGlobal (calendario) |
+| ServicioCobros (área 6) | Registro de cobros, conciliación, saldo pendiente y bajas contables | ServicioFacturacion (estado de cobro); ServicioAprobaciones (bajas); adaptadores de Stripe y banco; avisa a ServicioEnvio y ServicioNotificaciones |
+| ServicioNotificaciones (área 7) | Notificaciones, alertas, tareas e incidencias | Recibe avisos de las áreas 4, 5 y 6 |
+| ServicioInformes (área 8) | Dashboard, informes y exportaciones | Lee cifras de ServicioFacturacion y ServicioCobros; GestorDocumentos (exportaciones) |
 | Dominio (compartido) | Entidades del modelo (diagramas de clases) | Usado por los servicios y por el acceso a datos |
 | Acceso a datos | Lectura y escritura de las entidades en la base de datos | PostgreSQL; Dominio |
 | PostgreSQL | Persistencia (esquema del E-R) | Acceso a datos |
-| Planificador (área 10) | Tareas automáticas en segundo plano: facturas recurrentes (`generarRecurrentes`), recordatorios, vencimientos e impagos (`actualizarVencimientos`, `comprobarImpagos`), aviso de reactivación de pausas (`avisarReactivacionesPendientes`) y campaña de revisión anual (`prepararRevisionAnual`) (FR-86, FR-100) | ProxyPermisos, con identidad de sistema |
-| ConfiguracionGlobal / CalendarioLaboral (área 10) | Umbral de aprobación, calendario y demás parámetros | Leído por los servicios 3, 4 y 5 |
+| Planificador (área 10) | Tareas automáticas en segundo plano (FR-86, FR-100). `ejecutar(tipo)` lanza la `TareaAutomatica` de cada tipo de proceso: facturas recurrentes, recordatorios, vencimientos e impagos, aviso de reactivación de pausas, campaña de revisión anual, caducidad de delegaciones, copias de seguridad, conciliación automática, informes programados y borrado de exportaciones caducadas. Cada ejecución queda registrada (CU-56) | ProxyPermisos, con identidad de sistema |
+| ConfiguracionGlobal / CalendarioLaboral (área 10) | Umbral de aprobación, calendario y demás parámetros | Leído por los servicios de las áreas 3, 4 y 5 |
 | GestorDocumentos | Genera y guarda los PDF de las facturas, adjuntos y exportaciones temporales | Almacén de ficheros |
 | Almacén de ficheros | PDF inalterables (con su hash), exportaciones que caducan (FR-95) y adjuntos | GestorDocumentos |
-| Adaptadores de integración (Stripe, banco, correo, WhatsApp) | Aíslan al sistema de cada proveedor externo | Servicios 5 y 6; servicios externos simulados |
+| Adaptadores de integración (Stripe, banco, correo, WhatsApp) | Aíslan al sistema de cada proveedor externo | Servicios de las áreas 5 y 6; servicios externos simulados |
 
 ## Justificación y alternativas
 
-**Arquitectura en capas.** Separa la interfaz, la seguridad, la lógica y la persistencia, de modo que cambiar una capa no obliga a tocar las demás (mantenibilidad). Los servicios se organizan **uno por área**, igual que los casos de uso y el reparto del trabajo del equipo.
+**Arquitectura en capas.** Separa la interfaz, la seguridad, la lógica y la persistencia, de modo que cambiar una capa no obliga a tocar las demás (mantenibilidad). Los servicios se organizan **uno por área**.
 
-**Proxy de permisos como entrada única.** Todo lo que entra al sistema pasa por él: interfaz, API, webhooks y planificador. Así se aplican en un solo sitio los permisos y la cartera asignada (RB-15, FR-39) y se registra la auditoría (NFR-03). Las solicitudes de sistemas externos pasan por las mismas reglas que la interfaz (RB-31), y sus credenciales están separadas de las de los usuarios (NFR-50).
+**Proxy de permisos como entrada única.** Todo lo que entra al sistema pasa por él: interfaz, API, webhooks y planificador. La única excepción es el inicio de sesión (`ServicioAcceso`), que ocurre antes de que haya un solicitante y registra él mismo en la auditoría. Así se aplican en un solo sitio los permisos y la cartera asignada (RB-15, FR-39) y se registra la auditoría (NFR-03). Las solicitudes de sistemas externos pasan por las mismas reglas que la interfaz (RB-31), y sus credenciales están separadas de las de los usuarios (NFR-50).
 - *Alternativa descartada:* comprobar los permisos dentro de cada servicio. Repite la lógica en cada área y facilita olvidar una comprobación.
 - *Planificador:* no tiene usuario, así que llama a los servicios a través del proxy con una **identidad de sistema** propia, que no es un valor de `Rol`, con permisos limitados a lo que hacen sus tareas. En la auditoría queda como «Sistema» (usuario nulo).
 
@@ -88,13 +91,14 @@ Cada servicio corresponde a un área funcional de la Entrega 1 (áreas 1 a 8). L
 | CU-11 Pausar y reactivar | ServicioRelacionComercial → ServicioFacturacion (pausa desde su fecha de inicio); el aviso de reactivación lo lanza el Planificador y llega a ServicioNotificaciones (RB-29) |
 | CU-13 Revisión anual | Planificador abre la campaña → ServicioRelacionComercial → ServicioFacturacion (facturación anual; nuevo importe con fecha de efecto, RB-36) |
 | CU-15 Emitir factura puntual | Interfaz web → ProxyPermisos → ServicioFacturacion (con ConfiguracionGlobal para el umbral y GestorDocumentos para el PDF) → Acceso a datos → PostgreSQL |
-| CU-15 FA-3, CU-22, CU-23 Aprobaciones | ServicioFacturacion solicita a ServicioAprobaciones; al resolverse, el aviso «solicitud resuelta» llega a ServicioFacturacion y ServicioNotificaciones (CU-37) |
+| CU-15 FA-3, CU-22, CU-23 Aprobaciones | ServicioFacturacion solicita a ServicioAprobaciones, que avisa con «solicitud creada» a ServicioNotificaciones (los aprobadores); al resolverse, «solicitud resuelta» llega a ServicioFacturacion y ServicioNotificaciones (CU-37) |
 | CU-17 Facturación recurrente, CU-29 Recordatorios | Planificador → ProxyPermisos (identidad de sistema) → ServicioFacturacion / ServicioEnvio |
 | CU-27, CU-28 Envío de factura y fallo de envío | ServicioEnvio → ServicioFacturacion y ServicioClientes → adaptadores de correo y WhatsApp; el fallo se avisa a ServicioNotificaciones |
 | CU-34 Cobro notificado por la pasarela | Stripe → Receptor de webhooks → ProxyPermisos → ServicioCobros → AdaptadorStripe → Acceso a datos (FR-25, FR-87) |
 | CU-35, CU-36 Conciliación y baja contable | ServicioCobros → ServicioFacturacion (estado de cobro); la baja pide su aprobación a ServicioAprobaciones |
 | CU-43 Exportar informes | ServicioInformes → ServicioFacturacion / ServicioCobros → GestorDocumentos (FR-95) |
-| CU-48, CU-49, CU-50 Acceso, usuarios y cartera | ProxyPermisos (rol y cartera, RB-15, FR-39) y Auditoría |
+| CU-48 Acceso al sistema | Interfaz web → ServicioAcceso (sin proxy) → Sesion, ContextoSeguridad y Auditoría |
+| CU-49, CU-50 Usuarios y cartera | ProxyPermisos (rol y cartera, RB-15, FR-39) → ServicioUsuarios; Auditoría |
 | CU-53, CU-59 Copias de seguridad | Almacenamiento de copias, separado de los datos (NFR-11) |
 | CU-55 Datos de demostración | Esquema de demostración en el servidor de base de datos |
 | CU-57, CU-58 API externa | Sistema externo → FachadaAPI → ProxyPermisos (RB-31, NFR-50) |

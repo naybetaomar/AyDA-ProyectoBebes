@@ -1,0 +1,83 @@
+@startuml cu22_proponer_excepcion_prorrateo
+title CU-22 Proponer excepción o factura para revisión — Excepción de prorrateo
+hide footbox
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Usuario operativo__" as U
+participant "__: InterfazWeb__" as UI
+participant "__: ProxyAprobaciones__" as PX
+participant "__: ServicioAprobaciones__" as SA
+participant "__: ContextoSeguridad__" as CS
+participant "__c : ConfiguracionRecurrente__" as C
+participant "__: ManejadorSolicitudesResueltas__" as MS
+participant "__: ServicioNotificaciones__" as SN
+
+U -> UI ++ : proponerExcepcionProrrateo(c : ConfiguracionRecurrente, motivo : String)
+UI -> PX ++ : solicitarExcepcionProrrateo(configuracion : ConfiguracionRecurrente, motivo : String)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente)
+note right of PX
+  Cliente en la cartera del
+  Usuario operativo (RB-15).
+  Si no lo está, lanza
+  AccesoDenegado (FE-1).
+end note
+PX -> SA ++ : solicitarExcepcionProrrateo(configuracion : ConfiguracionRecurrente, motivo : String)
+SA -> CS ++ : solicitanteActual()
+autonumber stop
+return u : Usuario
+autonumber resume
+SA -> C ++ : calcularPrimeraCuota(fechaInicio : Date)
+autonumber stop
+return importe
+autonumber resume
+create participant "__s : SolicitudExcepcion__" as S
+SA --> S : SolicitudExcepcion(tipo = EXCEPCION_PRORRATEO, importe, motivo, solicitante = u, configuracion = c)
+note right of S
+  Queda PENDIENTE
+  (RB-25).
+end note
+SA ->o] : guardar solicitud en BD
+
+SA -[#2E7D32]->> MS ++ : «solicitud creada»(s)
+MS -> MS : alOcurrirEvento(evento = "solicitud creada", datos = s)
+MS ->o] : buscar Administradores y Superadministradores activos en BD
+autonumber stop
+MS <--o] : aprobadores
+autonumber resume
+loop para cada aprobador
+  create participant "__: Notificacion__" as N
+  MS --> N : Notificacion(destinatario = aprobador, solicitud = s)
+  MS -> SN ++ : registrarNotificacion(notificacion : Notificacion)
+  autonumber stop
+  return
+  autonumber resume
+end
+deactivate MS
+
+autonumber stop
+SA --> PX : s
+deactivate SA
+PX --> UI : s
+deactivate PX
+UI --> U : propuesta pendiente de aprobación
+deactivate UI
+autonumber resume
+
+note over SA, C
+  El área 4 no toca la configuración: solo
+  lee el importe que se dejaría de facturar.
+  Si se aprueba, el área 3 aplica la excepción
+  al recibir «solicitud resuelta» (CU-23).
+end note
+note over U, PX
+  **Propuesta de una factura** (descuento, importe o
+  fecha manual): mismo flujo que CU-15 (2), con
+  tipo = DESCUENTO, CAMBIO_IMPORTE o CAMBIO_FECHA
+  y el motivo de DatosFactura. La factura queda
+  PENDIENTE_APROBACION sin número (RB-25).
+end note
+@enduml

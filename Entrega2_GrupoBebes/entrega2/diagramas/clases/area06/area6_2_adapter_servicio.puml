@@ -7,9 +7,9 @@ class ServicioCobros {
   + registrarNotificacion(receptor : ReceptorNotificacionesPago, contenido : String) : MovimientoCobro
   + importarMovimientos(proveedor : ProveedorExtractos, desde : DateTime) : MovimientoCobro [0..*]
   + conciliarAutomaticamente(movimiento : MovimientoCobro) : void
-  + conciliarManualmente(movimiento : MovimientoCobro, factura : Factura, importe : Decimal, realizadoPor : Usuario) : Conciliacion
-  + deshacerConciliacion(conciliacion : Conciliacion, motivo : String, realizadoPor : Usuario) : void
-  + solicitarBajaContable(factura : Factura, tipo : TipoBajaContable, motivo : String, solicitante : Usuario) : SolicitudExcepcion
+  + conciliarManualmente(movimiento : MovimientoCobro, factura : Factura, importe : Decimal) : Conciliacion
+  + deshacerConciliacion(conciliacion : Conciliacion, motivo : String) : void
+  + solicitarBajaContable(factura : Factura, tipo : TipoBajaContable, motivo : String) : SolicitudExcepcion
   + registrarBajaAprobada(solicitud : SolicitudExcepcion) : BajaContable
   + calcularSaldoPendiente(factura : Factura) : Decimal
   + estaVencida(factura : Factura) : Boolean
@@ -80,35 +80,26 @@ note bottom of ServicioAprobaciones
 end note
 
 note left of ServicioCobros
-  **Orquesta**; no crea las conciliaciones:
-  conciliarManualmente() comprueba las reglas,
-  llama a MovimientoCobro.aplicarA() y actualiza
-  estadoCobro y la marca cobroExcesivo de la factura
-  (si un movimiento con referencia = numeroFactura le
-  deja importe sin aplicar; compara texto, A-28).
-  Así el acoplamiento va del área 6 a la 3, no al revés.
-  Reglas: evento repetido → se ignora (CU-34 FE-1),
-  estados de cobro y recordatorios (RB-14, RB-37),
-  nunca «pagada» por acción masiva (RB-23).
-  Lo invocan la interfaz, la API y el planificador
-  a través del Proxy de permisos (área 9).
+  **Punto de entrada del área 6**, a través del proxy
+  (interfaz, API, webhooks y planificador). Quién opera
+  lo da el ContextoSeguridad; el servicio lo pasa a
+  aplicarA() y deshacer() del dominio.
+  **Orquesta, no concilia**: comprueba las reglas, llama a
+  MovimientoCobro.aplicarA() y actualiza estadoCobro y
+  cobroExcesivo de la factura (A-28).
+  Evento repetido → se ignora (CU-34 FE-1); nunca
+  «pagada» por acción masiva (RB-23).
 end note
 
 note right of ServicioCobros
-  **calcularSaldoPendiente()** = total − conciliaciones no
-  deshechas − baja contable − abonos que la rectifican
-  (RB-10, A-27). Negativo → saldo a favor (Q-12).
-  **estaVencida()** = vencimiento pasado y saldo > 0
-  (aunque el estado sea PARCIALMENTE_CONCILIADA).
-  **actualizarVencimientos()**: tarea diaria del planificador
-  (área 10). Pasa a VENCIDA las PENDIENTE con el vencimiento
-  pasado, es decir, sin ningún cobro; usuario nulo (Sistema).
-  **comprobarImpagos()**: misma tarea diaria. Revisa todas
-  las facturas con estaVencida() y la deuda de cada cliente
-  (consultarSaldo) frente a los límites de ConfiguracionGlobal
-  (UR-92, UR-93).
-  Factura no calcula nada de cobros: así no depende
-  del área 6.
+  **calcularSaldoPendiente()** = total − conciliaciones
+  vigentes − baja contable − abonos (RB-10, A-27);
+  negativo → saldo a favor (Q-12).
+  **estaVencida()** = vencimiento pasado y saldo > 0.
+  **Tarea diaria** (planificador, área 10):
+  actualizarVencimientos() pasa a VENCIDA las PENDIENTE
+  vencidas; comprobarImpagos() compara días y deuda con
+  los límites de ConfiguracionGlobal (UR-92, UR-93).
 end note
 
 note bottom of ServicioCobros

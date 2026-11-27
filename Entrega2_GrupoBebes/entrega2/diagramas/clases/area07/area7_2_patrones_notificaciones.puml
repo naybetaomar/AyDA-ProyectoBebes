@@ -1,21 +1,21 @@
 @startuml area7_2
 skinparam classAttributeIconSize 0
 hide empty members
-title Área 7 — Diagrama 2 (propuesta): servicio y manejadores de eventos
+title Área 7 — Diagrama 2: servicio y manejadores de eventos
 
 class ServicioNotificaciones {
   .. Notificaciones (CU-37, CU-38) ..
   + registrarNotificacion(notificacion : Notificacion) : void
-  + obtenerPantallaTrabajo(usuario : Usuario) : ResumenNotificaciones
+  + obtenerPantallaTrabajo() : ResumenNotificaciones
   + cambiarEstadoNotificacion(notificacion : Notificacion, estado : EstadoNotificacion) : void
-  + configurarPreferencias(usuario : Usuario, preferencia : PreferenciaNotificacion) : void
+  + configurarPreferencias(preferencia : PreferenciaNotificacion) : void
   .. Tareas (las piden las áreas 1, 2 y 11) ..
   + crearTarea(tipo : TipoTarea, descripcion : String, cliente : Cliente [0..1], origen : String) : Tarea
   + asignarTarea(tarea : Tarea, responsable : Usuario) : void
   .. Incidencias y comentarios (CU-40, CU-41) ..
   + abrirIncidencia(tipo : TipoIncidencia, descripcion : String, cliente : Cliente, factura : Factura [0..1]) : Incidencia
   + cerrarIncidencia(incidencia : Incidencia, motivo : String) : void
-  + comentar(texto : String, restringido : Boolean, autor : Usuario, cliente : Cliente [0..1], factura : Factura [0..1], incidencia : Incidencia [0..1]) : Comentario
+  + comentar(texto : String, restringido : Boolean, cliente : Cliente [0..1], factura : Factura [0..1], incidencia : Incidencia [0..1]) : Comentario
 }
 
 class ResumenNotificaciones <<DTO>> {
@@ -52,6 +52,8 @@ note top of ServicioNotificaciones
   y las áreas 1 y 2 lo llaman a través del proxy de permisos (área 9).
   Las clases del área (Notificacion, Tarea, Incidencia,
   Comentario, PreferenciaNotificacion) están en el diagrama 1.
+  La pantalla de trabajo, las preferencias y el autor de un
+  comentario son los del usuario del ContextoSeguridad (área 9).
 end note
 
 note bottom of ManejadorAlertasCobro

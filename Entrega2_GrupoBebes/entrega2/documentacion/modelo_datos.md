@@ -14,11 +14,11 @@ Tablas del área 5: `plantilla_comunicacion`, `variable_plantilla`, `regla_recor
 Tablas del área 6: `movimiento_cobro`, `conciliacion` y `baja_contable`.
 Tablas del área 7: `notificacion`, `preferencia_notificacion`, `incidencia`, `comentario` y `tarea`.
 Tablas del área 8: `objetivo_facturacion`, `paquete_contable`, `tipo_cambio`, `exportacion_masiva`, `informe_programado` y `destinatario_informe`.
+Tablas del área 9: `usuario`, `sesion`, `token_recuperacion`, `asignacion_cliente`, `delegacion`, `registro_auditoria`, `descarga_fichero`, `copia_seguridad` y `restauracion_copia`.
 Tablas del área 10: `configuracion_global`, `entrada_configuracion`, `tarea_programada`, `ejecucion_proceso`, `detalle_fallo`, `error_tecnico`, `calendario_laboral`, `dia_laborable_calendario` y `fecha_festiva`.
 Tablas del área 11: `consumidor_api`, `llamada_api` y `solicitud_externa`.
-Tablas del área 9: `usuario`, `sesion`, `token_recuperacion`, `asignacion_cliente`, `delegacion`, `registro_auditoria`, `descarga_fichero`, `copia_seguridad` y `restauracion_copia`.
 
-Las clases de estas áreas están pendientes de la aprobación final del grupo, así que el modelo se cerrará cuando se aprueben. Las tablas van en el script en orden de dependencia: las de las áreas 1 y 4 que apuntan a `factura` (`documento`, `factura_categoria`, `solicitud_excepcion`) van después del área 3.
+Las tablas van en el script en orden de dependencia: las de las áreas 1 y 4 que apuntan a `factura` (`documento`, `factura_categoria`, `solicitud_excepcion`) van después del área 3.
 
 ## Justificación del modelo
 
@@ -56,7 +56,7 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 - `USUARIO (0..1)` — `CONCILIACION (0..N)`: quién la realizó y quién la deshizo; nulo = conciliación automática.
 
 **Área 4**
-- `FACTURA (1)` — `SOLICITUD_EXCEPCION (0..N)`, con solicitante (1) y aprobador (0..1).
+- `FACTURA (0..1)` y `CONFIGURACION_RECURRENTE (0..1)` — `SOLICITUD_EXCEPCION (0..N)`: exactamente una de las dos (la configuración, solo en la excepción de prorrateo); con solicitante (1) y aprobador (0..1).
 - `PERIODO_CONTABLE (1)` — `REAPERTURA_PERIODO (0..N)`; `PERIODO_CONTABLE (0..1)` — `FACTURA (0..N)`.
 
 **Área 5**
@@ -103,6 +103,7 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 - **Estado «vencida» guardado:** `VENCIDA` es un valor de `estado_cobro`; una tarea diaria del planificador marca las facturas sin ningún cobro cuyo vencimiento ha pasado (`ServicioCobros.actualizarVencimientos()`).
 - **Importes y fechas:** `DECIMAL(12,2)` en importes y `DECIMAL(5,2)` en porcentajes (NFR-31); instantes en UTC con `TIMESTAMP` y fechas legales con `DATE` (NFR-42, NFR-43).
 - **Trazabilidad (NFR-03):** todas las tablas llevan `creado_por`, `creado_en`, `modificado_por` y `modificado_en`, salvo las que son en sí un registro (`historial_estado_factura`, `sesion`, `token_recuperacion`, `registro_auditoria`, `descarga_fichero`, `llamada_api`, `ejecucion_proceso`, `detalle_fallo` y `error_tecnico`), que no las llevan, y las tablas cuyas filas solo se añaden y nunca se modifican (`tramo_importe`, `cliente_etiqueta`, `reapertura_periodo`, `variable_plantilla`, `dia_laborable_calendario`, `fecha_festiva`), que solo llevan `creado_por` y `creado_en`. Las dos FK a `usuario` admiten nulos (nulo = Sistema). No se dibujan en el diagrama.
+- **Excepción sobre una configuración recurrente:** la solicitud de excepción va sobre una factura o sobre una configuración recurrente (la de prorrateo, que se propone antes de que exista la factura). `factura_id` admite nulos, hay una columna `configuracion_recurrente_id` y un `CHECK` de «exactamente una» (aplicado el 25/11 y validado el 26/11).
 - **Configuración con vigencia:** cada valor de `entrada_configuracion` tiene su intervalo de vigencia, y un cambio crea una fila nueva en lugar de sobrescribir la anterior. Así se sabe qué valor aplicaba en una fecha (Q-07).
 - **Nombres:** tablas en singular y `snake_case`, PK `id`, FK `<tabla>_id` o por el rol cuando hay dos (`realizado_por_id`, `deshecho_por_id`).
 
@@ -123,7 +124,7 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 | Disparador: las líneas solo se crean, modifican o borran mientras la factura es un borrador (también quedan bloqueadas pendiente de aprobación, para que se apruebe lo que vio el aprobador) | `linea_factura` | RB-11, CU-22, CU-23 |
 | FK compuesta `(serie_facturacion_id, entidad_emisora_id)` → `serie_facturacion (id, entidad_emisora_id)`: la serie es de la misma entidad emisora que la factura | `factura` | Coherencia serie–entidad |
 | Borrado en cascada de líneas e historial | `linea_factura`, `historial_estado_factura` | Composición |
-| `UNIQUE (entidad_emisora_id, prefijo)` | `serie_facturacion` | Propuesta: un prefijo no se repite en la misma entidad |
+| `UNIQUE (entidad_emisora_id, prefijo)` | `serie_facturacion` | Un prefijo no se repite en la misma entidad |
 | `UNIQUE (relacion_comercial_id)` | `configuracion_recurrente` | Una configuración por relación comercial |
 | `UNIQUE (configuracion_recurrente_id, desde)` | `tramo_importe` | RB-36: un solo importe por fecha de inicio |
 | `EXCLUDE USING gist` sobre `daterange(desde, hasta)` por configuración (extensión `btree_gist`) | `periodo_pausa` | CU-11, RB-05: las pausas no se solapan y solo hay una en curso |
@@ -133,7 +134,6 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 | `CHECK`: `fecha_deshecho`, `motivo_deshacer` y `deshecho_por_id` van juntos | `conciliacion` | FR-27 |
 | `UNIQUE (factura_id)` y `UNIQUE (solicitud_excepcion_id)` | `baja_contable` | Una baja por factura y por solicitud |
 | `CHECK` de tipo: ANULADA o INCOBRABLE (nunca «pagada») | `baja_contable` | RB-08 |
-
 | `UNIQUE (identificador_fiscal)` | `cliente` | CU-01 |
 | Índice único parcial `(cliente_id) WHERE es_contacto_facturacion` | `contacto` | Un contacto de facturación por cliente |
 | `UNIQUE (contacto_id, canal)` | `consentimiento_canal` | Un consentimiento por canal |
@@ -168,7 +168,7 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 | `CHECK`: validada ⇔ con tarea; rechazada ⇔ con motivo | `solicitud_externa` | CU-58, RB-31 |
 | `EXCLUDE USING gist` sobre `daterange(desde, hasta)` por clave | `entrada_configuracion` | Un solo valor vigente por clave y fecha (Q-07) |
 | `UNIQUE (tipo)` | `tarea_programada` | Una programación por tipo de proceso |
-| `CHECK`: en curso ⇔ sin `fecha_fin`; fallida o cancelada ⇒ `causa` | `ejecucion_proceso` | BR-04, CU-56 |
+| `CHECK`: en curso ⇔ sin `fecha_fin`; fallida o cancelada ⇒ `causa` | `ejecucion_proceso` | CU-56 |
 | `UNIQUE (codigo_incidencia)`; `CHECK`: resuelto ⇔ `fecha_resolucion`; sin resolver ⇒ sin `resuelto_por_id` | `error_tecnico` | FR-61, FR-62 |
 | `UNIQUE (pais, anio)`; `UNIQUE` del día y del festivo por calendario | `calendario_laboral`, `dia_laborable_calendario`, `fecha_festiva` | FR-83, Q-02 |
 
@@ -202,7 +202,7 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 | A-28 | `movimiento_cobro.en_revision`, `motivo_revision`; `factura.cobro_excesivo` | El sobrante queda sin aplicar en el movimiento |
 | CU-36, RB-08 | `baja_contable` | Baja explícita (anulada o incobrable) aprobada mediante una solicitud |
 | RB-10, A-27 | Sin columna: lo calcula `ServicioCobros` | Saldo pendiente ≠ facturación total |
-| CU-56, BR-04 | `ejecucion_proceso`, `detalle_fallo`, `error_tecnico` | Cada ejecución del planificador queda registrada con sus fallos |
+| CU-56 | `ejecucion_proceso`, `detalle_fallo`, `error_tecnico` | Cada ejecución del planificador queda registrada con sus fallos |
 | FR-83, Q-02 | `calendario_laboral`, `dia_laborable_calendario`, `fecha_festiva` | Traslado de vencimientos y recordatorios al siguiente día laborable |
 | NFR-03 | `creado_por`, `creado_en`, `modificado_por`, `modificado_en`; `historial_estado_factura` | Nulo = Sistema |
 | NFR-31, NFR-42, NFR-43 | Tipos `DECIMAL` y `TIMESTAMP` en UTC | Sin coma flotante |
@@ -211,7 +211,5 @@ Las clases de estas áreas están pendientes de la aprobación final del grupo, 
 
 - **Sumas de conciliaciones:** que las conciliaciones vigentes de un movimiento no superen su importe (A-28) se comprueba en la aplicación; no cabe en un `CHECK`.
 - **Mínimo de una línea por factura:** el diagrama indica `1..N`; no se puede expresar con una restricción de columna y se comprueba al emitir.
-- **Excepción sobre una configuración recurrente (aplicada el 25/11, pendiente de confirmar en la reunión):** la solicitud de excepción va sobre una factura o sobre una configuración recurrente (la de prorrateo, que se propone antes de que exista la factura). `factura_id` admite nulos, hay una columna `configuracion_recurrente_id` y un `CHECK` de «exactamente una».
 - **Borrado de un borrador y solicitud de excepción:** el script usa `ON DELETE CASCADE`: si se borra un borrador, se borran sus solicitudes. No afecta a las de prorrateo, que van sobre la configuración.
 - **Destino del sobrante cobrado (Q-12):** devolución o saldo a favor. El modelo deja el importe en el movimiento sin aplicar, sea cual sea el destino.
-- **Aprobación de las clases de las áreas 3 y 6.** Mientras estén en «Propuesta», el modelo también lo está.

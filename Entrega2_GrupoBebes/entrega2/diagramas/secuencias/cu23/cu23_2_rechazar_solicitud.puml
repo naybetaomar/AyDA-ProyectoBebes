@@ -1,0 +1,91 @@
+@startuml cu23_2_rechazar_solicitud
+title CU-23 Resolver propuesta o autorizar sobre el umbral — 2. Rechazar (FA-2)
+hide footbox
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Administrador__" as A
+participant "__: InterfazWeb__" as UI
+participant "__: ProxyAprobaciones__" as PX
+participant "__: ServicioAprobaciones__" as SA
+participant "__: ContextoSeguridad__" as CS
+participant "__s : SolicitudExcepcion__" as S
+participant "__: ServicioFacturacion__" as SF
+participant "__f : Factura__" as F
+participant "__: ManejadorSolicitudesResueltas__" as MS
+participant "__: ServicioNotificaciones__" as SN
+
+note over A, UI
+  Pasos 1 a 2 (bandeja de
+  propuestas) como en el
+  diagrama 1.
+end note
+
+A -> UI ++ : rechazar(s : SolicitudExcepcion, comentario : String)
+UI -> PX ++ : rechazar(solicitud : SolicitudExcepcion, comentario : String)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
+PX -> SA ++ : rechazar(solicitud : SolicitudExcepcion, comentario : String)
+SA -> CS ++ : solicitanteActual()
+autonumber stop
+return aprobador : Usuario
+autonumber resume
+note right of SA
+  Mismas comprobaciones que al
+  aprobar: FE-1 (no el solicitante)
+  y FA-1 (umbral, RB-04).
+end note
+SA -> S ++ : rechazar(aprobador : Usuario, comentario : String)
+note right of S
+  El comentario es obligatorio.
+  Pasa a RECHAZADA con
+  aprobador y fechaResolucion.
+end note
+autonumber stop
+return
+autonumber resume
+SA ->o] : guardar solicitud en BD
+
+SA -[#2E7D32]->> SF ++ : «solicitud resuelta»(s)
+SF -> SF : alResolverSolicitud(solicitud : SolicitudExcepcion)
+opt s.tipo es una propuesta de factura
+  SF -> F ++ : volverABorrador(motivo = comentario)
+  create participant "__: HistorialEstadoFactura__" as H
+  F --> H : HistorialEstadoFactura(DOCUMENTAL, PENDIENTE_APROBACION, BORRADOR)
+  autonumber stop
+  return
+  autonumber resume
+  SF ->o] : guardar factura e historial en BD
+end
+deactivate SF
+
+SA -[#2E7D32]->> MS ++ : «solicitud resuelta»(s)
+MS -> MS : alOcurrirEvento(evento = "solicitud resuelta", datos = s)
+create participant "__: Notificacion__" as N
+MS --> N : Notificacion(destinatario = s.solicitante, solicitud = s, motivo = comentario)
+MS -> SN ++ : registrarNotificacion(notificacion : Notificacion)
+autonumber stop
+return
+autonumber resume
+deactivate MS
+
+autonumber stop
+SA --> PX
+deactivate SA
+PX --> UI
+deactivate PX
+UI --> A : solicitud rechazada
+deactivate UI
+autonumber resume
+
+note over SF, F
+  La factura vuelve a borrador con lo propuesto
+  (descuento, importe o fecha). El solicitante
+  puede corregirla y reenviarla (CU-22) o
+  retirar la modificación manual (POST-2).
+  Una excepción de prorrateo rechazada no
+  se aplica: el área 3 no hace nada.
+end note
+@enduml

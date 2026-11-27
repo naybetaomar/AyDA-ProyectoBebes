@@ -17,9 +17,9 @@ class ServicioRelacionComercial {
   + avisarReactivacionesPendientes(fecha : Date) : void
   .. Revisión anual (CU-13) ..
   + prepararRevisionAnual(anio : Integer) : RevisionAnualPlan [0..*]
-  + corregirFacturacionAnual(revision : RevisionAnualPlan, importe : Decimal, fuente : String, fecha : Date, usuario : Usuario) : void
-  + aplicarRevision(revision : RevisionAnualPlan, fechaEfecto : Date, aprobador : Usuario) : void
-  + mantenerPlan(revision : RevisionAnualPlan, aprobador : Usuario) : void
+  + corregirFacturacionAnual(revision : RevisionAnualPlan, importe : Decimal, fuente : String, fecha : Date) : void
+  + aplicarRevision(revision : RevisionAnualPlan, fechaEfecto : Date) : void
+  + mantenerPlan(revision : RevisionAnualPlan) : void
   .. Tarifas (CU-14) ..
   + configurarRangos(rangos : RangoTarifa [1..*]) : void
   + buscarRango(facturacionAnual : Decimal) : RangoTarifa
@@ -41,33 +41,19 @@ ServicioRelacionComercial .down.> ServicioFacturacion : facturación recurrente\
 ServicioRelacionComercial .down.> ServicioNotificaciones : aviso de reactivación >
 
 note right of ServicioRelacionComercial
-  **Punto de entrada del área 2** (CU-10 a CU-14),
-  a través del proxy de permisos (área 9).
-  crearRelacion(): fija el importe mensual en el área 3
-  con el precio del rango. modificarRelacion() puede
-  corregir el rango contratado (CU-10) solo si no hay
-  ninguna revisión aplicada; si cambia, envía el nuevo
-  importe al área 3 desde hoy. Después, el rango solo
-  cambia por revisión anual.
-  pausar(): la facturación se para desde la fecha de
-  inicio de la pausa, aunque sea futura (CU-11, RB-05).
-  reactivar(): se reanuda desde la fecha confirmada (RB-29);
-  el área 3 guarda cada pausa como intervalo.
-  darDeBaja(): guarda motivo y fecha; el área 3 deja de
-  generar cuotas desde esa fecha y el recobro sigue
-  (CU-12, RB-13).
-  comprobarBaja(): reglas de la baja; nulo = se puede, si no
-  devuelve el motivo. La usan darDeBaja() y el área 11 al
-  recibir una baja por la API (CU-58, RB-31): allí solo se
-  crea la tarea, y la baja la hace una persona (CU-12 FA-1).
-  aplicarRevision(): comunica el nuevo importe al área 3
-  con su fecha de efecto; las facturas anteriores no
-  cambian (RB-36). Exige aprobador ≠ quien corrigió (FR-74).
-  configurarRangos(): solo Superadministrador; rechaza
-  solapes y huecos (CU-14 FE-1).
-  **Tareas programadas** (planificador, área 10):
-  avisarReactivacionesPendientes() a diario (CU-11 paso 4)
-  y prepararRevisionAnual() al abrir la campaña (CU-13 paso 1).
+  **Punto de entrada del área 2** (CU-10 a CU-14), a través
+  del proxy (área 9). Quién corrige o aprueba lo da el
+  ContextoSeguridad, no es un parámetro.
+  El área 2 no factura: comunica al área 3 el importe,
+  las pausas y la baja, cada uno desde su fecha (RB-05, RB-29).
+  modificarRelacion(): solo cambia el rango contratado si no
+  hay ninguna revisión aplicada.
+  comprobarBaja(): reglas de la baja (nulo = se puede); la usan
+  darDeBaja() y la API, que solo crea una tarea (CU-58, RB-31).
+  aplicarRevision(): nuevo importe desde su fecha de efecto
+  (RB-36); aprobador ≠ quien corrigió (FR-74).
+  **Planificador** (área 10): avisarReactivacionesPendientes()
+  a diario y prepararRevisionAnual() al abrir la campaña.
 end note
 
 note bottom of ServicioFacturacion

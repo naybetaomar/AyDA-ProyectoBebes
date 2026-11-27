@@ -1,0 +1,117 @@
+@startuml cu23_1_aprobar_solicitud
+title CU-23 Resolver propuesta o autorizar sobre el umbral — 1. Aprobar
+hide footbox
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Administrador__" as A
+participant "__: InterfazWeb__" as UI
+participant "__: ProxyAprobaciones__" as PX
+participant "__: ServicioAprobaciones__" as SA
+participant "__: ContextoSeguridad__" as CS
+participant "__: ConfiguracionGlobal__" as CG
+participant "__s : SolicitudExcepcion__" as S
+participant "__: ServicioFacturacion__" as SF
+participant "__: ManejadorSolicitudesResueltas__" as MS
+
+A -> UI ++ : abrirBandejaPropuestas()
+UI -> PX ++ : listarPendientes()
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
+PX -> SA ++ : listarPendientes()
+SA ->o] : buscar solicitudes PENDIENTE en BD
+autonumber stop
+SA <--o] : solicitudes
+return solicitudes
+return solicitudes
+return propuestas pendientes con su importe
+autonumber resume
+note right of A
+  Paso 2: el umbral solo lo consulta
+  ServicioAprobaciones (paso 12), ya
+  detrás del proxy; la interfaz no
+  accede a ConfiguracionGlobal.
+end note
+
+A -> UI ++ : aprobar(s : SolicitudExcepcion, comentario : String [0..1])
+UI -> PX ++ : aprobar(solicitud : SolicitudExcepcion, comentario : String [0..1])
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
+note right of PX
+  Rol Administrador o
+  Superadministrador.
+end note
+PX -> SA ++ : aprobar(solicitud : SolicitudExcepcion, comentario : String [0..1])
+SA -> CS ++ : solicitanteActual()
+autonumber stop
+return aprobador : Usuario
+autonumber resume
+SA -> CG ++ : obtenerValor(clave = "umbral", fecha : Date)
+autonumber stop
+return umbral
+autonumber resume
+
+alt aprobador = s.solicitante (FE-1)
+  note right of SA
+    Error: no puede aprobar su
+    propia solicitud (FR-74).
+  end note
+else s.importe > umbral y no aprobador.tienePermisoDe(SUPERADMINISTRADOR) (FA-1)
+  note right of SA
+    Error: requiere un Superadministrador
+    (RB-04). La solicitud sigue PENDIENTE
+    hasta que la resuelva un
+    Superadministrador.
+  end note
+else puede aprobar
+  SA -> S ++ : aprobar(aprobador : Usuario, comentario : String [0..1])
+  note right of S
+    Guarda aprobador, comentario
+    y fechaResolucion; pasa a
+    APROBADA (paso 4).
+  end note
+  autonumber stop
+  return
+  autonumber resume
+  SA ->o] : guardar solicitud en BD
+
+  SA -[#2E7D32]->> SF ++ : «solicitud resuelta»(s)
+  SF -> SF : alResolverSolicitud(solicitud : SolicitudExcepcion)
+  alt s.tipo = EXCEPCION_PRORRATEO
+    participant "__c : ConfiguracionRecurrente__" as C
+    SF -> C ++ : aplicarExcepcionSinProrrateo()
+    autonumber stop
+    return
+    autonumber resume
+    SF ->o] : guardar configuración en BD
+  else propuesta de factura
+    ref over SF : CU-15 (1), desde «buscar PeriodoContable»:\nf.emitir(serie, periodo), PDF y guardar (RB-01, RB-07)
+  end
+  deactivate SF
+
+  SA -[#2E7D32]->> MS ++ : «solicitud resuelta»(s)
+  MS -> MS : alOcurrirEvento(evento = "solicitud resuelta", datos = s)
+  note right of MS
+    Avisa al solicitante de
+    la decisión (CU-37).
+  end note
+  deactivate MS
+end
+
+autonumber stop
+SA --> PX : resultado o error
+deactivate SA
+PX --> UI : resultado
+deactivate PX
+UI --> A : decisión registrada o motivo del error
+deactivate UI
+autonumber resume
+
+note over SA, S
+  El área 4 no emite la factura: solo resuelve la
+  solicitud y lanza «solicitud resuelta». Quien la pidió
+  (área 3 o área 6, para una baja contable) actúa al
+  recibirla. Así la dependencia va del área 3 a la 4.
+end note
+@enduml

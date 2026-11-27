@@ -46,7 +46,7 @@ F --> H : HistorialEstadoFactura(DOCUMENTAL, BORRADOR, PENDIENTE_APROBACION)
 autonumber stop
 return
 autonumber resume
-SF -> SA ++ : solicitar(factura : Factura, solicitante : Usuario, tipo = FACTURA_SOBRE_UMBRAL, importe : Decimal, motivo = nulo)
+SF -> SA ++ : solicitar(factura : Factura, tipo = FACTURA_SOBRE_UMBRAL, importe : Decimal, motivo = nulo)
 create participant "__: SolicitudExcepcion__" as S
 SA --> S : SolicitudExcepcion(tipo, importe, PENDIENTE)
 SA ->o] : guardar solicitud en BD

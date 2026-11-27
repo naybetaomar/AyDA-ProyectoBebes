@@ -4,7 +4,7 @@ skinparam classAttributeIconSize 0
 skinparam linetype ortho
 hide empty members
 
-title Área 7 — Diagrama 1 (propuesta): Modelo de notificaciones y colaboración
+title Área 7 — Diagrama 1: Modelo de notificaciones y colaboración
 
 class Notificacion {
     - id : Long {readOnly}

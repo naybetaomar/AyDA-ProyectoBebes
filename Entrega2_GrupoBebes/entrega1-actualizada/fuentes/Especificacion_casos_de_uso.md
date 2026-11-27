@@ -7,6 +7,8 @@ Este documento recoge la especificación textual de los 59 casos de uso represen
 
 **Actores.** Usuario operativo, Administrador y Superadministrador son jerárquicos (A-19): el Administrador puede hacer todo lo que hace el Usuario operativo, y el Superadministrador todo lo que hace el Administrador, salvo aprobar sus propias solicitudes sensibles. Además intervienen el Sistema externo, que consume la API; la Pasarela de pagos, un servicio de cobros simulado con Stripe; El Planificador no es un actor: es un mecanismo interno del sistema que dispara por tiempo la generación mensual, los recordatorios, la campaña anual, la caducidad de delegaciones, las copias de seguridad y las alertas, y en las fichas aparece como «Sistema (tarea programada)». CU-59 se numera al final para no alterar la numeración de los demás. Salvo CU-48 (Acceder al sistema), los casos de uso que arrancan por una tarea programada (CU-29) o por la Pasarela de pagos (CU-34) y los de la API externa (CU-57, CU-58), todos requieren que el usuario haya iniciado sesión, lo que se recoge como primera precondición de cada uno. Los actores son los definidos en la sección 1.3 de `Especificacion Requisitos.md`, y la asignación de cada operación a un rol se recoge en `Matriz_permisos.md`.
 
+**Cartera asignada.** En los casos de uso cuyo actor principal es el Usuario operativo, las operaciones sobre un cliente o sus facturas solo están permitidas si ese cliente está asignado al usuario, directamente o por una delegación vigente (RB-15, FR-39). Si no lo está, el sistema deniega el acceso. Administrador y Superadministrador acceden a cualquier cliente (RB-15, A-19). Para no repetirla, esta precondición solo se escribe en las fichas más sensibles (CU-16 y CU-22).
+
 **Requisitos transversales sin caso de uso propio.** UR-52 (dispositivos, idioma y zona horaria; NFR-17 y FR-49); UR-97 (deshacer modificaciones accidentales; flujo alternativo en CU-01, CU-10, CU-16 y en la conciliación, CU-35); UR-102 (recuperación tras una caída; flujo de excepción de CU-17, con apoyo de NFR-15); UR-45 y UR-70 (edición concurrente y duplicados por doble clic; flujos de excepción en CU-01 y CU-15); y UR-110 (cálculo determinista sin IA: FR-97 es una regla que ningún caso de uso puede incumplir, y la desactivación opcional está en CU-54).
 
 ## Índice de casos de uso
@@ -1132,13 +1134,14 @@ No se identifican flujos alternativos relevantes.
 | **Objetivo** | Guardar, recuperar y borrar borradores de factura sin perder el trabajo. |
 | **Actores participantes** | Usuario operativo (principal) |
 
-> *Nota de permisos:* los borradores forman parte de crear facturas, que el cliente permite al usuario operativo si su permiso lo permite (igual que CU-15).
+> *Nota de permisos:* el Usuario operativo gestiona los borradores de los clientes que tiene asignados (RB-15, FR-39); el Administrador y el Superadministrador, los de cualquier cliente (A-19).
 
 ---
 
 ### 2. Precondiciones
 
 - PRE-1. El usuario ha iniciado sesión.
+- PRE-2. Si el usuario es Usuario operativo, el borrador es de un cliente de su cartera (RB-15).
 
 ---
 
@@ -1185,6 +1188,15 @@ No se identifican flujos alternativos relevantes.
 1. El sistema lo impide (RB-11).
 
 **Resultado:** solo puede corregirse con rectificativa (CU-19).
+
+#### FE-2 — Borrador de un cliente no asignado
+
+**Se produce en:** paso 3.  
+**Condición:** Un Usuario operativo intenta abrir, por acceso directo (enlace o identificador), un borrador de un cliente que no está en su cartera.
+
+1. El sistema deniega el acceso (RB-15).
+
+**Resultado:** el borrador no se modifica.
 
 ---
 
@@ -1522,11 +1534,14 @@ No se identifican flujos alternativos relevantes.
 | **Objetivo** | Proponer facturas nuevas o modificadas o excepciones comerciales que requieren revisión. |
 | **Actores participantes** | Usuario operativo (principal) |
 
+> *Nota:* una excepción de prorrateo se propone antes de que exista la factura, así que se refiere a la facturación recurrente configurada (CU-17) y no a una factura.
+
 ---
 
 ### 2. Precondiciones
 
 - PRE-1. El usuario ha iniciado sesión.
+- PRE-2. Si el usuario es Usuario operativo, el cliente de la factura o de la excepción está en su cartera (RB-15).
 
 ---
 
@@ -1547,7 +1562,14 @@ No se identifican flujos alternativos relevantes.
 
 ### 5. Flujos de excepción
 
-No se identifican flujos de excepción relevantes.
+#### FE-1 — Cliente no asignado
+
+**Se produce en:** paso 1.  
+**Condición:** El cliente no está en la cartera del Usuario operativo.
+
+1. El sistema deniega la operación (RB-15, FR-39).
+
+**Resultado:** el caso de uso termina sin cambios.
 
 ---
 
@@ -1584,7 +1606,7 @@ No se identifican flujos de excepción relevantes.
 
 1. **Administrador:** abre la bandeja de propuestas pendientes.
 2. **Sistema:** muestra cada propuesta con su importe y el umbral configurado.
-3. **Administrador:** revisa y decide aprobar o rechazar, indicando un comentario.
+3. **Administrador:** revisa y decide aprobar o rechazar, indicando un comentario (obligatorio si rechaza).
 4. **Sistema:** registra la decisión, el comentario, el usuario y la fecha.
 5. **Sistema:** si se aprueba, emite o aplica lo propuesto.
 
@@ -1600,6 +1622,16 @@ No se identifican flujos de excepción relevantes.
 1. El sistema exige la autorización de un Superadministrador (RB-04).
 
 **Continuación:** continúa en el paso 4 con el Superadministrador.
+
+#### FA-2 — Rechazar la propuesta
+
+**Se produce en:** paso 5 del flujo principal.  
+**Condición:** La decisión registrada en el paso 4 es rechazar.
+
+1. La factura vuelve a borrador conservando lo propuesto, incluida la modificación manual (descuento, importe o fecha). Para emitirla, el solicitante debe corregirla y reenviarla (CU-22) o retirar la modificación manual. Si la propuesta era una excepción comercial sin factura, queda rechazada y no se aplica.
+2. El sistema notifica al solicitante la decisión y el motivo (CU-37).
+
+**Continuación:** el caso de uso termina.
 
 ---
 
@@ -1619,7 +1651,7 @@ No se identifican flujos de excepción relevantes.
 ### 6. Postcondiciones
 
 - POST-1. La propuesta queda aprobada o rechazada con su motivo.
-- POST-2. Una factura rechazada vuelve a borrador y el solicitante puede corregirla y volver a enviarla a aprobación (CU-22).
+- POST-2. Si se rechaza, el solicitante recibe la notificación con el motivo; la factura queda en borrador con lo propuesto y puede corregirse y reenviarse (CU-22).
 
 ---
 
@@ -1654,7 +1686,14 @@ No se identifican flujos de excepción relevantes.
 
 ### 4. Flujos alternativos
 
-No se identifican flujos alternativos relevantes.
+#### FA-1 — Reenviar una solicitud rechazada
+
+**Se produce en:** paso 4 del flujo principal.  
+**Condición:** La solicitud está rechazada.
+
+1. El Usuario operativo abre la factura en borrador, la corrige y la vuelve a enviar a revisión.
+
+**Continuación:** continúa en CU-22.
 
 ---
 
@@ -3200,6 +3239,8 @@ No se identifican flujos de excepción relevantes.
 | **Nombre** | Asignar y delegar clientes |
 | **Objetivo** | Asignar, reasignar y delegar temporalmente clientes a usuarios, limitando al Usuario operativo a su cartera. |
 | **Actores participantes** | Administrador (principal) |
+
+> *Nota de permisos:* asignar, reasignar y delegar está reservado al Administrador (FR-39, PRE-2); el Usuario operativo no puede iniciar este caso de uso. Queda abierta Q-10: si la reasignación necesita la aprobación de otro administrador.
 
 ---
 
