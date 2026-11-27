@@ -9,21 +9,6 @@
 -- ficheros (área 9) va al final.
 -- Reglas de traducción: snake_case, PK id, FK <tabla>_id, herencia en una tabla
 -- con columna tipo, enumerados como VARCHAR + CHECK y columnas de trazabilidad.
--- v2 (17/11): integra el parche de inalterabilidad, la FK compuesta de la serie
--- y documenta VENCIDA y A-28.
--- v3 (24/11): importe por tramos (tramo_importe) y pausas como intervalos
--- (periodo_pausa); configuracion_recurrente pierde importe_mensual, activa,
--- pausada_desde, importe_nuevo y fecha_cambio_importe.
--- v4 (24/11): añade las tablas de las áreas 1, 2, 4 y 5.
--- v5 (24/11): añade las tablas de las áreas 7 y 8.
--- v6 (24/11): añade las tablas del área 9; usuario deja de ser un marcador.
--- v7 (25/11): añade las tablas del área 11.
--- v8 (25/11): área 4 con motivo y fecha de resolución; área 5 con idioma de la
--- plantilla y motivo del fallo del mensaje.
--- v9 (25/11): motivo y fecha de revisión de la disputa de una factura (CU-31).
--- v10 (25/11): solicitud de excepción sobre una factura o una configuración
--- recurrente (prorrateo, CU-22); formato de la exportación masiva.
--- v11 (25/11): añade las tablas del área 10.
 -- =====================================================================
 
 -- =====================================================================
@@ -408,7 +393,7 @@ CREATE TABLE serie_facturacion (
     creado_en           TIMESTAMP    NOT NULL DEFAULT (now() AT TIME ZONE 'UTC'),
     modificado_por      BIGINT       REFERENCES usuario(id),
     modificado_en       TIMESTAMP,
-    -- Propuesta: un prefijo no se repite dentro de la misma entidad emisora.
+    -- Un prefijo no se repite dentro de la misma entidad emisora.
     CONSTRAINT uq_serie_prefijo UNIQUE (entidad_emisora_id, prefijo)
 );
 

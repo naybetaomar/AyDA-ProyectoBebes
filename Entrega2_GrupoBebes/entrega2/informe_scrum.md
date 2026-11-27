@@ -60,11 +60,9 @@ Herramientas utilizadas: repositorio Git con la estructura de la plantilla del p
 - **Completado**:
   - diagramas de arquitectura;
   - diagramas de clase del área 10;
-  - secuencias de CU-15, CU-17, CU-19, CU-22/23, CU-27/28, CU-34/35 y CU-48, y de la tarea diaria del planificador;
-  - E-R y script de las 11 áreas (64 tablas), construido y probado área por área sobre PostgreSQL.
-- **En curso:**
-  - secuencias de CU-57/58;
-  - informe y este informe Scrum.
+  - secuencias de CU-15, CU-17, CU-19, CU-22/23, CU-27/28, CU-34/35, CU-48 y CU-57/58, y de la tarea diaria del planificador;
+  - E-R y script de las 11 áreas (64 tablas), construido y probado área por área sobre PostgreSQL;
+  - informe de la entrega y este informe Scrum.
 
 ![Tablero al inicio del sprint 4](evidencias/sprint4_inicio.png)
 
@@ -82,19 +80,19 @@ Herramientas utilizadas: repositorio Git con la estructura de la plantilla del p
 | Diagramas de clase, áreas 7 y 8 | Luca | Entrega 2 | Muy Alta | clases | Completado |
 | Diagramas de clase, área 9 | Imad | Entrega 2 | Muy Alta | clases | Completado |
 | Diagramas de clase, área 10 | Cristóbal | Entrega 2 | Muy Alta | clases | Completado |
-| Diagrama de clase, área 11 | Guille | Entrega 2 | Muy Alta | clases | Completado |
+| Diagrama de clase, área 11 | Guillermo | Entrega 2 | Muy Alta | clases | Completado |
 | Revisión cruzada de los diagramas de clase | Todos | Entrega 2 | Alta | revisión | Completado |
 | Diagramas E-R (cada uno el de su área) | Todos | Entrega 2 | Muy Alta | datos | Completado; script de las 11 áreas probado sobre PostgreSQL. |
 | Diagramas de arquitectura | Abdelnaybet | Entrega 2 | Muy Alta | arquitectura | Completado |
 | Secuencias CU-15 y CU-19 | Abdelnaybet | Entrega 2 | Alta | secuencias | Completado |
 | Secuencias CU-27 y CU-28 | Ana | Entrega 2 | Alta | secuencias | Completado |
-| Secuencias CU-57 y CU-58 | Imad | Entrega 2 | Alta | secuencias | En curso |
+| Secuencias CU-57 y CU-58 | Imad | Entrega 2 | Alta | secuencias | Completado |
 | Secuencias CU-34 y CU-35 | Loraine | Entrega 2 | Alta | secuencias | Completado |
 | Secuencia CU-17 | Luca | Entrega 2 | Alta | secuencias | Completado |
 | Secuencias CU-22 y CU-23 | Cristóbal | Entrega 2 | Alta | secuencias | Completado |
-| Secuencia CU-48 | Guille | Entrega 2 | Alta | secuencias | Completado |
-| Terminar informes | Abdelnaybet | Entrega 2 | Alta | informe | En curso |
-| Terminar informe Scrum | Abdelnaybet | Entrega 2 | Alta | informe | En curso |
+| Secuencia CU-48 | Guillermo | Entrega 2 | Alta | secuencias | Completado |
+| Terminar informes | Abdelnaybet | Entrega 2 | Alta | informe | Completado |
+| Terminar informe Scrum | Abdelnaybet | Entrega 2 | Alta | informe | Completado |
 
 ## Problemas y riesgos
 
@@ -106,7 +104,7 @@ Herramientas utilizadas: repositorio Git con la estructura de la plantilla del p
 | 4 | Los E-R llegaron con formatos distintos (algunos conceptuales, otros físicos) | Modelo de datos incoherente | Convenciones comunes de traducción y un único script probado sobre PostgreSQL | Resuelto |
 | 4 | Revisiones hechas sobre copias antiguas del repositorio | Correcciones repetidas sobre cosas ya resueltas | Subir los cambios al repositorio con más frecuencia y descargar la última versión antes de revisar | Resuelto |
 | 4 | Área 10 pendiente de su versión nueva | El planificador debe recoger las tareas programadas de las áreas 2, 3, 6 y 9 | Lista de tareas programadas enviada a Cristóbal; versión nueva del área 10 integrada | Resuelto |
-| 4 | Varias secuencias se hicieron siguiendo solo el flujo del caso de uso, sin las clases del diseño | Secuencias que no se corresponden con el diagrama de clases | Revisar cada secuencia contra los diagramas de clase y adaptarla a sus clases y operaciones | En curso |
+| 4 | Varias secuencias se hicieron siguiendo solo el flujo del caso de uso, sin las clases del diseño | Secuencias que no se corresponden con el diagrama de clases | Revisar cada secuencia contra los diagramas de clase y adaptarla a sus clases y operaciones | Resuelto |
 
 ## Revisión y retrospectiva
 

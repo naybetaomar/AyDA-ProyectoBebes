@@ -57,7 +57,7 @@ Las 11 áreas funcionales son las siguientes:
 
 - **Un proxy de permisos** (área 9) se coloca delante de todos los servicios. Se encarga de comprobar el rol y la cartera del usuario y, además, registra la acción en la auditoría.
 
-- **Lo que se puede calcular no se guarda.** Por ejemplo, el estado del cliente, el rango de tarifa vigente y el saldo pendiente se obtienen cuando hacen falta. Así evitamos tener datos duplicados o contradictorios y no necesitamos tareas diarias para mantenerlos actualizados.
+- **Lo que se puede calcular no se guarda.** Por ejemplo, el estado del cliente, el rango de tarifa vigente y el saldo pendiente se obtienen cuando hacen falta. Así evitamos tener datos duplicados o contradictorios y no necesitamos tareas diarias para mantenerlos actualizados. Hay dos excepciones a propósito: el estado de cobro se guarda, porque cada cambio deja historial y avisa a otras áreas, y las pausas se guardan en las áreas 2 y 3 para que la dependencia vaya en un solo sentido.
 
 # 2. Actualizaciones de la Entrega 1
 
@@ -392,7 +392,7 @@ Todas las áreas siguen las mismas reglas de notación:
 
 ## Decisiones de diseño comunes
 
-**Un servicio por área como punto de entrada.** Cada área tiene un servicio (`ServicioFacturacion`, `ServicioCobros`, `ServicioAprobaciones`, `ServicioEnvio`…) con los casos de uso del área como operaciones. Las demás áreas, la interfaz, la API externa y el planificador no tocan las clases internas de un área: llaman a su servicio a través del proxy de permisos.
+**Un servicio por área como punto de entrada.** Cada área tiene un servicio (`ServicioFacturacion`, `ServicioCobros`, `ServicioAprobaciones`, `ServicioEnvio`…) con los casos de uso del área como operaciones. Las demás áreas, la interfaz, la API externa y el planificador no tocan las clases internas de un área: llaman a su servicio. La interfaz, la API, la pasarela y el planificador entran por el proxy de permisos; las llamadas entre servicios son internas y no vuelven a pasar por él.
 
 **Lógica entre áreas en un solo sentido.** Las asociaciones entre áreas pueden navegarse en los dos sentidos, pero la lógica no. Una clase solo calcula o decide con datos de su propia área; si necesita algo interno de otra, se lo pide al servicio de esa área. Por ejemplo, `Factura` (área 3) no calcula su saldo pendiente: lo calcula `ServicioCobros` (área 6), porque depende de las conciliaciones. Así no hay ciclos de dependencia entre áreas y cada una se puede cambiar sin tocar las demás.
 
@@ -617,6 +617,7 @@ Los patrones de comportamiento (Observer para los eventos, State para los estado
 - **El sobrante se queda en el movimiento.** Si se cobra más de lo que se debe, el exceso no se aplica a la factura: queda en `/importeSinAplicar` y la factura se marca con cobro excesivo (A-28).
 - **El saldo y el vencimiento los calcula el servicio.** `ServicioCobros.calcularSaldoPendiente()` resta del total las conciliaciones vigentes, la baja contable y los abonos (RB-10, A-27). `estaVencida()` indica si hay saldo con el vencimiento pasado. Ninguno de los dos se guarda.
 - **El estado `VENCIDA` sí se guarda.** Lo pone una tarea diaria del planificador (`actualizarVencimientos()`) en las facturas pendientes sin ningún cobro, siguiendo la tabla de transiciones de la Entrega 1.
+- **«Vencida» responde a dos preguntas distintas.** `VENCIDA` es la transición de la Entrega 1 para facturas sin ningún cobro; una factura cobrada en parte sigue `PARCIALMENTE_CONCILIADA` aunque pase el plazo. `estaVencida()` responde otra cosa: si queda saldo con el vencimiento pasado, y es lo que usan las alertas de impago. El estado de cobro se guarda, a diferencia del estado del cliente, porque cada cambio deja historial y avisa a otras áreas («estado de cobro cambiado»).
 - **Dos interfaces pequeñas para los proveedores.** `ReceptorNotificacionesPago` para la pasarela y `ProveedorExtractos` para el banco, en lugar de una sola. Cada adaptador implementa solo lo que usa (segregación de interfaces).
 - **La baja contable reutiliza la aprobación del área 4.** `BajaContable` solo se crea al aprobarse su `SolicitudExcepcion`, y no guarda solicitante ni aprobador (CU-36).
 
@@ -723,7 +724,7 @@ Los patrones de comportamiento (Observer para los eventos, State para los estado
 **Decisiones**
 
 - **Un proxy por servicio** (Proxy de protección), con la misma interfaz que el servicio real. `ControlAcceso` decide y el proxy deja el `RegistroAuditoria`.
-- **`ContextoSeguridad` da el solicitante.** Es un `Usuario` o la `IdentidadSistema` del planificador y de los webhooks (interfaz `Solicitante`), así que ninguna operación lleva el solicitante como parámetro.
+- **`ContextoSeguridad` da el solicitante.** Es un `Usuario` o la `IdentidadSistema` del planificador, de la API y de los webhooks (interfaz `Solicitante`), así que ninguna operación lleva el solicitante como parámetro.
 - **El inicio de sesión no pasa por el proxy.** `ServicioAcceso` bloquea la cuenta 15 minutos tras 5 fallos seguidos (A-07), cierra la sesión tras 30 minutos sin actividad (A-06) y guarda solo el hash del enlace de recuperación.
 - **Cartera.** Cada cliente tiene un solo responsable vigente (`AsignacionCliente`). Una `Delegacion` cede toda la cartera durante un periodo (FR-41).
 - **Auditoría inalterable.** Solo se crea y se consulta; usuario nulo = Sistema.
@@ -861,7 +862,8 @@ Entre todos, los eventos entre áreas aparecen al menos en una secuencia. «Impa
 | `cu34_registrar_cobro_pasarela` | CU-34, flujo principal: la pasarela notifica un pago y se concilia solo (FE-1, evento repetido) | Loraine |
 | `cu35_1_conciliar_manualmente` | CU-35 (1), flujo principal: bandeja y conciliación manual (FA-2 en nota) | Loraine |
 | `cu35_2_deshacer_conciliacion` | CU-35 (2), FA-1: deshacer una conciliación | Loraine |
-| *pendiente* | CU-57 / CU-58: consulta y solicitud por la API externa | Imad |
+| `cu57_consultar_datos_api` | CU-57: un sistema externo consulta los datos de un cliente (FE-1 y FE-2 como alternativas) | Imad |
+| `cu58_enviar_solicitud_api` | CU-58: un sistema externo pide la baja de un cliente (FE-1 como alternativa) | Imad |
 
 ## Notación
 
@@ -1023,11 +1025,11 @@ Si puede aprobar, `s.aprobar()` guarda el aprobador, el comentario y la fecha (p
 - **El umbral lo lee el servicio, no la interfaz.** La interfaz no accede a `ConfiguracionGlobal`: todo pasa por el proxy.
 - **Las comprobaciones de FE-1 y FA-1 se repiten al rechazar.** Se indica en una nota del diagrama 2 en lugar de dibujarlas otra vez.
 
-![Figura 56. CU-22: proponer una excepción de prorrateo](../entrega2/diagramas/secuencias/cu22/cu22_proponer_excepcion_prorrateo.png)
+![Figura 58. CU-22: proponer una excepción de prorrateo](../entrega2/diagramas/secuencias/cu22/cu22_proponer_excepcion_prorrateo.png)
 
-![Figura 57. CU-23 (1): aprobar; autoaprobación y umbral como alternativas](../entrega2/diagramas/secuencias/cu23/cu23_1_aprobar_solicitud.png)
+![Figura 59. CU-23 (1): aprobar; autoaprobación y umbral como alternativas](../entrega2/diagramas/secuencias/cu23/cu23_1_aprobar_solicitud.png)
 
-![Figura 58. CU-23 (2): rechazar; la factura vuelve a borrador](../entrega2/diagramas/secuencias/cu23/cu23_2_rechazar_solicitud.png)
+![Figura 60. CU-23 (2): rechazar; la factura vuelve a borrador](../entrega2/diagramas/secuencias/cu23/cu23_2_rechazar_solicitud.png)
 
 ## CU-34 y CU-35: Registrar el cobro de la pasarela y conciliar
 
@@ -1054,6 +1056,33 @@ En los tres casos, si el estado de cobro de la factura cambia, `recalcularEstado
 
 ![Figura 55. CU-35 (2): deshacer una conciliación](../entrega2/diagramas/secuencias/cu35/cu35_2_deshacer_conciliacion.png)
 
+## CU-57 y CU-58: La API externa
+
+El sistema externo solo conoce `FachadaAPI` (patrón Facade). Las dos operaciones empiezan igual: la fachada busca el `ConsumidorAPI` por el hash de la credencial, comprueba con `autenticar()` y `haAlcanzadoLimite()`, y decide:
+
+- **Credencial inválida o consumidor inexistente:** responde `NO_AUTORIZADA` (FE-2 de CU-57).
+- **Límite alcanzado:** responde `LIMITE_EXCEDIDO` (FE-1 de CU-57).
+- **Correcta:** deja la `IdentidadSistema` de la API en el `ContextoSeguridad` y llama a los servicios **a través de sus proxies**, como cualquier otra entrada.
+
+En todos los casos guarda una `LlamadaAPI` con el resultado (POST-1).
+
+**CU-57. Consultar datos.** La fachada pide las facturas del cliente (`consultarFacturas()`, área 3) y su saldo (`consultarSaldo()`, área 6), y devuelve un `DatosConsultaCliente`: solo los datos autorizados, en DTO, nunca las entidades del dominio.
+
+**CU-58. Solicitar la baja de un cliente.** La fachada comprueba la baja con `comprobarBaja()` del área 2, la misma regla que aplica la interfaz en CU-12 (RB-31), y crea la `SolicitudExterna`:
+
+- **Hay motivo (FE-1):** `s.rechazar(motivo)` y responde `RECHAZADA`.
+- **No hay motivo:** el área 7 crea una tarea de revisión (`crearTarea()`), `s.validar(t)` la enlaza y responde `CORRECTA`. La baja la hace después una persona (CU-12 FA-1).
+
+**Decisiones**
+
+- **La fachada recibe la credencial, no el consumidor.** Una credencial mala no tiene `ConsumidorAPI`, y aun así la llamada queda registrada.
+- **La API no da de baja a nadie.** Solo valida la petición y deja una tarea; la decisión sigue siendo de una persona.
+- **Las mismas reglas que la interfaz.** La API no duplica validaciones: llama a las operaciones de cada área por su proxy.
+
+![Figura 56. CU-57: consultar datos por la API; límite y credencial inválida](../entrega2/diagramas/secuencias/cu57/cu57_consultar_datos_api.png)
+
+![Figura 57. CU-58: solicitar una baja por la API; solicitud inválida](../entrega2/diagramas/secuencias/cu58/cu58_enviar_solicitud_api.png)
+
 ## Trazabilidad
 
 | Diagrama | Caso de uso | Participantes / responsabilidades |
@@ -1075,6 +1104,8 @@ En los tres casos, si el estado de cobro de la factura cambia, `recalcularEstado
 | `cu34_registrar_cobro_pasarela` | CU-34 (flujo principal, FE-1), A-28, NFR-27 | Receptor de webhooks; `ProxyCobros` (identidad de sistema); `ServicioCobros` (`registrarNotificacion()`, `conciliarAutomaticamente()`, `calcularSaldoPendiente()`, `recalcularEstadoCobro()`); `AdaptadorStripe` (`traducirNotificacion()`, Adapter); `MovimientoCobro` (`aplicarA()`, `marcarEnRevision()`); `Conciliacion`; `Factura` (`marcarCobroExcesivo()`, `registrarEstadoCobro()`); `ServicioRecordatorios` (área 5) |
 | `cu35_1_conciliar_manualmente` | CU-35 (flujo principal, FE-1, FA-2), FR-87, RB-37 | `ProxyCobros`; `ServicioCobros` (`consultarBandejaConciliacion()`, `conciliarManualmente()`, `recalcularEstadoCobro()`); `ContextoSeguridad`; `MovimientoCobro` (`aplicarA()`); `Conciliacion`; `Factura` (`registrarEstadoCobro()`); `ServicioRecordatorios` (área 5) |
 | `cu35_2_deshacer_conciliacion` | CU-35 FA-1, RB-37 | `ProxyCobros`; `ServicioCobros` (`deshacerConciliacion()`, `recalcularEstadoCobro()`); `ContextoSeguridad`; `Conciliacion` (`deshacer()`); `Factura` (`registrarEstadoCobro()`); `ServicioRecordatorios` (área 5) |
+| `cu57_consultar_datos_api` | CU-57 (flujo principal, FE-1, FE-2), POST-1, NFR-50 | `FachadaAPI` (Facade, `consultarDatos()`); `ConsumidorAPI` (`autenticar()`, `haAlcanzadoLimite()`); `LlamadaAPI`; `ContextoSeguridad` (`IdentidadSistema`); `ProxyFacturacion` y `ServicioFacturacion` (`consultarFacturas()`); `ProxyCobros` y `ServicioCobros` (`consultarSaldo()`); `DatosConsultaCliente` |
+| `cu58_enviar_solicitud_api` | CU-58 (flujo principal, FE-1), CU-12 FA-1, RB-31 | `FachadaAPI` (`enviarSolicitud()`); `ConsumidorAPI`; `LlamadaAPI`; `ContextoSeguridad`; `ProxyRelacionComercial` y `ServicioRelacionComercial` (`comprobarBaja()`); `SolicitudExterna` (`rechazar()`, `validar()`); `ProxyNotificaciones` y `ServicioNotificaciones` (`crearTarea()`); `Tarea` |
 | `tarea_1_vencimientos` | Transición «Pendiente → Vencida», CU-56 (fallo de la tarea) | `Planificador`, `TareaAutomatica` y `EjecucionProceso` (área 10); `ProxyCobros` (identidad de sistema); `ServicioCobros` (`actualizarVencimientos()`); `Factura` (`registrarEstadoCobro()`) |
 | `tarea_2_impagos` | UR-92, UR-93, CU-37 (alerta) | `Planificador`, `TareaAutomatica` y `EjecucionProceso` (área 10); `ProxyCobros`; `ServicioCobros` (`comprobarImpagos()`, `estaVencida()`, `consultarSaldo()`); `ConfiguracionGlobal` (límites); `ManejadorAlertasCobro` y `ServicioNotificaciones` (área 7) |
 
@@ -1102,11 +1133,11 @@ Estilo general: arquitectura en capas (presentación, seguridad, servicios de ap
 
 Cada servicio corresponde a un área funcional de nuestro sistema (áreas 1 a la 8). Las áreas 9, 10 y 11 son transversales.
 
-![Figura 59. Arquitectura lógica en capas (vista principal)](../entrega2/diagramas/arquitectura/arquitectura_1_general.png)
+![Figura 61. Arquitectura lógica en capas (vista principal)](../entrega2/diagramas/arquitectura/arquitectura_1_general.png)
 
-![Figura 60. Dependencias entre los servicios de las áreas y eventos](../entrega2/diagramas/arquitectura/arquitectura_2_servicios.png)
+![Figura 62. Dependencias entre los servicios de las áreas y eventos](../entrega2/diagramas/arquitectura/arquitectura_2_servicios.png)
 
-![Figura 61. Despliegue (complementaria)](../entrega2/diagramas/arquitectura/arquitectura_3_despliegue.png)
+![Figura 63. Despliegue (complementaria)](../entrega2/diagramas/arquitectura/arquitectura_3_despliegue.png)
 
 ## Responsabilidades
 
@@ -1156,7 +1187,7 @@ Cada servicio corresponde a un área funcional de nuestro sistema (áreas 1 a la
 
 **GestorDocumentos.** Centraliza los ficheros. El PDF de una factura emitida es inalterable (RB-07) y se guarda con su hash; las exportaciones son temporales y se borran al caducar (FR-95).
 
-**Planificador.** Ejecuta las tareas largas en segundo plano (FR-86) y recupera, tras una caída, las facturas recurrentes pendientes sin duplicar las ya generadas (FR-100). Por eso debe haber **una sola instancia** (o un bloqueo en la base de datos): si se escalara a varias, las tareas se ejecutarían por duplicado.
+**Planificador.** Ejecuta las tareas largas en segundo plano (FR-86) y recupera, tras una caída, las facturas recurrentes pendientes sin duplicar las ya generadas (FR-100). Por eso se despliega **una sola instancia**: con varias, las tareas se ejecutarían por duplicado. Si en el futuro hubiera que escalar, haría falta un bloqueo en la base de datos para que solo una instancia ejecute las tareas.
 
 **Despliegue.** La aplicación va en un único contenedor, con la interfaz y la API, el proxy, los servicios y el dominio, y el planificador. Es un monolito modular: sencillo de desplegar y suficiente para un sistema interno.
 - *Alternativa descartada:* un servicio desplegable por área (microservicios). Añade infraestructura y comunicación que este tamaño no justifica.
@@ -1260,11 +1291,9 @@ Herramientas utilizadas: repositorio Git con la estructura de la plantilla del p
 - **Completado**:
   - diagramas de arquitectura;
   - diagramas de clase del área 10;
-  - secuencias de CU-15, CU-17, CU-19, CU-22/23, CU-27/28, CU-34/35 y CU-48, y de la tarea diaria del planificador;
-  - E-R y script de las 11 áreas (64 tablas), construido y probado área por área sobre PostgreSQL.
-- **En curso:**
-  - secuencias de CU-57/58;
-  - informe y este informe Scrum.
+  - secuencias de CU-15, CU-17, CU-19, CU-22/23, CU-27/28, CU-34/35, CU-48 y CU-57/58, y de la tarea diaria del planificador;
+  - E-R y script de las 11 áreas (64 tablas), construido y probado área por área sobre PostgreSQL;
+  - informe de la entrega y este informe Scrum.
 
 ![Tablero al inicio del sprint 4](../entrega2/evidencias/sprint4_inicio.png)
 
@@ -1282,19 +1311,19 @@ Herramientas utilizadas: repositorio Git con la estructura de la plantilla del p
 | Diagramas de clase, áreas 7 y 8 | Luca | Entrega 2 | Muy Alta | clases | Completado |
 | Diagramas de clase, área 9 | Imad | Entrega 2 | Muy Alta | clases | Completado |
 | Diagramas de clase, área 10 | Cristóbal | Entrega 2 | Muy Alta | clases | Completado |
-| Diagrama de clase, área 11 | Guille | Entrega 2 | Muy Alta | clases | Completado |
+| Diagrama de clase, área 11 | Guillermo | Entrega 2 | Muy Alta | clases | Completado |
 | Revisión cruzada de los diagramas de clase | Todos | Entrega 2 | Alta | revisión | Completado |
 | Diagramas E-R (cada uno el de su área) | Todos | Entrega 2 | Muy Alta | datos | Completado; script de las 11 áreas probado sobre PostgreSQL. |
 | Diagramas de arquitectura | Abdelnaybet | Entrega 2 | Muy Alta | arquitectura | Completado |
 | Secuencias CU-15 y CU-19 | Abdelnaybet | Entrega 2 | Alta | secuencias | Completado |
 | Secuencias CU-27 y CU-28 | Ana | Entrega 2 | Alta | secuencias | Completado |
-| Secuencias CU-57 y CU-58 | Imad | Entrega 2 | Alta | secuencias | En curso |
+| Secuencias CU-57 y CU-58 | Imad | Entrega 2 | Alta | secuencias | Completado |
 | Secuencias CU-34 y CU-35 | Loraine | Entrega 2 | Alta | secuencias | Completado |
 | Secuencia CU-17 | Luca | Entrega 2 | Alta | secuencias | Completado |
 | Secuencias CU-22 y CU-23 | Cristóbal | Entrega 2 | Alta | secuencias | Completado |
-| Secuencia CU-48 | Guille | Entrega 2 | Alta | secuencias | Completado |
-| Terminar informes | Abdelnaybet | Entrega 2 | Alta | informe | En curso |
-| Terminar informe Scrum | Abdelnaybet | Entrega 2 | Alta | informe | En curso |
+| Secuencia CU-48 | Guillermo | Entrega 2 | Alta | secuencias | Completado |
+| Terminar informes | Abdelnaybet | Entrega 2 | Alta | informe | Completado |
+| Terminar informe Scrum | Abdelnaybet | Entrega 2 | Alta | informe | Completado |
 
 ## Problemas y riesgos
 
@@ -1306,7 +1335,7 @@ Herramientas utilizadas: repositorio Git con la estructura de la plantilla del p
 | 4 | Los E-R llegaron con formatos distintos (algunos conceptuales, otros físicos) | Modelo de datos incoherente | Convenciones comunes de traducción y un único script probado sobre PostgreSQL | Resuelto |
 | 4 | Revisiones hechas sobre copias antiguas del repositorio | Correcciones repetidas sobre cosas ya resueltas | Subir los cambios al repositorio con más frecuencia y descargar la última versión antes de revisar | Resuelto |
 | 4 | Área 10 pendiente de su versión nueva | El planificador debe recoger las tareas programadas de las áreas 2, 3, 6 y 9 | Lista de tareas programadas enviada a Cristóbal; versión nueva del área 10 integrada | Resuelto |
-| 4 | Varias secuencias se hicieron siguiendo solo el flujo del caso de uso, sin las clases del diseño | Secuencias que no se corresponden con el diagrama de clases | Revisar cada secuencia contra los diagramas de clase y adaptarla a sus clases y operaciones | En curso |
+| 4 | Varias secuencias se hicieron siguiendo solo el flujo del caso de uso, sin las clases del diseño | Secuencias que no se corresponden con el diagrama de clases | Revisar cada secuencia contra los diagramas de clase y adaptarla a sus clases y operaciones | Resuelto |
 
 ## Revisión y retrospectiva
 
@@ -1335,12 +1364,14 @@ Herramientas utilizadas: repositorio Git con la estructura de la plantilla del p
 
 - **Diseño dividido por áreas**, con un servicio como punto de entrada en cada una y la lógica entre áreas en un solo sentido. Cada área se puede cambiar sin tocar las demás y no hay ciclos de dependencia.
 - **Eventos entre áreas** en lugar de llamadas cruzadas. Se declaran ahora y el mecanismo (Observer) se formaliza en la Entrega 3.
-- **Proxy de permisos** con un `ContextoSeguridad`. Ninguna operación de ningún servicio lleva el solicitante como parámetro, y el planificador y la API pasan por el mismo control con su propia identidad.
+- **Proxy de permisos** con un `ContextoSeguridad`. Ninguna operación de ningún servicio lleva el solicitante como parámetro, y el planificador, la API y la pasarela pasan por el mismo control con su propia identidad.
 - **Datos derivados sin guardar**, que se calculan cuando se consultan:
   - el estado del cliente;
   - el rango de tarifa vigente;
   - el saldo pendiente;
   - el importe vigente de la facturación recurrente, calculado a partir de sus tramos.
+
+  Las excepciones son el estado de cobro, que se guarda porque deja historial y avisa a otras áreas, y las pausas, guardadas en las áreas 2 y 3 para que la dependencia vaya en un solo sentido.
 - **Restricciones en la base de datos** siempre que se pueden expresar:
   - sin solapes de pausas, tarifas, periodos, asignaciones y relaciones comerciales (`EXCLUDE`);
   - auditoría inalterable (disparadores);

@@ -58,7 +58,7 @@ Las 11 áreas funcionales son las siguientes:
 
 - **Un proxy de permisos** (área 9) se coloca delante de todos los servicios. Se encarga de comprobar el rol y la cartera del usuario y, además, registra la acción en la auditoría.
 
-- **Lo que se puede calcular no se guarda.** Por ejemplo, el estado del cliente, el rango de tarifa vigente y el saldo pendiente se obtienen cuando hacen falta. Así evitamos tener datos duplicados o contradictorios y no necesitamos tareas diarias para mantenerlos actualizados.
+- **Lo que se puede calcular no se guarda.** Por ejemplo, el estado del cliente, el rango de tarifa vigente y el saldo pendiente se obtienen cuando hacen falta. Así evitamos tener datos duplicados o contradictorios y no necesitamos tareas diarias para mantenerlos actualizados. Hay dos excepciones a propósito: el estado de cobro se guarda, porque cada cambio deja historial y avisa a otras áreas, y las pausas se guardan en las áreas 2 y 3 para que la dependencia vaya en un solo sentido.
 
 ## 2. Actualizaciones de la Entrega 1
 
@@ -145,7 +145,8 @@ El script `diagramas/modelo_datos/script.sql` crea las 64 tablas con sus restric
 | `cu34_registrar_cobro_pasarela` | CU-34: la pasarela notifica un pago; evento repetido |
 | `cu35_1_conciliar_manualmente` | CU-35 (1): bandeja y conciliación manual |
 | `cu35_2_deshacer_conciliacion` | CU-35 (2): deshacer una conciliación |
-| *pendiente* | CU-57 / CU-58: consulta y solicitud por la API externa |
+| `cu57_consultar_datos_api` | CU-57: consultar datos por la API; límite y credencial inválida |
+| `cu58_enviar_solicitud_api` | CU-58: solicitar una baja por la API; solicitud inválida |
 
 
 ## 6. Arquitectura y componentes
@@ -170,12 +171,14 @@ El script `diagramas/modelo_datos/script.sql` crea las 64 tablas con sus restric
 
 - **Diseño dividido por áreas**, con un servicio como punto de entrada en cada una y la lógica entre áreas en un solo sentido. Cada área se puede cambiar sin tocar las demás y no hay ciclos de dependencia.
 - **Eventos entre áreas** en lugar de llamadas cruzadas. Se declaran ahora y el mecanismo (Observer) se formaliza en la Entrega 3.
-- **Proxy de permisos** con un `ContextoSeguridad`. Ninguna operación de ningún servicio lleva el solicitante como parámetro, y el planificador y la API pasan por el mismo control con su propia identidad.
+- **Proxy de permisos** con un `ContextoSeguridad`. Ninguna operación de ningún servicio lleva el solicitante como parámetro, y el planificador, la API y la pasarela pasan por el mismo control con su propia identidad.
 - **Datos derivados sin guardar**, que se calculan cuando se consultan:
   - el estado del cliente;
   - el rango de tarifa vigente;
   - el saldo pendiente;
   - el importe vigente de la facturación recurrente, calculado a partir de sus tramos.
+
+  Las excepciones son el estado de cobro, que se guarda porque deja historial y avisa a otras áreas, y las pausas, guardadas en las áreas 2 y 3 para que la dependencia vaya en un solo sentido.
 - **Restricciones en la base de datos** siempre que se pueden expresar:
   - sin solapes de pausas, tarifas, periodos, asignaciones y relaciones comerciales (`EXCLUDE`);
   - auditoría inalterable (disparadores);

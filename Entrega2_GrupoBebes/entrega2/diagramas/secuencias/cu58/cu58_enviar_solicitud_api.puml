@@ -1,7 +1,6 @@
 @startuml cu58_enviar_solicitud_api
 title CU-58 Enviar solicitud mediante la API — «Cliente solicita baja» (FE-1 como alternativa)
 hide footbox
-skinparam maxMessageSize 140
 autonumber "0:"
 skinparam sequenceParticipantBackgroundColor #FFFFCC
 skinparam sequenceParticipantBorderColor #A80036
@@ -25,29 +24,31 @@ autonumber stop
 FA <--o] : c o nada
 autonumber resume
 
-alt no existe consumidor con esa credencial, o c.autenticar() = false
+opt existe c
+  FA -> C ++ : autenticar(credencial : String)
+  autonumber stop
+  return válida
+  autonumber resume
+  FA -> C ++ : haAlcanzadoLimite()
+  autonumber stop
+  return alcanzado
+  autonumber resume
+end
+
+alt no existe c, o la credencial no es válida
   create participant "__l : LlamadaAPI__" as L
   FA --> L : LlamadaAPI(consumidor = c o nulo, operacion = ENVIAR_SOLICITUD, resultado = NO_AUTORIZADA)
   FA ->o] : guardar l en BD
   autonumber stop
   FA --> SE : NO_AUTORIZADA
   autonumber resume
-else c.haAlcanzadoLimite() = true
+else límite alcanzado
   FA --> L : LlamadaAPI(consumidor = c, operacion = ENVIAR_SOLICITUD, resultado = LIMITE_EXCEDIDO)
   FA ->o] : guardar l en BD
   autonumber stop
   FA --> SE : LIMITE_EXCEDIDO
   autonumber resume
 else credencial válida y dentro del límite
-  FA -> C ++ : autenticar(credencial : String)
-  autonumber stop
-  return true
-  autonumber resume
-  FA -> C ++ : haAlcanzadoLimite()
-  autonumber stop
-  return false
-  autonumber resume
-
   FA -> CS ++ : establecer(solicitante = identidad de la API : IdentidadSistema)
   autonumber stop
   return

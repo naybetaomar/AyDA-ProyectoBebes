@@ -64,7 +64,7 @@ Cada servicio corresponde a un área funcional de nuestro sistema (áreas 1 a la
 
 **GestorDocumentos.** Centraliza los ficheros. El PDF de una factura emitida es inalterable (RB-07) y se guarda con su hash; las exportaciones son temporales y se borran al caducar (FR-95).
 
-**Planificador.** Ejecuta las tareas largas en segundo plano (FR-86) y recupera, tras una caída, las facturas recurrentes pendientes sin duplicar las ya generadas (FR-100). Por eso debe haber **una sola instancia** (o un bloqueo en la base de datos): si se escalara a varias, las tareas se ejecutarían por duplicado.
+**Planificador.** Ejecuta las tareas largas en segundo plano (FR-86) y recupera, tras una caída, las facturas recurrentes pendientes sin duplicar las ya generadas (FR-100). Por eso se despliega **una sola instancia**: con varias, las tareas se ejecutarían por duplicado. Si en el futuro hubiera que escalar, haría falta un bloqueo en la base de datos para que solo una instancia ejecute las tareas.
 
 **Despliegue.** La aplicación va en un único contenedor, con la interfaz y la API, el proxy, los servicios y el dominio, y el planificador. Es un monolito modular: sencillo de desplegar y suficiente para un sistema interno.
 - *Alternativa descartada:* un servicio desplegable por área (microservicios). Añade infraestructura y comunicación que este tamaño no justifica.

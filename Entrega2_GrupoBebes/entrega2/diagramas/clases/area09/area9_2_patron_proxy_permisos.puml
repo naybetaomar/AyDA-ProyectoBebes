@@ -137,8 +137,8 @@ note right of ContextoSeguridad
   Quién hace la petición. Lo rellena
   ServicioAcceso.validarSesion() (diagrama 4) en cada
   petición de la interfaz web con el Usuario de la
-  sesión, o el planificador (área 10) y el
-  receptor de webhooks con la IdentidadSistema.
+  sesión, o el planificador (área 10), la API
+  y el receptor de webhooks con la IdentidadSistema.
   Así ninguna operación lleva el solicitante
   como parámetro. Si está vacío, el proxy
   lanza AccesoDenegado.

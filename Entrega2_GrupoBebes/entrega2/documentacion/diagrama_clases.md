@@ -42,7 +42,7 @@ Todas las áreas siguen las mismas reglas de notación:
 
 ## Decisiones de diseño comunes
 
-**Un servicio por área como punto de entrada.** Cada área tiene un servicio (`ServicioFacturacion`, `ServicioCobros`, `ServicioAprobaciones`, `ServicioEnvio`…) con los casos de uso del área como operaciones. Las demás áreas, la interfaz, la API externa y el planificador no tocan las clases internas de un área: llaman a su servicio a través del proxy de permisos.
+**Un servicio por área como punto de entrada.** Cada área tiene un servicio (`ServicioFacturacion`, `ServicioCobros`, `ServicioAprobaciones`, `ServicioEnvio`…) con los casos de uso del área como operaciones. Las demás áreas, la interfaz, la API externa y el planificador no tocan las clases internas de un área: llaman a su servicio. La interfaz, la API, la pasarela y el planificador entran por el proxy de permisos; las llamadas entre servicios son internas y no vuelven a pasar por él.
 
 **Lógica entre áreas en un solo sentido.** Las asociaciones entre áreas pueden navegarse en los dos sentidos, pero la lógica no. Una clase solo calcula o decide con datos de su propia área; si necesita algo interno de otra, se lo pide al servicio de esa área. Por ejemplo, `Factura` (área 3) no calcula su saldo pendiente: lo calcula `ServicioCobros` (área 6), porque depende de las conciliaciones. Así no hay ciclos de dependencia entre áreas y cada una se puede cambiar sin tocar las demás.
 
@@ -239,6 +239,7 @@ Los patrones de comportamiento (Observer para los eventos, State para los estado
 - **El sobrante se queda en el movimiento.** Si se cobra más de lo que se debe, el exceso no se aplica a la factura: queda en `/importeSinAplicar` y la factura se marca con cobro excesivo (A-28).
 - **El saldo y el vencimiento los calcula el servicio.** `ServicioCobros.calcularSaldoPendiente()` resta del total las conciliaciones vigentes, la baja contable y los abonos (RB-10, A-27). `estaVencida()` indica si hay saldo con el vencimiento pasado. Ninguno de los dos se guarda.
 - **El estado `VENCIDA` sí se guarda.** Lo pone una tarea diaria del planificador (`actualizarVencimientos()`) en las facturas pendientes sin ningún cobro, siguiendo la tabla de transiciones de la Entrega 1.
+- **«Vencida» responde a dos preguntas distintas.** `VENCIDA` es la transición de la Entrega 1 para facturas sin ningún cobro; una factura cobrada en parte sigue `PARCIALMENTE_CONCILIADA` aunque pase el plazo. `estaVencida()` responde otra cosa: si queda saldo con el vencimiento pasado, y es lo que usan las alertas de impago. El estado de cobro se guarda, a diferencia del estado del cliente, porque cada cambio deja historial y avisa a otras áreas («estado de cobro cambiado»).
 - **Dos interfaces pequeñas para los proveedores.** `ReceptorNotificacionesPago` para la pasarela y `ProveedorExtractos` para el banco, en lugar de una sola. Cada adaptador implementa solo lo que usa (segregación de interfaces).
 - **La baja contable reutiliza la aprobación del área 4.** `BajaContable` solo se crea al aprobarse su `SolicitudExcepcion`, y no guarda solicitante ni aprobador (CU-36).
 
@@ -325,7 +326,7 @@ Los patrones de comportamiento (Observer para los eventos, State para los estado
 **Decisiones**
 
 - **Un proxy por servicio** (Proxy de protección), con la misma interfaz que el servicio real. `ControlAcceso` decide y el proxy deja el `RegistroAuditoria`.
-- **`ContextoSeguridad` da el solicitante.** Es un `Usuario` o la `IdentidadSistema` del planificador y de los webhooks (interfaz `Solicitante`), así que ninguna operación lleva el solicitante como parámetro.
+- **`ContextoSeguridad` da el solicitante.** Es un `Usuario` o la `IdentidadSistema` del planificador, de la API y de los webhooks (interfaz `Solicitante`), así que ninguna operación lleva el solicitante como parámetro.
 - **El inicio de sesión no pasa por el proxy.** `ServicioAcceso` bloquea la cuenta 15 minutos tras 5 fallos seguidos (A-07), cierra la sesión tras 30 minutos sin actividad (A-06) y guarda solo el hash del enlace de recuperación.
 - **Cartera.** Cada cliente tiene un solo responsable vigente (`AsignacionCliente`). Una `Delegacion` cede toda la cartera durante un periodo (FR-41).
 - **Auditoría inalterable.** Solo se crea y se consulta; usuario nulo = Sistema.

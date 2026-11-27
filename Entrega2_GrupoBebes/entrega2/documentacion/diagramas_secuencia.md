@@ -33,7 +33,8 @@ Entre todos, los eventos entre áreas aparecen al menos en una secuencia. «Impa
 | `cu34_registrar_cobro_pasarela.puml` | CU-34, flujo principal: la pasarela notifica un pago y se concilia solo (FE-1, evento repetido) | Loraine |
 | `cu35_1_conciliar_manualmente.puml` | CU-35 (1), flujo principal: bandeja y conciliación manual (FA-2 en nota) | Loraine |
 | `cu35_2_deshacer_conciliacion.puml` | CU-35 (2), FA-1: deshacer una conciliación | Loraine |
-| *pendiente* | CU-57 / CU-58: consulta y solicitud por la API externa | Imad |
+| `cu57_consultar_datos_api.puml` | CU-57: un sistema externo consulta los datos de un cliente (FE-1 y FE-2 como alternativas) | Imad |
+| `cu58_enviar_solicitud_api.puml` | CU-58: un sistema externo pide la baja de un cliente (FE-1 como alternativa) | Imad |
 
 ## Notación
 
@@ -189,6 +190,29 @@ En los tres casos, si el estado de cobro de la factura cambia, `recalcularEstado
 - **Conciliar solo crea la `Conciliacion`.** Lo aplicado y lo sin aplicar del movimiento, y el saldo de la factura, son derivados: deshacer no tiene que recalcular nada guardado.
 - **Una conciliación por movimiento y factura** mientras no se deshaga (FR-87).
 
+## CU-57 y CU-58: La API externa
+
+El sistema externo solo conoce `FachadaAPI` (patrón Facade). Las dos operaciones empiezan igual: la fachada busca el `ConsumidorAPI` por el hash de la credencial, comprueba con `autenticar()` y `haAlcanzadoLimite()`, y decide:
+
+- **Credencial inválida o consumidor inexistente:** responde `NO_AUTORIZADA` (FE-2 de CU-57).
+- **Límite alcanzado:** responde `LIMITE_EXCEDIDO` (FE-1 de CU-57).
+- **Correcta:** deja la `IdentidadSistema` de la API en el `ContextoSeguridad` y llama a los servicios **a través de sus proxies**, como cualquier otra entrada.
+
+En todos los casos guarda una `LlamadaAPI` con el resultado (POST-1).
+
+**CU-57. Consultar datos.** La fachada pide las facturas del cliente (`consultarFacturas()`, área 3) y su saldo (`consultarSaldo()`, área 6), y devuelve un `DatosConsultaCliente`: solo los datos autorizados, en DTO, nunca las entidades del dominio.
+
+**CU-58. Solicitar la baja de un cliente.** La fachada comprueba la baja con `comprobarBaja()` del área 2, la misma regla que aplica la interfaz en CU-12 (RB-31), y crea la `SolicitudExterna`:
+
+- **Hay motivo (FE-1):** `s.rechazar(motivo)` y responde `RECHAZADA`.
+- **No hay motivo:** el área 7 crea una tarea de revisión (`crearTarea()`), `s.validar(t)` la enlaza y responde `CORRECTA`. La baja la hace después una persona (CU-12 FA-1).
+
+**Decisiones**
+
+- **La fachada recibe la credencial, no el consumidor.** Una credencial mala no tiene `ConsumidorAPI`, y aun así la llamada queda registrada.
+- **La API no da de baja a nadie.** Solo valida la petición y deja una tarea; la decisión sigue siendo de una persona.
+- **Las mismas reglas que la interfaz.** La API no duplica validaciones: llama a las operaciones de cada área por su proxy.
+
 ## Trazabilidad
 
 | Diagrama | Caso de uso | Participantes / responsabilidades |
@@ -210,6 +234,8 @@ En los tres casos, si el estado de cobro de la factura cambia, `recalcularEstado
 | `cu34_registrar_cobro_pasarela.puml` | CU-34 (flujo principal, FE-1), A-28, NFR-27 | Receptor de webhooks; `ProxyCobros` (identidad de sistema); `ServicioCobros` (`registrarNotificacion()`, `conciliarAutomaticamente()`, `calcularSaldoPendiente()`, `recalcularEstadoCobro()`); `AdaptadorStripe` (`traducirNotificacion()`, Adapter); `MovimientoCobro` (`aplicarA()`, `marcarEnRevision()`); `Conciliacion`; `Factura` (`marcarCobroExcesivo()`, `registrarEstadoCobro()`); `ServicioRecordatorios` (área 5) |
 | `cu35_1_conciliar_manualmente.puml` | CU-35 (flujo principal, FE-1, FA-2), FR-87, RB-37 | `ProxyCobros`; `ServicioCobros` (`consultarBandejaConciliacion()`, `conciliarManualmente()`, `recalcularEstadoCobro()`); `ContextoSeguridad`; `MovimientoCobro` (`aplicarA()`); `Conciliacion`; `Factura` (`registrarEstadoCobro()`); `ServicioRecordatorios` (área 5) |
 | `cu35_2_deshacer_conciliacion.puml` | CU-35 FA-1, RB-37 | `ProxyCobros`; `ServicioCobros` (`deshacerConciliacion()`, `recalcularEstadoCobro()`); `ContextoSeguridad`; `Conciliacion` (`deshacer()`); `Factura` (`registrarEstadoCobro()`); `ServicioRecordatorios` (área 5) |
+| `cu57_consultar_datos_api.puml` | CU-57 (flujo principal, FE-1, FE-2), POST-1, NFR-50 | `FachadaAPI` (Facade, `consultarDatos()`); `ConsumidorAPI` (`autenticar()`, `haAlcanzadoLimite()`); `LlamadaAPI`; `ContextoSeguridad` (`IdentidadSistema`); `ProxyFacturacion` y `ServicioFacturacion` (`consultarFacturas()`); `ProxyCobros` y `ServicioCobros` (`consultarSaldo()`); `DatosConsultaCliente` |
+| `cu58_enviar_solicitud_api.puml` | CU-58 (flujo principal, FE-1), CU-12 FA-1, RB-31 | `FachadaAPI` (`enviarSolicitud()`); `ConsumidorAPI`; `LlamadaAPI`; `ContextoSeguridad`; `ProxyRelacionComercial` y `ServicioRelacionComercial` (`comprobarBaja()`); `SolicitudExterna` (`rechazar()`, `validar()`); `ProxyNotificaciones` y `ServicioNotificaciones` (`crearTarea()`); `Tarea` |
 | `tarea_1_vencimientos.puml` | Transición «Pendiente → Vencida», CU-56 (fallo de la tarea) | `Planificador`, `TareaAutomatica` y `EjecucionProceso` (área 10); `ProxyCobros` (identidad de sistema); `ServicioCobros` (`actualizarVencimientos()`); `Factura` (`registrarEstadoCobro()`) |
 | `tarea_2_impagos.puml` | UR-92, UR-93, CU-37 (alerta) | `Planificador`, `TareaAutomatica` y `EjecucionProceso` (área 10); `ProxyCobros`; `ServicioCobros` (`comprobarImpagos()`, `estaVencida()`, `consultarSaldo()`); `ConfiguracionGlobal` (límites); `ManejadorAlertasCobro` y `ServicioNotificaciones` (área 7) |
 

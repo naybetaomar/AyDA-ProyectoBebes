@@ -1,7 +1,6 @@
 @startuml cu57_consultar_datos_api
 title CU-57 Consultar datos mediante la API (FE-1 y FE-2 como alternativas)
 hide footbox
-skinparam maxMessageSize 140
 autonumber "0:"
 skinparam sequenceParticipantBackgroundColor #FFFFCC
 skinparam sequenceParticipantBorderColor #A80036
@@ -17,36 +16,39 @@ participant "__: ServicioFacturacion__" as SF
 participant "__: ProxyCobros__" as PC
 participant "__: ServicioCobros__" as SC
 
-SE -> FA ++ : consultarDatos(credencial, clienteId)
+SE -> FA ++ : consultarDatos(credencial : String, clienteId : Long)
 
 ' ---------- Paso 2: autenticar ----------
-FA ->o] : buscar ConsumidorAPI con credencial en BD
+FA ->o] : buscar ConsumidorAPI con el hash de la credencial en BD
 autonumber stop
 FA <--o] : c o nada
 autonumber resume
 
-alt no existe consumidor con esa credencial, o c.autenticar() = false (FE-2)
+opt existe c
+  FA -> C ++ : autenticar(credencial : String)
+  autonumber stop
+  return válida
+  autonumber resume
+  FA -> C ++ : haAlcanzadoLimite()
+  autonumber stop
+  return alcanzado
+  autonumber resume
+end
+
+alt no existe c, o la credencial no es válida (FE-2)
   create participant "__l : LlamadaAPI__" as L
   FA --> L : LlamadaAPI(consumidor = c o nulo, operacion = CONSULTAR_DATOS, resultado = NO_AUTORIZADA)
   FA ->o] : guardar l en BD
   autonumber stop
   FA --> SE : NO_AUTORIZADA
   autonumber resume
-else c.haAlcanzadoLimite() = true (FE-1)
+else límite alcanzado (FE-1)
   FA --> L : LlamadaAPI(consumidor = c, operacion = CONSULTAR_DATOS, resultado = LIMITE_EXCEDIDO)
   FA ->o] : guardar l en BD
   autonumber stop
   FA --> SE : LIMITE_EXCEDIDO
   autonumber resume
 else credencial válida y dentro del límite
-  FA -> C ++ : autenticar(credencial : String)
-  autonumber stop
-  return true
-  autonumber resume
-  FA -> C ++ : haAlcanzadoLimite()
-  autonumber stop
-  return false
-  autonumber resume
 
   ' ---------- Paso 3: permisos ----------
   FA -> CS ++ : establecer(solicitante = identidad de la API : IdentidadSistema)
@@ -97,6 +99,6 @@ note over FA, CS
   **Facade:** el sistema externo solo conoce FachadaAPI, y
   todo pasa por el proxy de cada área. La API entra
   con una IdentidadSistema (auditoría como «Sistema»).
-  Credenciales distintas de las de la interfaz .
+  Credenciales distintas de las de la interfaz.
 end note
 @enduml
