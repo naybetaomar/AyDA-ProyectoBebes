@@ -1,0 +1,74 @@
+@startuml cu35_2_deshacer_conciliacion
+title CU-35 Conciliar cobros — 2. Deshacer una conciliación (FA-1)
+hide footbox
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Administrador__" as A
+participant "__: InterfazWeb__" as UI
+participant "__: ProxyCobros__" as PX
+participant "__: ServicioCobros__" as SC
+participant "__: ContextoSeguridad__" as CS
+participant "__c : Conciliacion__" as C
+participant "__f : Factura__" as F
+participant "__: ServicioRecordatorios__" as SR
+
+A -> UI ++ : deshacer(c : Conciliacion, motivo : String)
+UI -> PX ++ : deshacerConciliacion(conciliacion : Conciliacion, motivo : String)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
+PX -> SC ++ : deshacerConciliacion(conciliacion : Conciliacion, motivo : String)
+SC -> CS ++ : solicitanteActual()
+autonumber stop
+return u : Usuario
+autonumber resume
+SC -> C ++ : deshacer(motivo : String, realizadoPor = u)
+note right of C
+  Guarda fechaDeshecho y
+  motivoDeshacer. La fila no se
+  borra: queda la traza.
+end note
+autonumber stop
+return
+autonumber resume
+SC ->o] : guardar conciliación en BD
+  SC -> SC : recalcularEstadoCobro(factura : Factura)
+  SC -> SC ++ : calcularSaldoPendiente(factura : Factura)
+  SC ->o] : sumar conciliaciones vigentes, baja y abonos de f en BD
+  autonumber stop
+  SC <--o] : importes
+  autonumber resume
+  deactivate SC
+  opt el estado de cobro cambia (PAGADA si el saldo es 0; PARCIALMENTE_CONCILIADA si queda saldo)
+    SC -> F ++ : registrarEstadoCobro(estado : EstadoCobro, motivo : String)
+    autonumber stop
+    return
+    autonumber resume
+    SC ->o] : guardar factura e historial en BD
+    SC -[#2E7D32]->> SR ++ : «estado de cobro cambiado»(f, estado)
+    SR -> SR : alCambiarEstadoCobro(factura : Factura, estado : EstadoCobro)
+    note right of SR
+      Cancela los recordatorios si
+      queda pagada; si no, siguen
+      sobre el saldo (RB-37).
+    end note
+    deactivate SR
+  end
+
+autonumber stop
+SC --> PX
+deactivate SC
+PX --> UI
+deactivate PX
+UI --> A : conciliación deshecha; vuelve al paso 3
+deactivate UI
+autonumber resume
+
+note over SC, C
+  El importe vuelve a m.importeSinAplicar
+  (es un derivado) y el movimiento
+  reaparece en la bandeja.
+end note
+@enduml

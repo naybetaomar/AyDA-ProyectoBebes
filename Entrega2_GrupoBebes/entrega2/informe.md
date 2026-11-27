@@ -26,7 +26,7 @@ Los requisitos y los 59 casos de uso se encuentran en la Entrega 1, actualizada 
 
 En este informe se presenta el diseño del sistema propuesto, incluyendo los siguientes apartados:
 
-- **Modelo físico de datos:** se incluye un diagrama E-R para cada área y un script SQL encargado de crear todas las tablas y sus restricciones. El script se ha comprobado mediante un banco de pruebas que incluye tanto inserciones válidas como casos que deben ser rechazados por las restricciones definidas.
+- **Modelo físico de datos:** se incluye un diagrama E-R para cada área y un script SQL encargado de crear todas las tablas y sus restricciones. El script se ha construido y probado área por área sobre PostgreSQL 16, tanto con inserciones válidas como con casos que las restricciones deben rechazar.
 
 - **Diagrama de clases:** se organiza según las 11 áreas funcionales definidas en la Entrega 1. Para cada área se muestran sus principales clases, los servicios que intervienen, los patrones utilizados y las relaciones existentes con el resto de áreas.
 
@@ -142,7 +142,9 @@ El script `diagramas/modelo_datos/script.sql` crea las 64 tablas con sus restric
 | `cu22_proponer_excepcion_prorrateo` | CU-22: proponer una excepción de prorrateo |
 | `cu23_1_aprobar_solicitud` | CU-23 (1): aprobar; autoaprobación y umbral como alternativas |
 | `cu23_2_rechazar_solicitud` | CU-23 (2): rechazar; la factura vuelve a borrador |
-| *pendiente* | CU-34 / CU-35: cobro por la pasarela y conciliación |
+| `cu34_registrar_cobro_pasarela` | CU-34: la pasarela notifica un pago; evento repetido |
+| `cu35_1_conciliar_manualmente` | CU-35 (1): bandeja y conciliación manual |
+| `cu35_2_deshacer_conciliacion` | CU-35 (2): deshacer una conciliación |
 | *pendiente* | CU-57 / CU-58: consulta y solicitud por la API externa |
 
 

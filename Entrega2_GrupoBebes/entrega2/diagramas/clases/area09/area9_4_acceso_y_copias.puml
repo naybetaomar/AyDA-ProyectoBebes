@@ -10,6 +10,7 @@ class ServicioAcceso {
   + cerrarSesion(sesion : Sesion) : void
   + solicitarRecuperacion(email : String) : void
   + restablecerCredencial(token : String, nuevaCredencial : String) : void
+  - comprobarCredencial(credencial : String, hash : String) : Boolean
 }
 
 interface IServicioCopias {

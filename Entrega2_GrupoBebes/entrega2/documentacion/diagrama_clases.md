@@ -248,7 +248,7 @@ Los patrones de comportamiento (Observer para los eventos, State para los estado
 |---|---|---|
 | CU-33, RB-10 | `ServicioCobros.consultarSaldo()`, `ResumenSaldo` | Saldo del cliente, distinto de la facturación acumulada |
 | CU-34, FR-25 | `ServicioCobros.registrarNotificacion()`, `AdaptadorStripe`, `{único: origen + idExterno}` | Registrar pagos de la pasarela sin duplicados |
-| CU-35, FR-84, FR-87 | `importarMovimientos()`, `conciliarAutomaticamente()`, `conciliarManualmente()`, `MovimientoCobro.aplicarA()` | Conciliar con la misma moneda y sin duplicar |
+| CU-35, FR-84, FR-87 | `consultarBandejaConciliacion()`, `importarMovimientos()`, `conciliarAutomaticamente()`, `conciliarManualmente()`, `deshacerConciliacion()`, `MovimientoCobro.aplicarA()` | Conciliar con la misma moneda y sin duplicar |
 | FR-27 | `Conciliacion.deshacer()` | Deshacer conservando la traza |
 | CU-36, RB-08, A-24 | `solicitarBajaContable()`, `registrarBajaAprobada()`, `BajaContable` | Baja contable aprobada, nunca como «pagada» |
 | A-27 | `recalcularEstadoCobro()` (escucha «abono emitido») | El abono compensa el saldo de la original |
@@ -325,7 +325,7 @@ Los patrones de comportamiento (Observer para los eventos, State para los estado
 **Decisiones**
 
 - **Un proxy por servicio** (Proxy de protección), con la misma interfaz que el servicio real. `ControlAcceso` decide y el proxy deja el `RegistroAuditoria`.
-- **`ContextoSeguridad` da el solicitante.** Es un `Usuario` o la `IdentidadSistema` del planificador (interfaz `Solicitante`), así que ninguna operación lleva el solicitante como parámetro.
+- **`ContextoSeguridad` da el solicitante.** Es un `Usuario` o la `IdentidadSistema` del planificador y de los webhooks (interfaz `Solicitante`), así que ninguna operación lleva el solicitante como parámetro.
 - **El inicio de sesión no pasa por el proxy.** `ServicioAcceso` bloquea la cuenta 15 minutos tras 5 fallos seguidos (A-07), cierra la sesión tras 30 minutos sin actividad (A-06) y guarda solo el hash del enlace de recuperación.
 - **Cartera.** Cada cliente tiene un solo responsable vigente (`AsignacionCliente`). Una `Delegacion` cede toda la cartera durante un periodo (FR-41).
 - **Auditoría inalterable.** Solo se crea y se consulta; usuario nulo = Sistema.

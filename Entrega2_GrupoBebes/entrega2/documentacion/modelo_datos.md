@@ -49,12 +49,6 @@ Las tablas van en el script en orden de dependencia: las de las áreas 1 y 4 que
 - `IMPUESTO (1)` — `LINEA_FACTURA (0..N)` e `IMPUESTO (1)` — `CONCEPTO_CATALOGO (0..N)`; `CONCEPTO_CATALOGO (0..1)` — `LINEA_FACTURA (0..N)`: una línea puede venir del catálogo o ser libre.
 - `USUARIO (0..1)` — `HISTORIAL_ESTADO_FACTURA (0..N)`, «realizado por»: nulo significa acción del Sistema.
 
-**Área 6**
-- `MOVIMIENTO_COBRO (1)` — `CONCILIACION (0..N)` y `FACTURA (1)` — `CONCILIACION (0..N)`: la conciliación es la tabla intermedia entre movimientos y facturas, con atributos propios (importe aplicado, fechas, usuarios).
-- `FACTURA (1)` — `BAJA_CONTABLE (0..1)`: una factura tiene como máximo una baja.
-- `SOLICITUD_EXCEPCION (1)` — `BAJA_CONTABLE (0..1)`: toda baja está aprobada mediante una solicitud.
-- `USUARIO (0..1)` — `CONCILIACION (0..N)`: quién la realizó y quién la deshizo; nulo = conciliación automática.
-
 **Área 4**
 - `FACTURA (0..1)` y `CONFIGURACION_RECURRENTE (0..1)` — `SOLICITUD_EXCEPCION (0..N)`: exactamente una de las dos (la configuración, solo en la excepción de prorrateo); con solicitante (1) y aprobador (0..1).
 - `PERIODO_CONTABLE (1)` — `REAPERTURA_PERIODO (0..N)`; `PERIODO_CONTABLE (0..1)` — `FACTURA (0..N)`.
@@ -62,6 +56,12 @@ Las tablas van en el script en orden de dependencia: las de las áreas 1 y 4 que
 **Área 5**
 - `PLANTILLA_COMUNICACION (1)` — `VARIABLE_PLANTILLA (0..N)`: la lista de variables obligatorias, normalizada.
 - `PLANTILLA_COMUNICACION (1)` — `REGLA_RECORDATORIO (0..N)` y — `MENSAJE (0..N)`; `FACTURA (1)` y `CONTACTO (1)` — `MENSAJE (0..N)`.
+
+**Área 6**
+- `MOVIMIENTO_COBRO (1)` — `CONCILIACION (0..N)` y `FACTURA (1)` — `CONCILIACION (0..N)`: la conciliación es la tabla intermedia entre movimientos y facturas, con atributos propios (importe aplicado, fechas, usuarios).
+- `FACTURA (1)` — `BAJA_CONTABLE (0..1)`: una factura tiene como máximo una baja.
+- `SOLICITUD_EXCEPCION (1)` — `BAJA_CONTABLE (0..1)`: toda baja está aprobada mediante una solicitud.
+- `USUARIO (0..1)` — `CONCILIACION (0..N)`: quién la realizó y quién la deshizo; nulo = conciliación automática.
 
 **Área 7**
 - `USUARIO`, `CLIENTE` y `FACTURA (0..1)` — `NOTIFICACION (0..N)`: destinatario (nulo = notificación general) y elemento sobre el que avisa.

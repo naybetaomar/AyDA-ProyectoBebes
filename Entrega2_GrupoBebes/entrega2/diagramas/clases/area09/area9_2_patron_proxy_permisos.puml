@@ -123,10 +123,10 @@ ControlAcceso ..> AccesoDenegado : lanza >
 IdentidadSistema ..> OperacionProtegida
 
 note top of ProxyPermisos
-  **Proxy de permisos.** Hay un proxy por cada servicio
-  (ServicioClientes, ServicioRelacionComercial,
-  ServicioFacturacion, ServicioCobros, ServicioNotificaciones…);
-  aquí se dibujan dos como ejemplo. Cada uno implementa la
+  **Proxy de permisos.** Hay un proxy por cada servicio, con su
+  nombre: ProxyClientes, ProxyRelacionComercial, ProxyFacturacion,
+  ProxyAprobaciones, ProxyEnvio, ProxyCobros, ProxyNotificaciones,
+  ProxyUsuarios, ProxyCopias…; aquí se dibujan dos como ejemplo. Cada uno implementa la
   misma interfaz que su servicio, así que las demás áreas no
   cambian sus firmas. Antes de delegar, autorizarYRegistrar()
   pide el solicitante al ContextoSeguridad, llama a
@@ -137,8 +137,8 @@ note right of ContextoSeguridad
   Quién hace la petición. Lo rellena
   ServicioAcceso.validarSesion() (diagrama 4) en cada
   petición de la interfaz web con el Usuario de la
-  sesión, o el
-  planificador (área 10) con la IdentidadSistema.
+  sesión, o el planificador (área 10) y el
+  receptor de webhooks con la IdentidadSistema.
   Así ninguna operación lleva el solicitante
   como parámetro. Si está vacío, el proxy
   lanza AccesoDenegado.

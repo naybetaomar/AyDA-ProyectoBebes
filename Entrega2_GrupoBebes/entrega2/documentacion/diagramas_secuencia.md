@@ -30,7 +30,9 @@ Entre todos, los eventos entre áreas aparecen al menos en una secuencia. «Impa
 | `cu22_proponer_excepcion_prorrateo.puml` | CU-22: proponer una excepción de prorrateo (la propuesta de una factura sigue CU-15, diagrama 2) | Cristóbal |
 | `cu23_1_aprobar_solicitud.puml` | CU-23 (1), flujo principal: aprobar (FE-1 y FA-1 como alternativas) | Cristóbal |
 | `cu23_2_rechazar_solicitud.puml` | CU-23 (2), FA-2: rechazar con comentario | Cristóbal |
-| *pendiente* | CU-34 / CU-35: cobro por la pasarela y conciliación | Loraine |
+| `cu34_registrar_cobro_pasarela.puml` | CU-34, flujo principal: la pasarela notifica un pago y se concilia solo (FE-1, evento repetido) | Loraine |
+| `cu35_1_conciliar_manualmente.puml` | CU-35 (1), flujo principal: bandeja y conciliación manual (FA-2 en nota) | Loraine |
+| `cu35_2_deshacer_conciliacion.puml` | CU-35 (2), FA-1: deshacer una conciliación | Loraine |
 | *pendiente* | CU-57 / CU-58: consulta y solicitud por la API externa | Imad |
 
 ## Notación
@@ -42,7 +44,7 @@ Todos los diagramas siguen las mismas reglas:
 - **Creación:** los objetos se crean con una flecha discontinua hacia la caja del participante, que aparece a esa altura.
 - **Base de datos:** el acceso a la base de datos se dibuja como un mensaje hacia un punto en el borde derecho («buscar… en BD», «guardar… en BD»). La persistencia no es una clase del dominio.
 - **Avisos entre áreas (eventos):** flecha verde. Indica que el área que emite no llama a la que escucha (ver «Lógica entre áreas en un solo sentido» en `diagrama_clases.md`).
-- **Comprobación de permisos:** toda petición de un usuario, de la API o del planificador entra por el proxy de permisos, que la autoriza y la registra en la auditoría antes de llamar al servicio. La única excepción es el inicio de sesión (CU-48), que ocurre antes de que haya un solicitante.
+- **Comprobación de permisos:** toda petición de un usuario, de la API, de la pasarela o del planificador entra por el proxy de permisos, que la autoriza y la registra en la auditoría antes de llamar al servicio. La única excepción es el inicio de sesión (CU-48), que ocurre antes de que haya un solicitante.
 
 ## CU-15: Emitir factura puntual
 
@@ -89,7 +91,7 @@ El planificador lanza `ejecutar(ACTUALIZACION_VENCIMIENTOS)`: crea la `Ejecucion
 
 **Decisiones**
 
-- **La alerta no se repite.** El área 6 avisa cada día mientras siga el impago, y el área 7 no crea otra alerta si ya hay una sin resolver del mismo tipo y para la misma factura o cliente. Así el área 6 no guarda si ya avisó, y si la tarea falla un día, al siguiente avisa igual. *Pendiente: que `Notificacion` (área 7) se relacione con la factura o el cliente.*
+- **La alerta no se repite.** El área 6 avisa cada día mientras siga el impago, y el área 7 no crea otra alerta si ya hay una sin resolver del mismo tipo y para la misma factura o cliente. Así el área 6 no guarda si ya avisó, y si la tarea falla un día, al siguiente avisa igual. Para comprobarlo, `Notificacion` guarda la factura o el cliente de la alerta.
 - **UR-93 puede llegar con hasta un día de retraso.** La deuda también crece al emitir una factura (área 3), pero solo se comprueba en esta tarea. Comprobarlo también al emitir obligaría al área 3 a conocer los límites de cobro. Se acepta para la primera versión.
 - **Detecta el área 6 y avisa el área 7.** El área 6 es la que conoce el saldo y el vencimiento; el área 7 solo crea la alerta.
 
@@ -168,6 +170,25 @@ Si puede aprobar, `s.aprobar()` guarda el aprobador, el comentario y la fecha (p
 - **Las comprobaciones de FE-1 y FA-1 se repiten al rechazar.** Se indica en una nota del diagrama 2 en lugar de dibujarlas otra vez.
 
 
+## CU-34 y CU-35: Registrar el cobro de la pasarela y conciliar
+
+**CU-34. Cobro notificado por la pasarela.** No hay usuario ni sesión. El receptor de webhooks (vista 1 de la arquitectura) recibe el aviso de la pasarela, deja la `IdentidadSistema` en el `ContextoSeguridad` y entra por `ProxyCobros`, igual que el planificador. `ServicioCobros.registrarNotificacion()` solo conoce la interfaz `ReceptorNotificacionesPago`. `AdaptadorStripe` traduce el aviso de Stripe a un `MovimientoCobro` (patrón Adapter). El servicio busca en la base de datos un movimiento con el mismo origen e identificador externo:
+
+- **Ya existe (FE-1):** el evento se ignora y no se contabiliza dos veces. La base de datos lo garantiza con `{único: origen + idExterno}`.
+- **Es nuevo:** se guarda (POST-1) y se intenta `conciliarAutomaticamente()`. Si la referencia identifica una sola factura, `m.aplicarA()` crea la `Conciliacion` por el importe que cabe en el saldo; si el cobro lo supera, la factura se marca con `marcarCobroExcesivo()` y el excedente queda en el movimiento (A-28, Q-12). Si la referencia falta o es ambigua, el movimiento queda en revisión para CU-35.
+
+**CU-35 (1). Conciliación manual.** El Administrador (PRE-3) abre la bandeja con `consultarBandejaConciliacion()`: movimientos pendientes, parciales o en revisión. Asocia un movimiento con una factura y un importe; `conciliarManualmente()` toma el usuario del `ContextoSeguridad`, comprueba el importe y la moneda, y `m.aplicarA()` crea la `Conciliacion` con quien la hizo. Si el importe es menor que el saldo, el pago queda parcial (FA-2).
+
+**CU-35 (2). Deshacer (FA-1).** `c.deshacer()` guarda la fecha y el motivo; la fila no se borra, así queda la traza. El importe vuelve a estar sin aplicar y el movimiento reaparece en la bandeja.
+
+En los tres casos, si el estado de cobro de la factura cambia, `recalcularEstadoCobro()` lo registra con su historial y emite «estado de cobro cambiado». `ServicioRecordatorios` (área 5) cancela los recordatorios si la factura queda pagada, o los mantiene sobre el saldo (RB-37).
+
+**Decisiones**
+
+- **La pasarela también pasa por el proxy,** con la `IdentidadSistema` como solicitante: así la notificación queda en la auditoría como «Sistema» y la única entrada sin proxy sigue siendo el inicio de sesión (CU-48). La conciliación automática queda sin `realizadoPor`.
+- **Conciliar solo crea la `Conciliacion`.** Lo aplicado y lo sin aplicar del movimiento, y el saldo de la factura, son derivados: deshacer no tiene que recalcular nada guardado.
+- **Una conciliación por movimiento y factura** mientras no se deshaga (FR-87).
+
 ## Trazabilidad
 
 | Diagrama | Caso de uso | Participantes / responsabilidades |
@@ -186,11 +207,14 @@ Si puede aprobar, `s.aprobar()` guarda el aprobador, el comentario y la fecha (p
 | `cu22_proponer_excepcion_prorrateo.puml` | CU-22 (flujo principal; FE-1 en nota), RB-25 | `ProxyAprobaciones` (RB-15); `ServicioAprobaciones` (`solicitarExcepcionProrrateo()`); `ContextoSeguridad` (`solicitanteActual()`); `ConfiguracionRecurrente` (`calcularPrimeraCuota()`); `SolicitudExcepcion`; `ManejadorSolicitudesResueltas` y `ServicioNotificaciones` (área 7) |
 | `cu23_1_aprobar_solicitud.puml` | CU-23 (flujo principal, FE-1, FA-1), FR-74, RB-04 | `ProxyAprobaciones`; `ServicioAprobaciones` (`listarPendientes()`, `aprobar()`); `ContextoSeguridad`; `ConfiguracionGlobal` (umbral); `SolicitudExcepcion` (`aprobar()`); `ServicioFacturacion` (`alResolverSolicitud()`); `ConfiguracionRecurrente` (`aplicarExcepcionSinProrrateo()`); `ManejadorSolicitudesResueltas` |
 | `cu23_2_rechazar_solicitud.puml` | CU-23 FA-2, POST-2, CU-37 | `ProxyAprobaciones`; `ServicioAprobaciones` (`rechazar()`); `SolicitudExcepcion` (`rechazar()`); `ServicioFacturacion` (`alResolverSolicitud()`); `Factura` (`volverABorrador()`); `HistorialEstadoFactura`; `ManejadorSolicitudesResueltas` y `ServicioNotificaciones` (área 7) |
+| `cu34_registrar_cobro_pasarela.puml` | CU-34 (flujo principal, FE-1), A-28, NFR-27 | Receptor de webhooks; `ProxyCobros` (identidad de sistema); `ServicioCobros` (`registrarNotificacion()`, `conciliarAutomaticamente()`, `calcularSaldoPendiente()`, `recalcularEstadoCobro()`); `AdaptadorStripe` (`traducirNotificacion()`, Adapter); `MovimientoCobro` (`aplicarA()`, `marcarEnRevision()`); `Conciliacion`; `Factura` (`marcarCobroExcesivo()`, `registrarEstadoCobro()`); `ServicioRecordatorios` (área 5) |
+| `cu35_1_conciliar_manualmente.puml` | CU-35 (flujo principal, FE-1, FA-2), FR-87, RB-37 | `ProxyCobros`; `ServicioCobros` (`consultarBandejaConciliacion()`, `conciliarManualmente()`, `recalcularEstadoCobro()`); `ContextoSeguridad`; `MovimientoCobro` (`aplicarA()`); `Conciliacion`; `Factura` (`registrarEstadoCobro()`); `ServicioRecordatorios` (área 5) |
+| `cu35_2_deshacer_conciliacion.puml` | CU-35 FA-1, RB-37 | `ProxyCobros`; `ServicioCobros` (`deshacerConciliacion()`, `recalcularEstadoCobro()`); `ContextoSeguridad`; `Conciliacion` (`deshacer()`); `Factura` (`registrarEstadoCobro()`); `ServicioRecordatorios` (área 5) |
 | `tarea_1_vencimientos.puml` | Transición «Pendiente → Vencida», CU-56 (fallo de la tarea) | `Planificador`, `TareaAutomatica` y `EjecucionProceso` (área 10); `ProxyCobros` (identidad de sistema); `ServicioCobros` (`actualizarVencimientos()`); `Factura` (`registrarEstadoCobro()`) |
 | `tarea_2_impagos.puml` | UR-92, UR-93, CU-37 (alerta) | `Planificador`, `TareaAutomatica` y `EjecucionProceso` (área 10); `ProxyCobros`; `ServicioCobros` (`comprobarImpagos()`, `estaVencida()`, `consultarSaldo()`); `ConfiguracionGlobal` (límites); `ManejadorAlertasCobro` y `ServicioNotificaciones` (área 7) |
 
 ## Consistencia
 
-- **Con el diagrama de clases.** Los participantes y operaciones del dominio y de los servicios existen en los diagramas de clases con el mismo nombre y los mismos parámetros. `InterfazWeb` es un componente de la arquitectura, no una clase. Cada servicio tiene su proxy (`ProxyFacturacion`, `ProxyCobros`, `ProxyEnvio`…), que implementa la misma interfaz que el servicio (`area9_2`). `GestorDocumentos` es infraestructura y no tiene operaciones definidas en el diagrama de clases; en las secuencias aparecen con un nombre que describe lo que hacen (`generarPdf()`, `obtenerPdf()`).
+- **Con el diagrama de clases.** Los participantes y operaciones del dominio y de los servicios existen en los diagramas de clases con el mismo nombre y los mismos parámetros. `InterfazWeb` es un componente de la arquitectura, no una clase. Cada servicio tiene su proxy (`ProxyFacturacion`, `ProxyAprobaciones`, `ProxyEnvio`, `ProxyCobros`…), que implementa la misma interfaz que el servicio; el diagrama de clases del área 9 dibuja dos como ejemplo y nombra el resto. `GestorDocumentos` es infraestructura, con sus operaciones (`guardar()`, `generarPdf()`, `obtenerPdf()`) declaradas en los diagramas de las áreas 1 y 5. `comprobarCredencial()` (CU-48) es una operación privada de `ServicioAcceso`.
 - **Con la arquitectura.** Los participantes siguen las capas de la vista 1: la interfaz y la API entran por el proxy de permisos, el proxy llama al servicio del área, y el servicio usa el dominio, la configuración, el gestor de documentos y la persistencia. Los avisos en verde son los mismos que las flechas verdes de la vista 2.
 - **Diferencia de nivel de abstracción.** Las secuencias no muestran el mecanismo de los eventos (Observer, Entrega 3) ni las clases de persistencia: el acceso a la base de datos se resume en un mensaje.

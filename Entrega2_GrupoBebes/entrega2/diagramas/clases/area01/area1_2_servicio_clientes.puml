@@ -76,7 +76,11 @@ package "DTO del área 1" <<Rectangle>> {
 class ServicioFacturacion <<referencia área 3>>
 class ServicioRelacionComercial <<referencia área 2>>
 class ServicioNotificaciones <<referencia área 7>>
-class GestorDocumentos <<infraestructura>>
+class GestorDocumentos <<infraestructura>> {
+  + guardar(nombre : String, contenido : Byte [0..*]) : String
+  + generarPdf(factura : Factura) : String
+  + obtenerPdf(factura : Factura) : Byte [0..*]
+}
 class ServicioUsuarios <<referencia área 9>> {
   + reasignarCliente(cliente : Cliente, nuevoResponsable : Usuario) : void
 }

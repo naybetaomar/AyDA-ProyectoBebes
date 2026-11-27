@@ -1,0 +1,99 @@
+@startuml cu35_1_conciliar_manualmente
+title CU-35 Conciliar cobros — 1. Conciliación manual
+hide footbox
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Administrador__" as A
+participant "__: InterfazWeb__" as UI
+participant "__: ProxyCobros__" as PX
+participant "__: ServicioCobros__" as SC
+participant "__: ContextoSeguridad__" as CS
+participant "__m : MovimientoCobro__" as M
+participant "__f : Factura__" as F
+participant "__: ServicioRecordatorios__" as SR
+
+A -> UI ++ : abrirBandejaConciliacion()
+UI -> PX ++ : consultarBandejaConciliacion()
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
+note right of PX
+  Solo Administrador
+  (PRE-3).
+end note
+PX -> SC ++ : consultarBandejaConciliacion()
+SC ->o] : buscar movimientos PENDIENTE, EN_REVISION o PARCIALMENTE_APLICADO en BD
+autonumber stop
+SC <--o] : movimientos
+return movimientos
+return movimientos
+return movimientos sin conciliar, parciales o en revisión (FE-1)
+autonumber resume
+
+A -> UI ++ : conciliar(m : MovimientoCobro, f : Factura, importe : Decimal)
+UI -> PX ++ : conciliarManualmente(movimiento : MovimientoCobro, factura : Factura, importe : Decimal)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente)
+PX -> SC ++ : conciliarManualmente(movimiento : MovimientoCobro, factura : Factura, importe : Decimal)
+SC -> CS ++ : solicitanteActual()
+autonumber stop
+return u : Usuario
+autonumber resume
+SC -> SC : calcularSaldoPendiente(factura : Factura)
+note right of SC
+  Comprueba: importe ≤ saldo pendiente,
+  importe ≤ m.importeSinAplicar y misma
+  moneda. Si falla, devuelve el error.
+end note
+SC -> M ++ : aplicarA(factura = f, importe, realizadoPor = u)
+create participant "__c : Conciliacion__" as C
+M --> C : Conciliacion(importeAplicado, fecha)
+autonumber stop
+return c
+autonumber resume
+note right of M
+  FA-2: si el importe es menor
+  que el saldo, el pago es parcial;
+  lo que no se aplica sigue en
+  m.importeSinAplicar (Q-12).
+end note
+SC ->o] : guardar conciliación en BD
+  SC -> SC : recalcularEstadoCobro(factura : Factura)
+  SC -> SC ++ : calcularSaldoPendiente(factura : Factura)
+  SC ->o] : sumar conciliaciones vigentes, baja y abonos de f en BD
+  autonumber stop
+  SC <--o] : importes
+  autonumber resume
+  deactivate SC
+  opt el estado de cobro cambia (PAGADA si el saldo es 0; PARCIALMENTE_CONCILIADA si queda saldo)
+    SC -> F ++ : registrarEstadoCobro(estado : EstadoCobro, motivo : String)
+    autonumber stop
+    return
+    autonumber resume
+    SC ->o] : guardar factura e historial en BD
+    SC -[#2E7D32]->> SR ++ : «estado de cobro cambiado»(f, estado)
+    SR -> SR : alCambiarEstadoCobro(factura : Factura, estado : EstadoCobro)
+    note right of SR
+      Cancela los recordatorios si
+      queda pagada; si no, siguen
+      sobre el saldo (RB-37).
+    end note
+    deactivate SR
+  end
+
+autonumber stop
+SC --> PX : c
+deactivate SC
+PX --> UI : c
+deactivate PX
+UI --> A : conciliación registrada; estado y saldo actualizados
+deactivate UI
+autonumber resume
+
+note over SC, M
+  Una conciliación por movimiento y factura
+  mientras no se deshaga (FR-87). Deshacerla
+  (FA-1) está en el diagrama 2.
+end note
+@enduml

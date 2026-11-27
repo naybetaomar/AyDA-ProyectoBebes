@@ -60,10 +60,10 @@ Herramientas utilizadas: repositorio Git con la estructura de la plantilla del p
 - **Completado**:
   - diagramas de arquitectura;
   - diagramas de clase del área 10;
-  - secuencias de CU-15, CU-17, CU-19, CU-22/23, CU-27/28 y CU-48, y de la tarea diaria del planificador;
+  - secuencias de CU-15, CU-17, CU-19, CU-22/23, CU-27/28, CU-34/35 y CU-48, y de la tarea diaria del planificador;
   - E-R y script de las 11 áreas (64 tablas), construido y probado área por área sobre PostgreSQL.
 - **En curso:**
-  - el resto de secuencias (CU-34/35 y CU-57/58);
+  - secuencias de CU-57/58;
   - informe y este informe Scrum.
 
 ![Tablero al inicio del sprint 4](evidencias/sprint4_inicio.png)
@@ -89,7 +89,7 @@ Herramientas utilizadas: repositorio Git con la estructura de la plantilla del p
 | Secuencias CU-15 y CU-19 | Abdelnaybet | Entrega 2 | Alta | secuencias | Completado |
 | Secuencias CU-27 y CU-28 | Ana | Entrega 2 | Alta | secuencias | Completado |
 | Secuencias CU-57 y CU-58 | Imad | Entrega 2 | Alta | secuencias | En curso |
-| Secuencias CU-34 y CU-35 | Loraine | Entrega 2 | Alta | secuencias | En curso |
+| Secuencias CU-34 y CU-35 | Loraine | Entrega 2 | Alta | secuencias | Completado |
 | Secuencia CU-17 | Luca | Entrega 2 | Alta | secuencias | Completado |
 | Secuencias CU-22 y CU-23 | Cristóbal | Entrega 2 | Alta | secuencias | Completado |
 | Secuencia CU-48 | Guille | Entrega 2 | Alta | secuencias | Completado |

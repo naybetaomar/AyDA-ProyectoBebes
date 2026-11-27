@@ -48,7 +48,11 @@ class ServicioFacturacion <<referencia área 3>> {
 class ServicioCobros <<referencia área 6>> {
   + estaVencida(factura : Factura) : Boolean
 }
-class GestorDocumentos <<infraestructura>>
+class GestorDocumentos <<infraestructura>> {
+  + guardar(nombre : String, contenido : Byte [0..*]) : String
+  + generarPdf(factura : Factura) : String
+  + obtenerPdf(factura : Factura) : Byte [0..*]
+}
 class CalendarioLaboral <<referencia área 10>> {
   + siguienteDiaLaborable(fecha : Date) : Date
 }

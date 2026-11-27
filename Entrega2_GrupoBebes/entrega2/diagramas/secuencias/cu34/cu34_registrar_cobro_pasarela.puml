@@ -1,0 +1,124 @@
+@startuml cu34_registrar_cobro_pasarela
+title CU-34 Registrar cobro notificado por la pasarela
+hide footbox
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Pasarela de pagos (Stripe)__" as ST
+participant "__: Receptor de webhooks__" as WH
+participant "__: ProxyCobros__" as PX
+participant "__: ServicioCobros__" as SC
+participant "__: AdaptadorStripe__" as AD
+participant "__f : Factura__" as F
+participant "__: ServicioRecordatorios__" as SR
+
+ST -> WH ++ : webhook(contenido : String)
+note right of WH
+  Antes, el receptor deja la
+  IdentidadSistema en
+  ContextoSeguridad.
+end note
+WH -> PX ++ : registrarNotificacion(receptor : ReceptorNotificacionesPago, contenido : String)
+PX -> PX : autorizarYRegistrar(operacion : OperacionProtegida)
+note right of PX
+  Solicitante: IdentidadSistema.
+  Auditoría con usuario nulo
+  (= Sistema), como el planificador.
+end note
+PX -> SC ++ : registrarNotificacion(receptor : ReceptorNotificacionesPago, contenido : String)
+SC -> AD ++ : traducirNotificacion(contenido : String)
+create participant "__m : MovimientoCobro__" as M
+AD --> M : MovimientoCobro(origen = PASARELA, idExterno, referencia, importe, moneda, datosConfirmacion)
+autonumber stop
+return m
+autonumber resume
+SC ->o] : buscar MovimientoCobro con el mismo origen e idExterno en BD
+autonumber stop
+SC <--o] : movimiento existente o nada
+autonumber resume
+
+alt ya existe (FE-1, evento repetido)
+  note right of SC
+    Se ignora: no se contabiliza otra vez.
+    En BD: {único: origen + idExterno}.
+  end note
+else evento nuevo
+  SC ->o] : guardar m en BD (POST-1)
+  SC -> SC : conciliarAutomaticamente(movimiento : MovimientoCobro)
+  SC ->o] : buscar facturas pendientes con la referencia de m en BD
+  autonumber stop
+  SC <--o] : facturas
+  autonumber resume
+  alt la referencia identifica una única factura f
+    SC -> SC : calcularSaldoPendiente(factura : Factura)
+    SC -> M ++ : aplicarA(factura = f, importe = mín(m.importe, saldo), realizadoPor = nulo)
+    create participant "__: Conciliacion__" as C
+    M --> C : Conciliacion(importeAplicado, fecha)
+    autonumber stop
+    return conciliacion
+    autonumber resume
+    opt m.importe > saldo pendiente
+      SC -> F ++ : marcarCobroExcesivo(excesivo = true)
+      autonumber stop
+      return
+      autonumber resume
+      note right of F
+        El excedente queda en
+        m.importeSinAplicar y se
+        revisa en CU-35 (A-28, Q-12).
+      end note
+    end
+    SC ->o] : guardar conciliación en BD
+  SC -> SC : recalcularEstadoCobro(factura : Factura)
+  SC -> SC ++ : calcularSaldoPendiente(factura : Factura)
+  SC ->o] : sumar conciliaciones vigentes, baja y abonos de f en BD
+  autonumber stop
+  SC <--o] : importes
+  autonumber resume
+  deactivate SC
+  opt el estado de cobro cambia (PAGADA si el saldo es 0; PARCIALMENTE_CONCILIADA si queda saldo)
+    SC -> F ++ : registrarEstadoCobro(estado : EstadoCobro, motivo : String)
+    autonumber stop
+    return
+    autonumber resume
+    SC ->o] : guardar factura e historial en BD
+    SC -[#2E7D32]->> SR ++ : «estado de cobro cambiado»(f, estado)
+    SR -> SR : alCambiarEstadoCobro(factura : Factura, estado : EstadoCobro)
+    note right of SR
+      Cancela los recordatorios si
+      queda pagada; si no, siguen
+      sobre el saldo (RB-37).
+    end note
+    deactivate SR
+  end
+  else referencia ausente o ambigua
+    SC -> M ++ : marcarEnRevision(motivo : String)
+    autonumber stop
+    return
+    autonumber resume
+    SC ->o] : guardar m en BD
+    note right of M
+      EN_REVISION: queda en la
+      bandeja de CU-35 (FE-1).
+    end note
+  end
+end
+autonumber stop
+SC --> PX
+deactivate SC
+PX --> WH
+deactivate PX
+WH --> ST : evento recibido
+deactivate WH
+autonumber resume
+
+note over SC, AD
+  **Adapter:** ServicioCobros solo conoce ReceptorNotificacionesPago.
+  AdaptadorStripe traduce el formato de Stripe a un MovimientoCobro;
+  cambiar de pasarela es escribir otro adaptador (NFR-27).
+  POST-2: los datos de confirmación quedan en m.datosConfirmacion.
+end note
+@enduml
