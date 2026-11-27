@@ -1,0 +1,102 @@
+@startuml cu57_consultar_datos_api
+title CU-57 Consultar datos mediante la API (FE-1 y FE-2 como alternativas)
+hide footbox
+skinparam maxMessageSize 140
+autonumber "0:"
+skinparam sequenceParticipantBackgroundColor #FFFFCC
+skinparam sequenceParticipantBorderColor #A80036
+skinparam sequenceArrowColor #A80036
+skinparam sequenceLifeLineBorderColor #A80036
+
+actor "__: Sistema externo__" as SE
+participant "__: FachadaAPI__" as FA
+participant "__c : ConsumidorAPI__" as C
+participant "__: ContextoSeguridad__" as CS
+participant "__: ProxyFacturacion__" as PF
+participant "__: ServicioFacturacion__" as SF
+participant "__: ProxyCobros__" as PC
+participant "__: ServicioCobros__" as SC
+
+SE -> FA ++ : consultarDatos(credencial, clienteId)
+
+' ---------- Paso 2: autenticar ----------
+FA ->o] : buscar ConsumidorAPI con credencial en BD
+autonumber stop
+FA <--o] : c o nada
+autonumber resume
+
+alt no existe consumidor con esa credencial, o c.autenticar() = false (FE-2)
+  create participant "__l : LlamadaAPI__" as L
+  FA --> L : LlamadaAPI(consumidor = c o nulo, operacion = CONSULTAR_DATOS, resultado = NO_AUTORIZADA)
+  FA ->o] : guardar l en BD
+  autonumber stop
+  FA --> SE : NO_AUTORIZADA
+  autonumber resume
+else c.haAlcanzadoLimite() = true (FE-1)
+  FA --> L : LlamadaAPI(consumidor = c, operacion = CONSULTAR_DATOS, resultado = LIMITE_EXCEDIDO)
+  FA ->o] : guardar l en BD
+  autonumber stop
+  FA --> SE : LIMITE_EXCEDIDO
+  autonumber resume
+else credencial válida y dentro del límite
+  FA -> C ++ : autenticar(credencial : String)
+  autonumber stop
+  return true
+  autonumber resume
+  FA -> C ++ : haAlcanzadoLimite()
+  autonumber stop
+  return false
+  autonumber resume
+
+  ' ---------- Paso 3: permisos ----------
+  FA -> CS ++ : establecer(solicitante = identidad de la API : IdentidadSistema)
+  autonumber stop
+  return
+  autonumber resume
+  FA ->o] : buscar cliente con clienteId en BD
+  autonumber stop
+  FA <--o] : cliente
+  autonumber resume
+
+  FA -> PF ++ : consultarFacturas(cliente : Cliente)
+  PF -> PF : autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente)
+  PF -> SF ++ : consultarFacturas(cliente : Cliente)
+  SF ->o] : buscar facturas del cliente en BD
+  autonumber stop
+  SF <--o] : facturas
+  SF --> PF : resumenes : ResumenFactura [0..*]
+  deactivate SF
+  PF --> FA : resumenes
+  deactivate PF
+  autonumber resume
+
+  FA -> PC ++ : consultarSaldo(cliente : Cliente)
+  PC -> PC : autorizarYRegistrar(operacion : OperacionProtegida, cliente : Cliente)
+  PC -> SC ++ : consultarSaldo(cliente : Cliente)
+  SC ->o] : sumar saldos pendientes del cliente en BD
+  autonumber stop
+  SC <--o] : importes
+  SC --> PC : saldo : ResumenSaldo
+  deactivate SC
+  PC --> FA : saldo
+  deactivate PC
+  autonumber resume
+
+  ' ---------- Paso 4: devolver el detalle mínimo y registrar ----------
+  create participant "__d : DatosConsultaCliente__" as D
+  FA --> D : DatosConsultaCliente(clienteId, razonSocial, facturas = resumenes, saldo)
+  FA --> L : LlamadaAPI(consumidor = c, operacion = CONSULTAR_DATOS, resultado = CORRECTA)
+  FA ->o] : guardar l en BD (POST-1)
+  autonumber stop
+  FA --> SE : d
+  autonumber resume
+end
+deactivate FA
+
+note over FA, CS
+  **Facade:** el sistema externo solo conoce FachadaAPI, y
+  todo pasa por el proxy de cada área. La API entra
+  con una IdentidadSistema (auditoría como «Sistema»).
+  Credenciales distintas de las de la interfaz .
+end note
+@enduml
